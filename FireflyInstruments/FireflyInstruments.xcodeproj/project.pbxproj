@@ -1,0 +1,722 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		920DFFF11D39356D00E92859 /* BinaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920DFFF01D39356D00E92859 /* BinaryTests.swift */; };
+		920DFFF41D39406200E92859 /* ColorInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920DFFF31D39406200E92859 /* ColorInstrument.swift */; };
+		924431401D3FB94400F03EAC /* USBHIDDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 9244313E1D3FB94400F03EAC /* USBHIDDevice.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		924431411D3FB94400F03EAC /* USBHIDDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 9244313F1D3FB94400F03EAC /* USBHIDDevice.m */; };
+		924431481D3FBC2300F03EAC /* FDError.h in Headers */ = {isa = PBXBuildFile; fileRef = 924431461D3FBC2300F03EAC /* FDError.h */; };
+		924431491D3FBC2300F03EAC /* FDError.m in Sources */ = {isa = PBXBuildFile; fileRef = 924431471D3FBC2300F03EAC /* FDError.m */; };
+		9244314C1D3FC11C00F03EAC /* USBHIDMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 9244314A1D3FC11B00F03EAC /* USBHIDMonitor.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9244314D1D3FC11C00F03EAC /* USBHIDMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 9244314B1D3FC11C00F03EAC /* USBHIDMonitor.m */; };
+		924B6B551D418284000CBAB7 /* IndicatorInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924B6B541D418284000CBAB7 /* IndicatorInstrument.swift */; };
+		924B6B581D4184BC000CBAB7 /* InternalInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924B6B571D4184BC000CBAB7 /* InternalInstrument.swift */; };
+		9255D6431D3D9EFC00655D79 /* DetourSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9255D6421D3D9EFC00655D79 /* DetourSource.swift */; };
+		9255D6461D3DBA3E00655D79 /* DetourSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9255D6451D3DBA3E00655D79 /* DetourSourceTests.swift */; };
+		9272D9571D36D29D00830CF5 /* FireflyInstruments.h in Headers */ = {isa = PBXBuildFile; fileRef = 9272D9561D36D29D00830CF5 /* FireflyInstruments.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9272D95E1D36D29D00830CF5 /* FireflyInstruments.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9272D9531D36D29D00830CF5 /* FireflyInstruments.framework */; };
+		9272D9851D36D39200830CF5 /* ARMSerialWireDebug.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9272D9801D36D37F00830CF5 /* ARMSerialWireDebug.framework */; };
+		9272D98E1D36D45F00830CF5 /* SerialWireInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9272D98D1D36D45F00830CF5 /* SerialWireInstrument.swift */; };
+		9272D9901D36D51C00830CF5 /* InstrumentManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9272D98F1D36D51C00830CF5 /* InstrumentManager.swift */; };
+		927795D31D397DFE000D7CFE /* DetourTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 927795D21D397DFE000D7CFE /* DetourTests.swift */; };
+		927905281D3E732800623816 /* SerialWireInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 927905271D3E732800623816 /* SerialWireInstrumentTests.swift */; };
+		9279052B1D3E909600623816 /* InstrumentManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279052A1D3E909600623816 /* InstrumentManagerTests.swift */; };
+		927D13EA1D3EC61A00466EE8 /* InstrumentPortal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 927D13E91D3EC61A00466EE8 /* InstrumentPortal.swift */; };
+		9286EEC61D42810F0078FA55 /* RelayInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEC51D42810F0078FA55 /* RelayInstrument.swift */; };
+		9286EEC91D4281F70078FA55 /* CurrentInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEC81D4281F70078FA55 /* CurrentInstrument.swift */; };
+		9286EECB1D4284150078FA55 /* BatteryInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EECA1D4284150078FA55 /* BatteryInstrument.swift */; };
+		9286EECD1D428CE00078FA55 /* ColorInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EECC1D428CE00078FA55 /* ColorInstrumentTests.swift */; };
+		9286EECF1D428D0E0078FA55 /* MockPortal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EECE1D428D0E0078FA55 /* MockPortal.swift */; };
+		9286EED11D428D4E0078FA55 /* MockUSBHIDDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EED01D428D4E0078FA55 /* MockUSBHIDDevice.swift */; };
+		9286EEE81D4292410078FA55 /* IndicatorInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEE71D4292410078FA55 /* IndicatorInstrumentTests.swift */; };
+		9286EEEA1D42948E0078FA55 /* RelayInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEE91D42948E0078FA55 /* RelayInstrumentTests.swift */; };
+		9286EEEC1D4294DA0078FA55 /* CurrentInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEEB1D4294DA0078FA55 /* CurrentInstrumentTests.swift */; };
+		9286EEEE1D42954C0078FA55 /* BatteryInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEED1D42954C0078FA55 /* BatteryInstrumentTests.swift */; };
+		9286EEF01D42A3AD0078FA55 /* PortalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEEF1D42A3AD0078FA55 /* PortalTests.swift */; };
+		9286EEF61D42B4470078FA55 /* VoltageInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEF51D42B4470078FA55 /* VoltageInstrument.swift */; };
+		9286EEF81D42B5370078FA55 /* VoltageInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEF71D42B5370078FA55 /* VoltageInstrumentTests.swift */; };
+		92B3BEB01D3FE3D900EBBCF7 /* Instrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B3BEAF1D3FE3D900EBBCF7 /* Instrument.swift */; };
+		92BFEC9B1D3E6F6B00C2481A /* Portal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92BFEC9A1D3E6F6B00C2481A /* Portal.swift */; };
+		92F9E3651D37E9EA00F16833 /* Detour.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F9E3641D37E9EA00F16833 /* Detour.swift */; };
+		92F9E3681D37F1DE00F16833 /* Binary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F9E3671D37F1DE00F16833 /* Binary.swift */; };
+		92F9E36E1D38491600F16833 /* fd_ieee754.c in Sources */ = {isa = PBXBuildFile; fileRef = 92F9E36C1D38491600F16833 /* fd_ieee754.c */; };
+		92F9E36F1D38491600F16833 /* fd_ieee754.h in Headers */ = {isa = PBXBuildFile; fileRef = 92F9E36D1D38491600F16833 /* fd_ieee754.h */; settings = {ATTRIBUTES = (Public, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9272D95F1D36D29D00830CF5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9272D94A1D36D29D00830CF5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9272D9521D36D29D00830CF5;
+			remoteInfo = FireflyInstruments;
+		};
+		9272D97F1D36D37F00830CF5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9272D97A1D36D37F00830CF5 /* ARMSerialWireDebug.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 92008A721CFE2E3A00AFDF20;
+			remoteInfo = ARMSerialWireDebug;
+		};
+		9272D9811D36D37F00830CF5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9272D97A1D36D37F00830CF5 /* ARMSerialWireDebug.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 92008A7C1CFE2E3A00AFDF20;
+			remoteInfo = ARMSerialWireDebugTests;
+		};
+		9272D9831D36D38C00830CF5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9272D97A1D36D37F00830CF5 /* ARMSerialWireDebug.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 92008A711CFE2E3A00AFDF20;
+			remoteInfo = ARMSerialWireDebug;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		920DFFF01D39356D00E92859 /* BinaryTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BinaryTests.swift; sourceTree = "<group>"; };
+		920DFFF31D39406200E92859 /* ColorInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorInstrument.swift; sourceTree = "<group>"; };
+		9244313E1D3FB94400F03EAC /* USBHIDDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBHIDDevice.h; sourceTree = "<group>"; };
+		9244313F1D3FB94400F03EAC /* USBHIDDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = USBHIDDevice.m; sourceTree = "<group>"; };
+		924431461D3FBC2300F03EAC /* FDError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FDError.h; sourceTree = "<group>"; };
+		924431471D3FBC2300F03EAC /* FDError.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FDError.m; sourceTree = "<group>"; };
+		9244314A1D3FC11B00F03EAC /* USBHIDMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBHIDMonitor.h; sourceTree = "<group>"; };
+		9244314B1D3FC11C00F03EAC /* USBHIDMonitor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = USBHIDMonitor.m; sourceTree = "<group>"; };
+		9244314E1D3FC71600F03EAC /* USBHIDDevice_Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBHIDDevice_Private.h; sourceTree = "<group>"; };
+		924B6B541D418284000CBAB7 /* IndicatorInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IndicatorInstrument.swift; sourceTree = "<group>"; };
+		924B6B571D4184BC000CBAB7 /* InternalInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InternalInstrument.swift; sourceTree = "<group>"; };
+		9255D6421D3D9EFC00655D79 /* DetourSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourSource.swift; sourceTree = "<group>"; };
+		9255D6451D3DBA3E00655D79 /* DetourSourceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourSourceTests.swift; sourceTree = "<group>"; };
+		9272D9531D36D29D00830CF5 /* FireflyInstruments.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FireflyInstruments.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9272D9561D36D29D00830CF5 /* FireflyInstruments.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FireflyInstruments.h; sourceTree = "<group>"; };
+		9272D9581D36D29D00830CF5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9272D95D1D36D29D00830CF5 /* FireflyInstrumentsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FireflyInstrumentsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9272D9641D36D29D00830CF5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9272D97A1D36D37F00830CF5 /* ARMSerialWireDebug.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = ARMSerialWireDebug.xcodeproj; path = "../../firefly-arm-serial-wire-debug/ARMSerialWireDebug.xcodeproj"; sourceTree = "<group>"; };
+		9272D98D1D36D45F00830CF5 /* SerialWireInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialWireInstrument.swift; sourceTree = "<group>"; };
+		9272D98F1D36D51C00830CF5 /* InstrumentManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstrumentManager.swift; sourceTree = "<group>"; };
+		927795D21D397DFE000D7CFE /* DetourTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourTests.swift; sourceTree = "<group>"; };
+		927905271D3E732800623816 /* SerialWireInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialWireInstrumentTests.swift; sourceTree = "<group>"; };
+		9279052A1D3E909600623816 /* InstrumentManagerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstrumentManagerTests.swift; sourceTree = "<group>"; };
+		927D13E91D3EC61A00466EE8 /* InstrumentPortal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstrumentPortal.swift; sourceTree = "<group>"; };
+		9286EEC51D42810F0078FA55 /* RelayInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RelayInstrument.swift; sourceTree = "<group>"; };
+		9286EEC81D4281F70078FA55 /* CurrentInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CurrentInstrument.swift; sourceTree = "<group>"; };
+		9286EECA1D4284150078FA55 /* BatteryInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BatteryInstrument.swift; sourceTree = "<group>"; };
+		9286EECC1D428CE00078FA55 /* ColorInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorInstrumentTests.swift; sourceTree = "<group>"; };
+		9286EECE1D428D0E0078FA55 /* MockPortal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockPortal.swift; sourceTree = "<group>"; };
+		9286EED01D428D4E0078FA55 /* MockUSBHIDDevice.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockUSBHIDDevice.swift; sourceTree = "<group>"; };
+		9286EEE71D4292410078FA55 /* IndicatorInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IndicatorInstrumentTests.swift; sourceTree = "<group>"; };
+		9286EEE91D42948E0078FA55 /* RelayInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RelayInstrumentTests.swift; sourceTree = "<group>"; };
+		9286EEEB1D4294DA0078FA55 /* CurrentInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CurrentInstrumentTests.swift; sourceTree = "<group>"; };
+		9286EEED1D42954C0078FA55 /* BatteryInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BatteryInstrumentTests.swift; sourceTree = "<group>"; };
+		9286EEEF1D42A3AD0078FA55 /* PortalTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PortalTests.swift; sourceTree = "<group>"; };
+		9286EEF51D42B4470078FA55 /* VoltageInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VoltageInstrument.swift; sourceTree = "<group>"; };
+		9286EEF71D42B5370078FA55 /* VoltageInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VoltageInstrumentTests.swift; sourceTree = "<group>"; };
+		92B3BEAF1D3FE3D900EBBCF7 /* Instrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Instrument.swift; sourceTree = "<group>"; };
+		92BFEC9A1D3E6F6B00C2481A /* Portal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Portal.swift; sourceTree = "<group>"; };
+		92F9E3641D37E9EA00F16833 /* Detour.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Detour.swift; sourceTree = "<group>"; };
+		92F9E3671D37F1DE00F16833 /* Binary.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Binary.swift; sourceTree = "<group>"; };
+		92F9E36C1D38491600F16833 /* fd_ieee754.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fd_ieee754.c; sourceTree = "<group>"; };
+		92F9E36D1D38491600F16833 /* fd_ieee754.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = fd_ieee754.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		9272D94F1D36D29D00830CF5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9272D9851D36D39200830CF5 /* ARMSerialWireDebug.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9272D95A1D36D29D00830CF5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9272D95E1D36D29D00830CF5 /* FireflyInstruments.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		920CA8AC1D494D1100661E38 /* Instruments */ = {
+			isa = PBXGroup;
+			children = (
+				9286EECA1D4284150078FA55 /* BatteryInstrument.swift */,
+				920DFFF31D39406200E92859 /* ColorInstrument.swift */,
+				9286EEC81D4281F70078FA55 /* CurrentInstrument.swift */,
+				924B6B541D418284000CBAB7 /* IndicatorInstrument.swift */,
+				9286EEC51D42810F0078FA55 /* RelayInstrument.swift */,
+				9272D98D1D36D45F00830CF5 /* SerialWireInstrument.swift */,
+				9286EEF51D42B4470078FA55 /* VoltageInstrument.swift */,
+			);
+			name = Instruments;
+			sourceTree = "<group>";
+		};
+		920CA8AE1D494F2E00661E38 /* Manager */ = {
+			isa = PBXGroup;
+			children = (
+				92B3BEAF1D3FE3D900EBBCF7 /* Instrument.swift */,
+				9272D98F1D36D51C00830CF5 /* InstrumentManager.swift */,
+				927D13E91D3EC61A00466EE8 /* InstrumentPortal.swift */,
+				924B6B571D4184BC000CBAB7 /* InternalInstrument.swift */,
+				92BFEC9A1D3E6F6B00C2481A /* Portal.swift */,
+			);
+			name = Manager;
+			sourceTree = "<group>";
+		};
+		920CA8AF1D494F6300661E38 /* Manager */ = {
+			isa = PBXGroup;
+			children = (
+				9279052A1D3E909600623816 /* InstrumentManagerTests.swift */,
+				9286EEEF1D42A3AD0078FA55 /* PortalTests.swift */,
+			);
+			name = Manager;
+			sourceTree = "<group>";
+		};
+		920CA8B01D494F7500661E38 /* Instruments */ = {
+			isa = PBXGroup;
+			children = (
+				9286EEED1D42954C0078FA55 /* BatteryInstrumentTests.swift */,
+				9286EECC1D428CE00078FA55 /* ColorInstrumentTests.swift */,
+				9286EEEB1D4294DA0078FA55 /* CurrentInstrumentTests.swift */,
+				9286EEE71D4292410078FA55 /* IndicatorInstrumentTests.swift */,
+				9286EEE91D42948E0078FA55 /* RelayInstrumentTests.swift */,
+				927905271D3E732800623816 /* SerialWireInstrumentTests.swift */,
+				9286EEF71D42B5370078FA55 /* VoltageInstrumentTests.swift */,
+			);
+			name = Instruments;
+			sourceTree = "<group>";
+		};
+		920CA8B11D494F9200661E38 /* Mocks */ = {
+			isa = PBXGroup;
+			children = (
+				9286EECE1D428D0E0078FA55 /* MockPortal.swift */,
+				9286EED01D428D4E0078FA55 /* MockUSBHIDDevice.swift */,
+			);
+			name = Mocks;
+			sourceTree = "<group>";
+		};
+		920DFFF51D3943EC00E92859 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				924431421D3FBB8A00F03EAC /* Data */,
+				924431431D3FBBFA00F03EAC /* Private */,
+				924431391D3FB52A00F03EAC /* USB */,
+			);
+			name = Common;
+			sourceTree = "<group>";
+		};
+		920DFFF61D39441600E92859 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				9272D9561D36D29D00830CF5 /* FireflyInstruments.h */,
+				9272D9581D36D29D00830CF5 /* Info.plist */,
+			);
+			name = Configuration;
+			sourceTree = "<group>";
+		};
+		924431391D3FB52A00F03EAC /* USB */ = {
+			isa = PBXGroup;
+			children = (
+				9244313B1D3FB71E00F03EAC /* HID */,
+			);
+			name = USB;
+			sourceTree = "<group>";
+		};
+		9244313B1D3FB71E00F03EAC /* HID */ = {
+			isa = PBXGroup;
+			children = (
+				9244313E1D3FB94400F03EAC /* USBHIDDevice.h */,
+				9244313F1D3FB94400F03EAC /* USBHIDDevice.m */,
+				9244314E1D3FC71600F03EAC /* USBHIDDevice_Private.h */,
+				9244314A1D3FC11B00F03EAC /* USBHIDMonitor.h */,
+				9244314B1D3FC11C00F03EAC /* USBHIDMonitor.m */,
+			);
+			name = HID;
+			sourceTree = "<group>";
+		};
+		924431421D3FBB8A00F03EAC /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				92F9E3671D37F1DE00F16833 /* Binary.swift */,
+				92F9E3641D37E9EA00F16833 /* Detour.swift */,
+				9255D6421D3D9EFC00655D79 /* DetourSource.swift */,
+				92F9E36C1D38491600F16833 /* fd_ieee754.c */,
+				92F9E36D1D38491600F16833 /* fd_ieee754.h */,
+			);
+			name = Data;
+			sourceTree = "<group>";
+		};
+		924431431D3FBBFA00F03EAC /* Private */ = {
+			isa = PBXGroup;
+			children = (
+				924431461D3FBC2300F03EAC /* FDError.h */,
+				924431471D3FBC2300F03EAC /* FDError.m */,
+			);
+			name = Private;
+			sourceTree = "<group>";
+		};
+		9272D9491D36D29D00830CF5 = {
+			isa = PBXGroup;
+			children = (
+				9272D97A1D36D37F00830CF5 /* ARMSerialWireDebug.xcodeproj */,
+				9272D9551D36D29D00830CF5 /* FireflyInstruments */,
+				9272D9611D36D29D00830CF5 /* FireflyInstrumentsTests */,
+				9272D9541D36D29D00830CF5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		9272D9541D36D29D00830CF5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9272D9531D36D29D00830CF5 /* FireflyInstruments.framework */,
+				9272D95D1D36D29D00830CF5 /* FireflyInstrumentsTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9272D9551D36D29D00830CF5 /* FireflyInstruments */ = {
+			isa = PBXGroup;
+			children = (
+				920CA8AE1D494F2E00661E38 /* Manager */,
+				920CA8AC1D494D1100661E38 /* Instruments */,
+				920DFFF51D3943EC00E92859 /* Common */,
+				920DFFF61D39441600E92859 /* Configuration */,
+			);
+			path = FireflyInstruments;
+			sourceTree = "<group>";
+		};
+		9272D9611D36D29D00830CF5 /* FireflyInstrumentsTests */ = {
+			isa = PBXGroup;
+			children = (
+				920CA8B11D494F9200661E38 /* Mocks */,
+				920CA8B01D494F7500661E38 /* Instruments */,
+				920CA8AF1D494F6300661E38 /* Manager */,
+				9286EEF91D42BF040078FA55 /* Common */,
+				9286EEF11D42A48E0078FA55 /* Configuration */,
+			);
+			path = FireflyInstrumentsTests;
+			sourceTree = "<group>";
+		};
+		9272D97B1D36D37F00830CF5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				9272D9801D36D37F00830CF5 /* ARMSerialWireDebug.framework */,
+				9272D9821D36D37F00830CF5 /* ARMSerialWireDebugTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		9286EEF11D42A48E0078FA55 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				9272D9641D36D29D00830CF5 /* Info.plist */,
+			);
+			name = Configuration;
+			sourceTree = "<group>";
+		};
+		9286EEF91D42BF040078FA55 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				9286EEFA1D42BF0A0078FA55 /* Data */,
+			);
+			name = Common;
+			sourceTree = "<group>";
+		};
+		9286EEFA1D42BF0A0078FA55 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				920DFFF01D39356D00E92859 /* BinaryTests.swift */,
+				9255D6451D3DBA3E00655D79 /* DetourSourceTests.swift */,
+				927795D21D397DFE000D7CFE /* DetourTests.swift */,
+			);
+			name = Data;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		9272D9501D36D29D00830CF5 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9272D9571D36D29D00830CF5 /* FireflyInstruments.h in Headers */,
+				9244314C1D3FC11C00F03EAC /* USBHIDMonitor.h in Headers */,
+				92F9E36F1D38491600F16833 /* fd_ieee754.h in Headers */,
+				924431401D3FB94400F03EAC /* USBHIDDevice.h in Headers */,
+				924431481D3FBC2300F03EAC /* FDError.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		9272D9521D36D29D00830CF5 /* FireflyInstruments */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9272D9671D36D29D00830CF5 /* Build configuration list for PBXNativeTarget "FireflyInstruments" */;
+			buildPhases = (
+				9272D94E1D36D29D00830CF5 /* Sources */,
+				9272D94F1D36D29D00830CF5 /* Frameworks */,
+				9272D9501D36D29D00830CF5 /* Headers */,
+				9272D9511D36D29D00830CF5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9272D9841D36D38C00830CF5 /* PBXTargetDependency */,
+			);
+			name = FireflyInstruments;
+			productName = FireflyInstruments;
+			productReference = 9272D9531D36D29D00830CF5 /* FireflyInstruments.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		9272D95C1D36D29D00830CF5 /* FireflyInstrumentsTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9272D96A1D36D29D00830CF5 /* Build configuration list for PBXNativeTarget "FireflyInstrumentsTests" */;
+			buildPhases = (
+				9272D9591D36D29D00830CF5 /* Sources */,
+				9272D95A1D36D29D00830CF5 /* Frameworks */,
+				9272D95B1D36D29D00830CF5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9272D9601D36D29D00830CF5 /* PBXTargetDependency */,
+			);
+			name = FireflyInstrumentsTests;
+			productName = FireflyInstrumentsTests;
+			productReference = 9272D95D1D36D29D00830CF5 /* FireflyInstrumentsTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9272D94A1D36D29D00830CF5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0730;
+				LastUpgradeCheck = 0730;
+				ORGANIZATIONNAME = "Firefly Design LLC";
+				TargetAttributes = {
+					9272D9521D36D29D00830CF5 = {
+						CreatedOnToolsVersion = 7.3.1;
+					};
+					9272D95C1D36D29D00830CF5 = {
+						CreatedOnToolsVersion = 7.3.1;
+					};
+				};
+			};
+			buildConfigurationList = 9272D94D1D36D29D00830CF5 /* Build configuration list for PBXProject "FireflyInstruments" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 9272D9491D36D29D00830CF5;
+			productRefGroup = 9272D9541D36D29D00830CF5 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 9272D97B1D36D37F00830CF5 /* Products */;
+					ProjectRef = 9272D97A1D36D37F00830CF5 /* ARMSerialWireDebug.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				9272D9521D36D29D00830CF5 /* FireflyInstruments */,
+				9272D95C1D36D29D00830CF5 /* FireflyInstrumentsTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		9272D9801D36D37F00830CF5 /* ARMSerialWireDebug.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ARMSerialWireDebug.framework;
+			remoteRef = 9272D97F1D36D37F00830CF5 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		9272D9821D36D37F00830CF5 /* ARMSerialWireDebugTests.xctest */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.cfbundle;
+			path = ARMSerialWireDebugTests.xctest;
+			remoteRef = 9272D9811D36D37F00830CF5 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9272D9511D36D29D00830CF5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9272D95B1D36D29D00830CF5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9272D94E1D36D29D00830CF5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9272D9901D36D51C00830CF5 /* InstrumentManager.swift in Sources */,
+				924431491D3FBC2300F03EAC /* FDError.m in Sources */,
+				92B3BEB01D3FE3D900EBBCF7 /* Instrument.swift in Sources */,
+				92BFEC9B1D3E6F6B00C2481A /* Portal.swift in Sources */,
+				9286EEC91D4281F70078FA55 /* CurrentInstrument.swift in Sources */,
+				924431411D3FB94400F03EAC /* USBHIDDevice.m in Sources */,
+				92F9E3651D37E9EA00F16833 /* Detour.swift in Sources */,
+				9286EEC61D42810F0078FA55 /* RelayInstrument.swift in Sources */,
+				9286EECB1D4284150078FA55 /* BatteryInstrument.swift in Sources */,
+				924B6B551D418284000CBAB7 /* IndicatorInstrument.swift in Sources */,
+				9255D6431D3D9EFC00655D79 /* DetourSource.swift in Sources */,
+				9286EEF61D42B4470078FA55 /* VoltageInstrument.swift in Sources */,
+				927D13EA1D3EC61A00466EE8 /* InstrumentPortal.swift in Sources */,
+				92F9E3681D37F1DE00F16833 /* Binary.swift in Sources */,
+				92F9E36E1D38491600F16833 /* fd_ieee754.c in Sources */,
+				924B6B581D4184BC000CBAB7 /* InternalInstrument.swift in Sources */,
+				9244314D1D3FC11C00F03EAC /* USBHIDMonitor.m in Sources */,
+				9272D98E1D36D45F00830CF5 /* SerialWireInstrument.swift in Sources */,
+				920DFFF41D39406200E92859 /* ColorInstrument.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9272D9591D36D29D00830CF5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9286EEEE1D42954C0078FA55 /* BatteryInstrumentTests.swift in Sources */,
+				9279052B1D3E909600623816 /* InstrumentManagerTests.swift in Sources */,
+				920DFFF11D39356D00E92859 /* BinaryTests.swift in Sources */,
+				9255D6461D3DBA3E00655D79 /* DetourSourceTests.swift in Sources */,
+				927795D31D397DFE000D7CFE /* DetourTests.swift in Sources */,
+				9286EEE81D4292410078FA55 /* IndicatorInstrumentTests.swift in Sources */,
+				927905281D3E732800623816 /* SerialWireInstrumentTests.swift in Sources */,
+				9286EEEA1D42948E0078FA55 /* RelayInstrumentTests.swift in Sources */,
+				9286EEEC1D4294DA0078FA55 /* CurrentInstrumentTests.swift in Sources */,
+				9286EECD1D428CE00078FA55 /* ColorInstrumentTests.swift in Sources */,
+				9286EEF01D42A3AD0078FA55 /* PortalTests.swift in Sources */,
+				9286EED11D428D4E0078FA55 /* MockUSBHIDDevice.swift in Sources */,
+				9286EECF1D428D0E0078FA55 /* MockPortal.swift in Sources */,
+				9286EEF81D42B5370078FA55 /* VoltageInstrumentTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9272D9601D36D29D00830CF5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9272D9521D36D29D00830CF5 /* FireflyInstruments */;
+			targetProxy = 9272D95F1D36D29D00830CF5 /* PBXContainerItemProxy */;
+		};
+		9272D9841D36D38C00830CF5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ARMSerialWireDebug;
+			targetProxy = 9272D9831D36D38C00830CF5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		9272D9651D36D29D00830CF5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		9272D9661D36D29D00830CF5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		9272D9681D36D29D00830CF5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = FireflyInstruments/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.fireflydesign.FireflyInstruments;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		9272D9691D36D29D00830CF5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				FRAMEWORK_VERSION = A;
+				INFOPLIST_FILE = FireflyInstruments/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.fireflydesign.FireflyInstruments;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		9272D96B1D36D29D00830CF5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = FireflyInstrumentsTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.fireflydesign.FireflyInstrumentsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		9272D96C1D36D29D00830CF5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = FireflyInstrumentsTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = com.fireflydesign.FireflyInstrumentsTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		9272D94D1D36D29D00830CF5 /* Build configuration list for PBXProject "FireflyInstruments" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9272D9651D36D29D00830CF5 /* Debug */,
+				9272D9661D36D29D00830CF5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9272D9671D36D29D00830CF5 /* Build configuration list for PBXNativeTarget "FireflyInstruments" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9272D9681D36D29D00830CF5 /* Debug */,
+				9272D9691D36D29D00830CF5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		9272D96A1D36D29D00830CF5 /* Build configuration list for PBXNativeTarget "FireflyInstrumentsTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9272D96B1D36D29D00830CF5 /* Debug */,
+				9272D96C1D36D29D00830CF5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9272D94A1D36D29D00830CF5 /* Project object */;
+}
