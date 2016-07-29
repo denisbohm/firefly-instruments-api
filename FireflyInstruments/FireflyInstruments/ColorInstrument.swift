@@ -76,7 +76,7 @@ public class ColorInstrument: InternalInstrument {
         self.portal = portal
     }
 
-    public func convert(integrationTime integrationTime: Float32 = 0.0024, gain: Float32 = 1) throws -> Conversion {
+    public func convert(integrationTime integrationTime: Float32 = 0.6144, gain: Float32 = 1) throws -> Conversion {
         let arguments = Binary(byteOrder: .LittleEndian)
         arguments.write(integrationTime)
         arguments.write(gain)
