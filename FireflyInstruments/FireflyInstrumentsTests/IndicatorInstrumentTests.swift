@@ -24,6 +24,7 @@ class IndicatorInstrumentTests: XCTestCase {
         binary.write(green)
         binary.write(blue)
         portal.assertDidSend(0x01, content: binary.data)
+        portal.assertDidWrite()
     }
     
 }

@@ -31,9 +31,20 @@ class MockPortal: Portal {
 
     var reads = [Read]()
 
+    var assertIndex = 0
+
+    func nextAssertCall() -> Call? {
+        XCTAssert(calls.count > assertIndex)
+        if calls.count <= assertIndex {
+            return nil
+        }
+        let call = calls[assertIndex]
+        assertIndex += 1
+        return call
+    }
+
     func assertDidSend(type: UInt64, content: [UInt8]) {
-        XCTAssert(calls.count > 0)
-        guard let call = calls.last else {
+        guard let call = nextAssertCall() else {
             return
         }
         guard case let Call.send(callType, callContent) = call else {
@@ -59,8 +70,7 @@ class MockPortal: Portal {
     }
 
     func assertDidWrite() {
-        XCTAssert(calls.count > 0)
-        guard let call = calls.last else {
+        guard let call = nextAssertCall() else {
             return
         }
         guard case Call.write = call else {
@@ -89,8 +99,7 @@ class MockPortal: Portal {
     }
 
     func assertDidReadWithLength(length: Int) {
-        XCTAssert(calls.count > 0)
-        guard let call = calls.last else {
+        guard let call = nextAssertCall() else {
             return
         }
         guard case let Call.readWithLength(callLength) = call else {
@@ -106,8 +115,7 @@ class MockPortal: Portal {
     }
 
     func assertDidRead() {
-        XCTAssert(calls.count > 0)
-        guard let call = calls.last else {
+        guard let call = nextAssertCall() else {
             return
         }
         guard case Call.read = call else {

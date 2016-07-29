@@ -41,6 +41,7 @@
 		9286EEF01D42A3AD0078FA55 /* PortalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEEF1D42A3AD0078FA55 /* PortalTests.swift */; };
 		9286EEF61D42B4470078FA55 /* VoltageInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEF51D42B4470078FA55 /* VoltageInstrument.swift */; };
 		9286EEF81D42B5370078FA55 /* VoltageInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9286EEF71D42B5370078FA55 /* VoltageInstrumentTests.swift */; };
+		9289509F1D4A89E7005A5F55 /* USBHIDFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9289509E1D4A89E7005A5F55 /* USBHIDFinder.swift */; };
 		92B3BEB01D3FE3D900EBBCF7 /* Instrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B3BEAF1D3FE3D900EBBCF7 /* Instrument.swift */; };
 		92BFEC9B1D3E6F6B00C2481A /* Portal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92BFEC9A1D3E6F6B00C2481A /* Portal.swift */; };
 		92F9E3651D37E9EA00F16833 /* Detour.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F9E3641D37E9EA00F16833 /* Detour.swift */; };
@@ -119,6 +120,7 @@
 		9286EEEF1D42A3AD0078FA55 /* PortalTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PortalTests.swift; sourceTree = "<group>"; };
 		9286EEF51D42B4470078FA55 /* VoltageInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VoltageInstrument.swift; sourceTree = "<group>"; };
 		9286EEF71D42B5370078FA55 /* VoltageInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VoltageInstrumentTests.swift; sourceTree = "<group>"; };
+		9289509E1D4A89E7005A5F55 /* USBHIDFinder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = USBHIDFinder.swift; sourceTree = "<group>"; };
 		92B3BEAF1D3FE3D900EBBCF7 /* Instrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Instrument.swift; sourceTree = "<group>"; };
 		92BFEC9A1D3E6F6B00C2481A /* Portal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Portal.swift; sourceTree = "<group>"; };
 		92F9E3641D37E9EA00F16833 /* Detour.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Detour.swift; sourceTree = "<group>"; };
@@ -240,6 +242,7 @@
 				9244314E1D3FC71600F03EAC /* USBHIDDevice_Private.h */,
 				9244314A1D3FC11B00F03EAC /* USBHIDMonitor.h */,
 				9244314B1D3FC11C00F03EAC /* USBHIDMonitor.m */,
+				9289509E1D4A89E7005A5F55 /* USBHIDFinder.swift */,
 			);
 			name = HID;
 			sourceTree = "<group>";
@@ -479,6 +482,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9272D9901D36D51C00830CF5 /* InstrumentManager.swift in Sources */,
+				9289509F1D4A89E7005A5F55 /* USBHIDFinder.swift in Sources */,
 				924431491D3FBC2300F03EAC /* FDError.m in Sources */,
 				92B3BEB01D3FE3D900EBBCF7 /* Instrument.swift in Sources */,
 				92BFEC9B1D3E6F6B00C2481A /* Portal.swift in Sources */,

@@ -25,9 +25,12 @@ class ColorInstrumentTests: XCTestCase {
         binary.write(green)
         binary.write(blue)
         portal.queueRead(UInt64(1), content: binary.data)
+        let arguments = Binary(byteOrder: .LittleEndian)
+        arguments.write(Float32(0.0024))
+        arguments.write(Float32(1))
         let conversion = try colorInstrument.convert()
-        portal.assertDidSend(0x01)
-        XCTAssertEqualWithAccuracy(conversion.clear, clear, accuracy: 0.001)
+        portal.assertDidSend(0x01, content: arguments.data)
+        XCTAssertEqualWithAccuracy(conversion.c, clear, accuracy: 0.001)
     }
 
 }
