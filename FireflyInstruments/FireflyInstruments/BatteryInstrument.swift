@@ -27,6 +27,7 @@ public class BatteryInstrument: InternalInstrument {
         let binary = Binary(byteOrder: .LittleEndian)
         binary.write(value)
         portal.send(BatteryInstrument.apiTypeSetVoltage, content: binary.data)
+        try portal.write()
     }
 
     public func convert() throws -> Conversion {

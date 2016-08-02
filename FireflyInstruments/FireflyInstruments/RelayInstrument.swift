@@ -20,6 +20,7 @@ public class RelayInstrument: InternalInstrument {
 
     public func set(value: Bool) throws {
         portal.send(RelayInstrument.apiTypeSetState, content: value ? 1 : 0)
+        try portal.write()
     }
     
 }
