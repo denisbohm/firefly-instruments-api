@@ -18,6 +18,7 @@ public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
     static let apiTypeShiftOutData = UInt64(4)
     static let apiTypeShiftInBits = UInt64(5)
     static let apiTypeShiftInData = UInt64(6)
+    static let apiTypeSetEnabled = UInt64(7)
 
     static let outputIndicator = 0
     static let outputReset = 1
@@ -31,6 +32,13 @@ public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
 
     public func reset() throws {
         portal.send(SerialWireInstrument.apiTypeReset)
+        try portal.write()
+    }
+
+    public func setEnabled(value: Bool) throws {
+        let binary = Binary(byteOrder: .LittleEndian)
+        binary.write(UInt8(value ? 1 : 0))
+        portal.send(SerialWireInstrument.apiTypeSetEnabled, content: binary.data)
         try portal.write()
     }
 
