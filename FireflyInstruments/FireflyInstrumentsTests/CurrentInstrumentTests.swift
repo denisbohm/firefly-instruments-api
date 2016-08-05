@@ -15,6 +15,10 @@ class CurrentInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let currentInstrument = CurrentInstrument(portal: portal)
 
+        try currentInstrument.reset()
+        portal.assertDidSend(0)
+        portal.assertDidWrite()
+
         let current = Float32(0.1)
         let binary = Binary(byteOrder: .LittleEndian)
         binary.write(current)

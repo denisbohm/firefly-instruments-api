@@ -15,6 +15,10 @@ class VoltageInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let voltageInstrument = VoltageInstrument(portal: portal)
 
+        try voltageInstrument.reset()
+        portal.assertDidSend(0)
+        portal.assertDidWrite()
+
         let voltage = Float32(0.1)
         let binary = Binary(byteOrder: .LittleEndian)
         binary.write(voltage)

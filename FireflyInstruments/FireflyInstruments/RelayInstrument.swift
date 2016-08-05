@@ -10,12 +10,18 @@ import Foundation
 
 public class RelayInstrument: InternalInstrument {
 
+    static let apiTypeReset = UInt64(0)
     static let apiTypeSetState = UInt64(1)
 
     var portal: Portal
 
     public init(portal: Portal) {
         self.portal = portal
+    }
+
+    public func reset() throws {
+        portal.send(RelayInstrument.apiTypeReset)
+        try portal.write()
     }
 
     public func set(value: Bool) throws {

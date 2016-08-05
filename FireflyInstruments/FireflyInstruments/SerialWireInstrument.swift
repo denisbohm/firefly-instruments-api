@@ -11,6 +11,7 @@ import ARMSerialWireDebug
 
 public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
 
+    static let apiTypeReset = UInt64(0)
     static let apiTypeSetOutputs = UInt64(1)
     static let apiTypeGetInputs = UInt64(2)
     static let apiTypeShiftOutBits = UInt64(3)
@@ -26,6 +27,11 @@ public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
 
     public init(portal: Portal) {
         self.portal = portal
+    }
+
+    public func reset() throws {
+        portal.send(SerialWireInstrument.apiTypeReset)
+        try portal.write()
     }
 
     func set(output: Int, value: Bool) {

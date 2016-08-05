@@ -18,26 +18,35 @@ class InstrumentManagerTests: XCTestCase {
         let categoryLength = category.lengthOfBytesUsingEncoding(NSUTF8StringEncoding)
         binary.writeVarUInt(UInt64(5 + categoryLength)) // length
         binary.writeVarUInt(0) // instrument identifier
-        binary.writeVarUInt(2) // type
+        binary.writeVarUInt(1) // type
         binary.writeVarUInt(1) // instrument count
         binary.write(category) // instrument category
         binary.writeVarUInt(1) // instrument identifier
         device.queue(binary.data)
     }
 
-    func getInstrument(category: String) throws {
+    func getInstrument<T>(category: String, _: T.Type) throws -> T {
         let device = MockUSBHIDDevice()
         let instrumentManager = InstrumentManager(device: device)
         queueDiscovery(device, category: category)
         try instrumentManager.discoverInstruments()
-        let _ = try instrumentManager.getInstrument("\(category)1")
+        return try instrumentManager.getInstrument("\(category)1")
     }
 
     func testGetInstruments() throws {
-        let categories = ["Battery", "Color", "Current", "Indicator", "Relay", "SerialWire", "Voltage"]
-        for category in categories {
-            try getInstrument(category)
-        }
+        try getInstrument("Battery", BatteryInstrument.self)
+        try getInstrument("Color", ColorInstrument.self)
+        try getInstrument("Current", CurrentInstrument.self)
+        try getInstrument("Indicator", IndicatorInstrument.self)
+        try getInstrument("Relay", RelayInstrument.self)
+        try getInstrument("SerialWire", SerialWireInstrument.self)
+        try getInstrument("Voltage", VoltageInstrument.self)
+    }
+
+    func testResetInstruments() throws {
+        let device = MockUSBHIDDevice()
+        let instrumentManager = InstrumentManager(device: device)
+        try instrumentManager.resetInstruments()
     }
 
     func testUnknownInstrument() throws {
@@ -50,7 +59,10 @@ class InstrumentManagerTests: XCTestCase {
     func testGetUnknown() throws {
         let device = MockUSBHIDDevice()
         let instrumentManager = InstrumentManager(device: device)
-        XCTAssertThrowsError(try instrumentManager.getInstrument("BFG"))
+        queueDiscovery(device, category: "Battery")
+        try instrumentManager.discoverInstruments()
+        XCTAssertThrowsError(try instrumentManager.getInstrument("Anonymous") as IndicatorInstrument)
+        XCTAssertThrowsError(try instrumentManager.getInstrument("Battery1") as IndicatorInstrument)
     }
 
     func testInstrumentPortal() throws {
@@ -59,7 +71,7 @@ class InstrumentManagerTests: XCTestCase {
         queueDiscovery(device, category: "SerialWire")
         try instrumentManager.discoverInstruments()
 
-        let serialWire = try instrumentManager.getInstrument("SerialWire1") as! SerialWireInstrument
+        let serialWire: SerialWireInstrument = try instrumentManager.getInstrument("SerialWire1")
         serialWire.setIndicator(true)
         try serialWire.write()
         device.assertDidSetReport(0, 4, 1, 0x01, 0b001, 0b001)

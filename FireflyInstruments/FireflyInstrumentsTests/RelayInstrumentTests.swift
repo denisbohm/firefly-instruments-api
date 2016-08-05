@@ -15,11 +15,17 @@ class RelayInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let relayInstrument = RelayInstrument(portal: portal)
 
+        try relayInstrument.reset()
+        portal.assertDidSend(0)
+        portal.assertDidWrite()
+
         try relayInstrument.set(false)
         portal.assertDidSend(0x01, content: 0)
+        portal.assertDidWrite()
 
         try relayInstrument.set(true)
         portal.assertDidSend(0x01, content: 1)
+        portal.assertDidWrite()
     }
     
 }

@@ -14,12 +14,18 @@ public class CurrentInstrument: InternalInstrument {
         public let current: Float32
     }
 
+    static let apiTypeReset = UInt64(0)
     static let apiTypeConvertCurrent = UInt64(1)
 
     var portal: Portal
 
     public init(portal: Portal) {
         self.portal = portal
+    }
+
+    public func reset() throws {
+        portal.send(CurrentInstrument.apiTypeReset)
+        try portal.write()
     }
 
     public func convert() throws -> Conversion {

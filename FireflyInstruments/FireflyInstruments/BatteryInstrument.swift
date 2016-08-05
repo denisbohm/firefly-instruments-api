@@ -14,13 +14,27 @@ public class BatteryInstrument: InternalInstrument {
         public let current: Float32
     }
 
+    static let apiTypeReset = UInt64(0)
     static let apiTypeConvertCurrent = UInt64(1)
     static let apiTypeSetVoltage = UInt64(2)
+    static let apiTypeSetEnabled = UInt64(3)
 
     var portal: Portal
 
     public init(portal: Portal) {
         self.portal = portal
+    }
+
+    public func reset() throws {
+        portal.send(BatteryInstrument.apiTypeReset)
+        try portal.write()
+    }
+
+    public func setEnabled(value: Bool) throws {
+        let binary = Binary(byteOrder: .LittleEndian)
+        binary.write(UInt8(value ? 1 : 0))
+        portal.send(BatteryInstrument.apiTypeSetEnabled, content: binary.data)
+        try portal.write()
     }
 
     public func setVoltage(value: Float32) throws {

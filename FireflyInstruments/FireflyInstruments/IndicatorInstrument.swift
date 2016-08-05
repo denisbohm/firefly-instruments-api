@@ -10,12 +10,18 @@ import Foundation
 
 public class IndicatorInstrument: InternalInstrument {
 
+    static let apiTypeReset = UInt64(0)
     static let apiTypeSetRGB = UInt64(1)
 
     var portal: Portal
 
     public init(portal: Portal) {
         self.portal = portal
+    }
+
+    public func reset() throws {
+        portal.send(IndicatorInstrument.apiTypeReset)
+        try portal.write()
     }
 
     public func set(red red: Float, green: Float, blue: Float) throws {

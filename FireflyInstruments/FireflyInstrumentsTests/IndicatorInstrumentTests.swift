@@ -15,6 +15,10 @@ class IndicatorInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let indicatorInstrument = IndicatorInstrument(portal: portal)
 
+        try indicatorInstrument.reset()
+        portal.assertDidSend(0)
+        portal.assertDidWrite()
+
         let red = Float32(0.1)
         let green = Float32(0.2)
         let blue = Float32(0.3)

@@ -11,25 +11,13 @@ import ARMSerialWireDebug
 
 public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
 
-    static let apiIdentifierSerialWire1 = UInt64(1)
-    static let apiIdentifierSerialWire2 = UInt64(2)
-    static let apiIdentifierColor1 = UInt64(3)
-    static let apiIdentifierIndicator1 = UInt64(4)
-    static let apiIdentifierRelay1 = UInt64(5)
-    static let apiIdentifierRelay2 = UInt64(6)
-    static let apiIdentifierRelay3 = UInt64(7)
-    static let apiIdentifierRelay4 = UInt64(8)
-    static let apiIdentifierRelay5 = UInt64(9)
-    static let apiIdentifierVoltage1 = UInt64(10)
-    static let apiIdentifierVoltage2 = UInt64(11)
-    static let apiIdentifierCurrent1 = UInt64(12)
-    static let apiIdentifierBattery1 = UInt64(13)
-
-    static let apiTypeEcho = UInt64(1)
-    static let apiTypeDiscoverInstruments = UInt64(2)
+    static let apiTypeResetInstruments = UInt64(0)
+    static let apiTypeDiscoverInstruments = UInt64(1)
+    static let apiTypeEcho = UInt64(2)
 
     public enum Error: ErrorType {
         case InvalidIdentifier(String)
+        case InvalidType(String)
         case PortalNotFound(UInt64)
         case InvalidInputReport(ErrorType)
     }
@@ -54,15 +42,20 @@ public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
         constructorByCategory["Indicator"] = { portal in return IndicatorInstrument(portal: portal) }
         constructorByCategory["SerialWire"] = { portal in return SerialWireInstrument(portal: portal) }
         constructorByCategory["Relay"] = { portal in return RelayInstrument(portal: portal) }
-        constructorByCategory["Voltage"] = { portal in return RelayInstrument(portal: portal) }
-        constructorByCategory["Current"] = { portal in return RelayInstrument(portal: portal) }
-        constructorByCategory["Battery"] = { portal in return RelayInstrument(portal: portal) }
+        constructorByCategory["Voltage"] = { portal in return VoltageInstrument(portal: portal) }
+        constructorByCategory["Current"] = { portal in return CurrentInstrument(portal: portal) }
+        constructorByCategory["Battery"] = { portal in return BatteryInstrument(portal: portal) }
         constructorByCategory["Color"] = { portal in return ColorInstrument(portal: portal) }
         self.constructorByCategory = constructorByCategory
 
         super.init()
         
         device.delegate = self
+    }
+
+    public func resetInstruments() throws {
+        portal.send(InstrumentManager.apiTypeResetInstruments)
+        try portal.write()
     }
 
     public func discoverInstruments() throws {
@@ -88,11 +81,14 @@ public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
         self.instruments = instruments
     }
 
-    public func getInstrument(identifier: String) throws -> Instrument {
+    public func getInstrument<T>(identifier: String) throws -> T {
         guard let instrument = instruments[identifier] else {
             throw Error.InvalidIdentifier(identifier)
         }
-        return instrument
+        guard let t = instrument as? T else {
+            throw Error.InvalidType(identifier)
+        }
+        return t
     }
 
     func getPortal(identifier: UInt64) -> Portal? {

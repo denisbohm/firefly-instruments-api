@@ -11,9 +11,13 @@ import XCTest
 
 class SerialWireInstrumentTests: XCTestCase {
 
-    func testSends() {
+    func testSends() throws {
         let portal = MockPortal()
         let serialWireInstrument = SerialWireInstrument(portal: portal)
+
+        try serialWireInstrument.reset()
+        portal.assertDidSend(0)
+        portal.assertDidWrite()
 
         serialWireInstrument.setIndicator(true)
         portal.assertDidSend(0x01, content: 0b001, 0b001)

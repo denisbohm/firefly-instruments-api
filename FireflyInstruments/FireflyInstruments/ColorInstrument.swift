@@ -11,10 +11,18 @@ import Foundation
 public class ColorInstrument: InternalInstrument {
 
     public struct Conversion {
+
         public let c: Float32
         public let r: Float32
         public let g: Float32
         public let b: Float32
+
+        public init(c: Float32, r: Float32, g: Float32, b: Float32) {
+            self.c = c
+            self.r = r
+            self.g = g
+            self.b = b
+        }
 
         public var x: Float32 { get { return (-0.14282) * r + (+1.54924) * g + (-0.95641) * b } }
         public var y: Float32 { get { return (-0.32466) * r + (+1.57837) * g + (-0.73191) * b } }
@@ -35,10 +43,10 @@ public class ColorInstrument: InternalInstrument {
                     if r == max {
                         h = (g - b) / delta // between yellow & magenta
                     } else
-                        if g == max {
-                            h = 2 + (b - r) / delta // between cyan & yellow
-                        } else {
-                            h = 4 + (r - g) / delta // between magenta & cyan
+                    if g == max {
+                        h = 2 + (b - r) / delta // between cyan & yellow
+                    } else {
+                        h = 4 + (r - g) / delta // between magenta & cyan
                     }
                     h *= 60 // degrees
                     if h < 0 {
@@ -68,12 +76,18 @@ public class ColorInstrument: InternalInstrument {
 
     }
 
+    static let apiTypeReset = UInt64(0)
     static let apiTypeConvert = UInt64(1)
 
     var portal: Portal
 
     public init(portal: Portal) {
         self.portal = portal
+    }
+
+    public func reset() throws {
+        portal.send(ColorInstrument.apiTypeReset)
+        try portal.write()
     }
 
     public func convert(integrationTime integrationTime: Float32 = 0.6144, gain: Float32 = 1) throws -> Conversion {
