@@ -20,7 +20,7 @@ class SerialWireInstrumentTests: XCTestCase {
         portal.assertDidWrite()
 
         try serialWireInstrument.setEnabled(true)
-        portal.assertDidSend(7, content: 0x01)
+        portal.assertDidSend(9, content: 0x01)
         portal.assertDidWrite()
 
         serialWireInstrument.setIndicator(true)

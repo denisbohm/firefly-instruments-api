@@ -12,6 +12,7 @@ class InstrumentPortal: Portal {
 
     enum Error: ErrorType {
         case Timeout
+        case Cancelled
         case UnexpectedType(type: UInt64, packet: Packet)
     }
 
@@ -37,22 +38,26 @@ class InstrumentPortal: Portal {
         writeQueue.append(Packet(type: type, content: content))
     }
 
-    func write(identifier: UInt64, type: UInt64, content: NSData) throws {
-        let binary = Binary(byteOrder: .LittleEndian)
-        binary.writeVarUInt(identifier)
-        binary.writeVarUInt(type)
-        binary.write(content)
-        let detourSource = DetourSource(size: 64, data: binary.data)
-        while let subdata = detourSource.next() {
-            try device.setReport(subdata)
-        }
-    }
-
     func write() throws {
+        if writeQueue.isEmpty {
+            return
+        }
+        
+        let binary = Binary(byteOrder: .LittleEndian)
         while !writeQueue.isEmpty {
             let packet = writeQueue.first!
-            try write(identifier, type: packet.type, content: packet.content)
+            binary.writeVarUInt(identifier)
+            binary.writeVarUInt(packet.type)
+            binary.writeVarUInt(UInt64(packet.content.length))
+            binary.write(packet.content)
             writeQueue.removeFirst()
+        }
+        let detourSource = DetourSource(size: 64, data: binary.data)
+        while let subdata = detourSource.next() {
+            if NSThread.currentThread().cancelled {
+                throw Error.Cancelled
+            }
+            try device.setReport(subdata)
         }
     }
 

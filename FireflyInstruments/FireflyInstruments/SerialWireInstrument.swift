@@ -18,7 +18,9 @@ public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
     static let apiTypeShiftOutData = UInt64(4)
     static let apiTypeShiftInBits = UInt64(5)
     static let apiTypeShiftInData = UInt64(6)
-    static let apiTypeSetEnabled = UInt64(7)
+    static let apiTypeFlush = UInt64(7)
+    static let apiTypeData = UInt64(8)
+    static let apiTypeSetEnabled = UInt64(9)
 
     static let outputIndicator = 0
     static let outputReset = 1
@@ -96,6 +98,8 @@ public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
     }
 
     @objc public func readWithByteCount(byteCount: UInt) throws -> NSData {
+        portal.send(SerialWireInstrument.apiTypeFlush)
+        try portal.write()
         return try portal.read(length: Int(byteCount))
     }
 
