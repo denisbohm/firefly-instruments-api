@@ -81,12 +81,14 @@ public class Detour {
         if buffer.length >= length {
             endDate = NSDate()
             state = .Success
-            
+
+            /*
             let duration = endDate!.timeIntervalSinceDate(startDate!)
             if (duration > 0.0) {
                 let rate = Double(buffer.length) / duration;
                 NSLog("detour success: \(buffer.length) B (\(rate) B/s)")
             }
+             */
         } else {
             sequenceNumber += 1
         }

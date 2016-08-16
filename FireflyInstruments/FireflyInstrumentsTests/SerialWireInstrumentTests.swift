@@ -6,7 +6,7 @@
 //  Copyright © 2016 Firefly Design LLC. All rights reserved.
 //
 
-import FireflyInstruments
+@testable import FireflyInstruments
 import XCTest
 
 class SerialWireInstrumentTests: XCTestCase {
@@ -21,6 +21,10 @@ class SerialWireInstrumentTests: XCTestCase {
 
         try serialWireInstrument.setEnabled(true)
         portal.assertDidSend(9, content: 0x01)
+        portal.assertDidWrite()
+
+        try serialWireInstrument.setEnabled(false)
+        portal.assertDidSend(9, content: 0x00)
         portal.assertDidWrite()
 
         serialWireInstrument.setIndicator(true)
@@ -56,11 +60,26 @@ class SerialWireInstrumentTests: XCTestCase {
         portal.assertDidSend(10, content: 9, 3, 1, 2, 3)
         portal.assertDidReadType(type: 10)
 
+        portal.queueRead(10, content: 1)
+        XCTAssertThrowsError(try serialWireInstrument.writeMemory(9, data: NSData(bytes: bytes, length: bytes.count)))
+        portal.assertDidSend(10, content: 9, 3, 1, 2, 3)
+        portal.assertDidReadType(type: 10)
+
         portal.queueRead(11, content: 0, 1, 2, 3)
         let memory = try serialWireInstrument.readMemory(9, length: UInt32(bytes.count))
         portal.assertDidSend(11, content: 9, 3)
         portal.assertDidReadType(type: 11)
         XCTAssert(memory.isEqualToData(NSData(bytes: bytes, length: bytes.count)))
+
+        portal.queueRead(11, content: 1)
+        XCTAssertThrowsError(try serialWireInstrument.readMemory(9, length: UInt32(bytes.count)))
+        portal.assertDidSend(11, content: 9, 3)
+        portal.assertDidReadType(type: 11)
+
+        portal.queueRead(11, content: 0, 1)
+        XCTAssertThrowsError(try serialWireInstrument.readMemory(9, length: UInt32(bytes.count)))
+        portal.assertDidSend(11, content: 9, 3)
+        portal.assertDidReadType(type: 11)
     }
 
     func testWrite() throws {
@@ -81,6 +100,58 @@ class SerialWireInstrumentTests: XCTestCase {
         portal.assertDidSend(7)
         portal.assertDidWrite()
         portal.assertDidReadWithLength(1)
+    }
+
+    class Thread: NSThread {
+
+        let condition = NSCondition()
+        let block: () throws -> ()
+        var error: ErrorType? = nil
+        var done = false
+
+        init(block: () throws -> ()) {
+            self.block = block
+        }
+
+        override func main() {
+            cancel()
+            do {
+                try block()
+            } catch (let error) {
+                self.error = error
+            }
+            condition.lock()
+            defer {
+                condition.broadcast()
+                condition.unlock()
+            }
+            done = true
+        }
+
+        func run() {
+            start()
+            let deadline = NSDate(timeIntervalSinceNow: 10)
+            while deadline.isGreaterThan(NSDate()) {
+                condition.lock()
+                defer {
+                    condition.unlock()
+                }
+                if done {
+                    return
+                }
+            }
+        }
+        
+    }
+    
+    func testReadCancel() {
+        let portal = InstrumentPortal(device: USBHIDDevice(), identifier: 0)
+        portal.send(0, content: NSData())
+        let thread = Thread() {
+            try portal.write()
+        }
+        thread.run()
+        XCTAssert(thread.error != nil)
     }
 
     func testDetect() throws {

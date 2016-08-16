@@ -33,11 +33,14 @@ public class DetourSource {
         if index >= data.length {
             if endDate == nil {
                 endDate = NSDate()
+                
+                /*
                 let duration = endDate!.timeIntervalSinceDate(startDate!)
                 if duration > 0.0 {
                     let rate = Double(data.length) / duration
                     NSLog("detour source success: \(data.length) B (\(rate) B/s)")
                 }
+                 */
             }
             return nil
         }

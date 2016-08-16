@@ -71,7 +71,7 @@
 
 - (BOOL)setReport:(nonnull NSData *)data error:(NSError * _Nullable * _Nullable)error
 {
-    NSLog(@"USB HID Set Report: %@", data);
+//    NSLog(@"USB HID Set Report: %@", data);
 
     if (!_isOpen) {
         return FDErrorReturn(error, nil);
@@ -87,7 +87,7 @@
 
 - (void)inputReport:(NSData *)data
 {
-    NSLog(@"USB HID Input Report: %@", data);
+//    NSLog(@"USB HID Input Report: %@", data);
 
     [_delegate usbHidDevice:self inputReport:data];
 }
