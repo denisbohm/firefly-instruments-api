@@ -117,7 +117,11 @@ public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
                 let binary = Binary(data: detour.data, byteOrder: .LittleEndian)
                 let identifier = try binary.readVarUInt()
                 let type = try binary.readVarUInt()
+                let length = try binary.readVarUInt()
                 let content = binary.remainingData
+                if content.length != Int(length) {
+                    NSLog("invalid content length")
+                }
                 detour.clear()
                 guard let portal = getPortal(identifier) else {
                     notifyErrorHandler(Error.PortalNotFound(identifier))

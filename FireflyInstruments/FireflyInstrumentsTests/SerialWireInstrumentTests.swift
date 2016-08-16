@@ -50,6 +50,17 @@ class SerialWireInstrumentTests: XCTestCase {
 
         serialWireInstrument.shiftInData(2)
         portal.assertDidSend(0x06, content: 1)
+
+        portal.queueRead(10, content: 0)
+        try serialWireInstrument.writeMemory(9, data: NSData(bytes: bytes, length: bytes.count))
+        portal.assertDidSend(10, content: 9, 3, 1, 2, 3)
+        portal.assertDidReadType(type: 10)
+
+        portal.queueRead(11, content: 0, 1, 2, 3)
+        let memory = try serialWireInstrument.readMemory(9, length: UInt32(bytes.count))
+        portal.assertDidSend(11, content: 9, 3)
+        portal.assertDidReadType(type: 11)
+        XCTAssert(memory.isEqualToData(NSData(bytes: bytes, length: bytes.count)))
     }
 
     func testWrite() throws {
@@ -67,6 +78,8 @@ class SerialWireInstrumentTests: XCTestCase {
         portal.assertDidRead()
 
         try serialWireInstrument.readWithByteCount(1)
+        portal.assertDidSend(7)
+        portal.assertDidWrite()
         portal.assertDidReadWithLength(1)
     }
 

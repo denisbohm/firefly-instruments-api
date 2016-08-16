@@ -16,9 +16,10 @@ class InstrumentManagerTests: XCTestCase {
         let binary = Binary(byteOrder: .LittleEndian)
         binary.writeVarUInt(0) // ordinal
         let categoryLength = category.lengthOfBytesUsingEncoding(NSUTF8StringEncoding)
-        binary.writeVarUInt(UInt64(5 + categoryLength)) // length
+        binary.writeVarUInt(UInt64(6 + categoryLength)) // length
         binary.writeVarUInt(0) // instrument identifier
         binary.writeVarUInt(1) // type
+        binary.writeVarUInt(UInt64(3 + categoryLength)) // data length
         binary.writeVarUInt(1) // instrument count
         binary.write(category) // instrument category
         binary.writeVarUInt(1) // instrument identifier
@@ -74,7 +75,7 @@ class InstrumentManagerTests: XCTestCase {
         let serialWire: SerialWireInstrument = try instrumentManager.getInstrument("SerialWire1")
         serialWire.setIndicator(true)
         try serialWire.write()
-        device.assertDidSetReport(0, 4, 1, 0x01, 0b001, 0b001)
+        device.assertDidSetReport(0, 5, 1, 1, 2, 0b001, 0b001)
 
         serialWire.portal.timeout = 0.001
         XCTAssertThrowsError(try serialWire.readWithByteCount(1))
@@ -84,9 +85,10 @@ class InstrumentManagerTests: XCTestCase {
 
         var binary = Binary(byteOrder: .LittleEndian)
         binary.writeVarUInt(0) // detour sequence number
-        binary.writeVarUInt(4) // detour data length
+        binary.writeVarUInt(5) // detour data length
         binary.writeVarUInt(serialWire.portal.identifier)
         binary.writeVarUInt(2) // type
+        binary.writeVarUInt(2) // length
         binary.write(UInt8(3))
         binary.write(UInt8(4))
         let data = binary.data
@@ -120,9 +122,10 @@ class InstrumentManagerTests: XCTestCase {
 
         binary = Binary(byteOrder: .LittleEndian)
         binary.writeVarUInt(0) // detour sequence number
-        binary.writeVarUInt(3) // detour data length
+        binary.writeVarUInt(4) // detour data length
         binary.writeVarUInt(serialWire.portal.identifier)
         binary.writeVarUInt(1) // type
+        binary.writeVarUInt(1) // length
         instrumentManager.usbHidDevice(device, inputReport: binary.data)
         binary = Binary(byteOrder: .LittleEndian)
         binary.writeVarUInt(1) // detour sequence number

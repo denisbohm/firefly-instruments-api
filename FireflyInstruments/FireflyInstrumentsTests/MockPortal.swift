@@ -16,6 +16,7 @@ class MockPortal: Portal {
         case send(UInt64, NSData)
         case write()
         case readWithLength(Int)
+        case readType(UInt64)
         case read()
     }
 
@@ -87,10 +88,30 @@ class MockPortal: Portal {
         reads.append(Read(type: type, content: content))
     }
 
+    func queueRead(type: UInt64, content: [UInt8]) {
+        queueRead(type, content: NSData(bytes: content, length: content.count))
+    }
+
+    func queueRead(type: UInt64, content: UInt8...) {
+        queueRead(type, content: content)
+    }
+
     func received(type: UInt64, content: NSData) {
     }
 
+    func assertDidReadType(type type: UInt64) {
+        guard let call = nextAssertCall() else {
+            return
+        }
+        guard case let Call.readType(callType) = call else {
+            XCTFail("unexpected func called")
+            return
+        }
+        XCTAssert(callType == type)
+    }
+
     func read(type type: UInt64) throws -> NSData {
+        calls.append(.readType(type))
         guard let read = reads.first else {
             return NSData()
         }

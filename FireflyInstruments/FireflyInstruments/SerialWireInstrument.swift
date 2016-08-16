@@ -9,7 +9,11 @@
 import Foundation
 import ARMSerialWireDebug
 
-public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
+public class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransfer, InternalInstrument {
+
+    public enum Error : ErrorType {
+        case MemoryTransferIssue(code: UInt64, data: NSData)
+    }
 
     static let apiTypeReset = UInt64(0)
     static let apiTypeSetOutputs = UInt64(1)
@@ -21,6 +25,8 @@ public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
     static let apiTypeFlush = UInt64(7)
     static let apiTypeData = UInt64(8)
     static let apiTypeSetEnabled = UInt64(9)
+    static let apiTypeWriteMemory = UInt64(10)
+    static let apiTypeReadMemory = UInt64(11)
 
     static let outputIndicator = 0
     static let outputReset = 1
@@ -105,6 +111,38 @@ public class SerialWireInstrument: NSObject, FDSerialWire, InternalInstrument {
 
     @objc(read:) public func read() throws -> NSData {
         return portal.read()
+    }
+
+    @objc public func writeMemory(address: UInt32, data: NSData) throws {
+        let request = Binary(byteOrder: .LittleEndian)
+        request.writeVarUInt(UInt64(address))
+        request.writeVarUInt(UInt64(data.length))
+        request.write(data)
+        portal.send(SerialWireInstrument.apiTypeWriteMemory, content: request.data)
+        let data = try portal.read(type: SerialWireInstrument.apiTypeWriteMemory)
+        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let code = try binary.readVarUInt()
+        if code != 0 {
+            throw Error.MemoryTransferIssue(code: code, data: binary.remainingData)
+        }
+    }
+
+    @objc public func readMemory(address: UInt32, length: UInt32) throws -> NSData {
+        let request = Binary(byteOrder: .LittleEndian)
+        request.writeVarUInt(UInt64(address))
+        request.writeVarUInt(UInt64(length))
+        portal.send(SerialWireInstrument.apiTypeReadMemory, content: request.data)
+        let data = try portal.read(type: SerialWireInstrument.apiTypeReadMemory)
+        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let code = try binary.readVarUInt()
+        if code != 0 {
+            throw Error.MemoryTransferIssue(code: code, data: binary.remainingData)
+        }
+        let result = binary.remainingData
+        if result.length != Int(length) {
+            throw Error.MemoryTransferIssue(code: code, data: result)
+        }
+        return result
     }
 
 }

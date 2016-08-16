@@ -17,8 +17,9 @@ class PortalTests: XCTestCase {
 
         let bytes = [1, 2, 3] as [UInt8]
         let data = NSData(bytes: bytes, length: bytes.count)
-        try instrumentPortal.write(1, type: 0x20, content: data)
-        device.assertDidSetReport(0, 5, 1, 0x20, 1, 2, 3)
+        instrumentPortal.send(0x20, content: data)
+        try instrumentPortal.write()
+        device.assertDidSetReport(0, 6, 1, 0x20, 3, 1, 2, 3)
     }
 
     func testRead() throws {
