@@ -55,6 +55,12 @@ class SerialWireInstrumentTests: XCTestCase {
         serialWireInstrument.shiftInData(2)
         portal.assertDidSend(0x06, content: 1)
 
+        portal.queueRead(2, content: 1)
+        let value = try serialWireInstrument.getReset()
+        portal.assertDidSend(2, content: 1)
+        portal.assertDidReadType(type: 2)
+        XCTAssert(value)
+
         portal.queueRead(10, content: 0)
         try serialWireInstrument.writeMemory(9, data: NSData(bytes: bytes, length: bytes.count))
         portal.assertDidSend(10, content: 9, 3, 1, 2, 3)
@@ -80,6 +86,26 @@ class SerialWireInstrumentTests: XCTestCase {
         XCTAssertThrowsError(try serialWireInstrument.readMemory(9, length: UInt32(bytes.count)))
         portal.assertDidSend(11, content: 9, 3)
         portal.assertDidReadType(type: 11)
+
+        portal.queueRead(12, content: 0)
+        try serialWireInstrument.writeFromStorage(9, length: 8, storageIdentifier: 7, storageAddress: 6)
+        portal.assertDidSend(12, content: 9, 8, 7, 6)
+        portal.assertDidReadType(type: 12)
+
+        portal.queueRead(12, content: 1)
+        XCTAssertThrowsError(try serialWireInstrument.writeFromStorage(9, length: 8, storageIdentifier: 7, storageAddress: 6))
+        portal.assertDidSend(12, content: 9, 8, 7, 6)
+        portal.assertDidReadType(type: 12)
+
+        portal.queueRead(13, content: 0)
+        try serialWireInstrument.compareToStorage(9, length: 8, storageIdentifier: 7, storageAddress: 6)
+        portal.assertDidSend(13, content: 9, 8, 7, 6)
+        portal.assertDidReadType(type: 13)
+
+        portal.queueRead(13, content: 1)
+        XCTAssertThrowsError(try serialWireInstrument.compareToStorage(9, length: 8, storageIdentifier: 7, storageAddress: 6))
+        portal.assertDidSend(13, content: 9, 8, 7, 6)
+        portal.assertDidReadType(type: 13)
     }
 
     func testWrite() throws {

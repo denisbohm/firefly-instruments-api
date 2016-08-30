@@ -34,6 +34,7 @@ class ColorInstrumentTests: XCTestCase {
         arguments.write(Float32(1))
         let conversion = try colorInstrument.convert()
         portal.assertDidSend(0x01, content: arguments.data)
+        portal.assertDidReadType(type: 0x01)
         XCTAssertEqualWithAccuracy(conversion.c, clear, accuracy: 0.001)
     }
 

@@ -39,13 +39,14 @@ public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
         self.portal = InstrumentPortal(device: device, identifier: 0)
 
         var constructorByCategory = [String: InstrumentConstructor]()
-        constructorByCategory["Indicator"] = { portal in return IndicatorInstrument(portal: portal) }
-        constructorByCategory["SerialWire"] = { portal in return SerialWireInstrument(portal: portal) }
-        constructorByCategory["Relay"] = { portal in return RelayInstrument(portal: portal) }
-        constructorByCategory["Voltage"] = { portal in return VoltageInstrument(portal: portal) }
-        constructorByCategory["Current"] = { portal in return CurrentInstrument(portal: portal) }
         constructorByCategory["Battery"] = { portal in return BatteryInstrument(portal: portal) }
         constructorByCategory["Color"] = { portal in return ColorInstrument(portal: portal) }
+        constructorByCategory["Current"] = { portal in return CurrentInstrument(portal: portal) }
+        constructorByCategory["Indicator"] = { portal in return IndicatorInstrument(portal: portal) }
+        constructorByCategory["Relay"] = { portal in return RelayInstrument(portal: portal) }
+        constructorByCategory["SerialWire"] = { portal in return SerialWireInstrument(portal: portal) }
+        constructorByCategory["Storage"] = { portal in return StorageInstrument(portal: portal) }
+        constructorByCategory["Voltage"] = { portal in return VoltageInstrument(portal: portal) }
         self.constructorByCategory = constructorByCategory
 
         super.init()
