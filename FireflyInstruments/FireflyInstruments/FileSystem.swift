@@ -7,16 +7,17 @@
 //
 
 import Foundation
+import ARMSerialWireDebug
 
 /*
  instrument storage file system
-
+ - keep it simple
+ - embrace the nature of the flash chip
  - intended to store a small number of files (~10)
- - each files data is stored in contiguous locations
- - separate files are stored in their own sectors
+ - a files metadata and content data are stored in contiguous locations
+ - sectors are not shared across files
  - can set a minimum allocation size (wastes space, but minimizes fragmentation)
- - LRU policy
-
+ - LRU policy to automatically remove old files if needed to reclaim space when new files are written
  */
 
 public class FileSystem {
@@ -24,76 +25,259 @@ public class FileSystem {
     public enum Error: ErrorType {
         case InvalidName(String)
         case DuplicateName(String)
+        case NotEnoughSpace(name: String, length: UInt32)
     }
 
     public struct Hash {
-        let data: [UInt8] // 20 bytes
+        public let data: [UInt8] // 20 bytes
     }
 
-    static let OpenMarker: UInt8 = 0xff
-    static let UsedMarker: UInt8 = 0x0f
-    static let FreeMarker: UInt8 = 0x00
-
     public struct Entry {
-        let location: UInt32
-        let marker: UInt8
-        let name: String
-        let length: UInt32
-        let hash: NSData
-        let date: NSDate
+        public let name: String
+        public let length: UInt32
+        public let date: NSDate
+        public let hash: NSData
+        public let address: UInt32
+    }
+
+    enum Status {
+        case Available
+        case Metadata(entry: Entry, sectorCount: Int)
+        case Content
+    }
+    
+    struct Sector {
         let address: UInt32
-        let allocation: UInt32
+        var status: Status
     }
 
     public let storageInstrument: StorageInstrument
 
-    public var size = 2^21
-    public var pageSize = 2^8
-    public var sectorSize = 2^12
-    public var minimumAllocationSize = 2^18
+    public var minimumSectorCount = 64
 
-    let entrySize = 2^8
+    public let size = 2^21
+    public let sectorSize = 2^12
 
-    var entries = [Entry]()
+    let pageSize = 2^8
+    let hashSize = 20
+
+    let magic: NSData
+
+    var sectorCount: Int { get { return size / sectorSize } }
+
+    var sectors = [Sector]()
 
     public init(storageInstrument: StorageInstrument) {
         self.storageInstrument = storageInstrument
+
+        let magicBytes = [0xf0, 0x66, 0x69, 0x72, 0x65, 0x66, 0x6c, 0x79] as [UInt8]
+        magic = NSData(bytes: magicBytes, length: magicBytes.count)
     }
 
-    public func readIndex() throws {
-        let data = try storageInstrument.read(0, length: UInt32(sectorSize))
-        var location = 0
-        while location < sectorSize {
-            let entry: Entry
-            let binary = Binary(data: data.subdataWithRange(NSRange(location: location, length: entrySize)), byteOrder: ByteOrder.LittleEndian)
-            let marker: UInt8 = try binary.read()
-            /*
-            if marker != FileSystem.UsedMarker {
-                entry = Entry(location: location, marker: marker, name: "", length: 0, hash: NSData(), date: NSDate(), address: 0, allocation: 0)
-            } else {
-                let length: UInt32 = try binary.read()
-                let hash: NSData = try binary.read(length: 20)
-                let name: String = try binary.read()
-            }
- */
+    func sectorCountForContentLength(length: UInt32) -> Int {
+        return (Int(length) + (sectorSize - 1)) / sectorSize
+    }
 
-            location += entrySize
+    func erase(sector: Sector) throws {
+        var sectorCount = 1
+        if case let Status.Metadata(_, contentSectorCount) = sector.status {
+            sectorCount += contentSectorCount
+        }
+        try storageInstrument.erase(sector.address, length: UInt32(sectorCount * sectorSize))
+        let firstSectorIndex = Int(sector.address) / sectorSize
+        for sectorIndex in firstSectorIndex ..< sectorCount {
+            sectors[sectorIndex].status = Status.Available
         }
     }
 
+    public func erase(name: String) throws {
+        for sector in sectors {
+            if case let Status.Metadata(entry, _) = sector.status {
+                if entry.name == name {
+                    try erase(sector)
+                }
+            }
+        }
+    }
+    
+    func repair() throws {
+        for sector in sectors {
+            if case let Status.Metadata(entry, _) = sector.status {
+                let hash = try storageInstrument.hash(sector.address + UInt32(sectorSize), length: entry.length)
+                if !hash.isEqualToData(entry.hash) {
+                    try erase(sector)
+                }
+            }
+        }
+    }
+
+    func scan() throws {
+        // read the first byte of each sector so we can quickly probe the status of each
+        let markersData = try storageInstrument.read(0, length: UInt32(size), sublength: 1, substride: UInt32(sectorSize))
+        let markers = Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>(markersData.bytes), count: markersData.length))
+        var sectorIndex = 0
+        while sectorIndex < sectorCount {
+            let address = UInt32(sectorIndex * sectorSize)
+            let marker = markers[sectorIndex]
+            if marker == 0xf0 {
+                // should be metadata
+                let data = try storageInstrument.read(0, length: UInt32(pageSize))
+                if magic.isEqualToData(data.subdataWithRange(NSRange(location: 0, length: magic.length))) {
+                    let binary = Binary(data: data, byteOrder: ByteOrder.LittleEndian)
+                    try binary.read(length: magic.length) // skip header
+                    let length: UInt32 = try binary.read()
+                    let date: UInt32 = try binary.read()
+                    let hash = try binary.read(length: hashSize)
+                    let name: String = try binary.read()
+                    let sectorCount = max(sectorCountForContentLength(length), minimumSectorCount)
+                    let sector = Sector(address: address, status: Status.Metadata(entry: Entry(name: name, length: length, date: NSDate(timeIntervalSince1970: NSTimeInterval(date)), hash: hash, address: address + UInt32(sectorSize)), sectorCount: sectorCount))
+                    sectors.append(sector)
+                    sectorIndex += 1
+
+                    for contentSectorIndex in 0 ..< sectorCount {
+                        let contentAddress = address + UInt32(contentSectorIndex * sectorSize)
+                        sectors.append(Sector(address: contentAddress, status: Status.Content))
+                        sectorIndex += 1
+                    }
+                    continue
+                }
+                // something weird found, consider this sector available... -denis
+                NSLog("weird...")
+            }
+
+            // available
+            sectors.append(Sector(address: address, status: Status.Available))
+            sectorIndex += 1
+        }
+    }
+
+    public func inspect() throws {
+        try scan()
+        try repair()
+    }
+
     public func get(name: String) -> Entry? {
+        for sector in sectors {
+            if case let Status.Metadata(entry, _) = sector.status {
+                if entry.name == name {
+                    return entry
+                }
+            }
+        }
         return nil
+    }
+
+    func write(name: String, data: NSData, sector: Sector, sectorCount: Int) throws -> Entry {
+        let length = UInt32(data.length)
+        let date = NSDate()
+        let hash = FDCryptography.sha1(data)
+        let entry = Entry(name: name, length: length, date: date, hash: hash, address: sector.address + UInt32(sectorSize))
+        var sectorIndex = Int(sector.address) / sectorSize
+        sectors[sectorIndex].status = Status.Metadata(entry: entry, sectorCount: sectorCount)
+        for _ in 0 ..< sectorCount {
+            sectorIndex += 1
+            sectors[sectorIndex].status = Status.Content
+        }
+
+        try storageInstrument.erase(sector.address, length: UInt32(sectorCount * sectorSize))
+
+        let binary = Binary(byteOrder: ByteOrder.LittleEndian)
+        binary.write(magic)
+        binary.write(length)
+        binary.write(UInt32(date.timeIntervalSince1970))
+        binary.write(hash)
+        binary.write(name)
+        var address = sector.address
+        try storageInstrument.write(address, data: binary.data)
+
+        var sublocation = 0
+        var sublength = pageSize
+        let pageCount = (data.length + pageSize - 1) / pageSize
+        for _ in 0 ..< pageCount {
+            address += UInt32(pageSize)
+            if (sublocation + sublength) > data.length {
+                sublength = data.length - sublocation
+            }
+            let subdata = data.subdataWithRange(NSRange(location: sublocation, length: sublength))
+            try storageInstrument.write(address, data: subdata)
+            sublocation += pageSize
+        }
+
+        return entry
+    }
+
+    func checkCandidate(name: String, data: NSData, availableSector: Sector?, availableSectorCount: Int, entrySectorCount: Int) throws -> Entry? {
+        if let sector = availableSector {
+            if availableSectorCount >= entrySectorCount {
+                return try write(name, data: data, sector: sector, sectorCount: entrySectorCount)
+            }
+        }
+        return nil
+    }
+
+    func checkWrite(name: String, data: NSData) throws -> Entry? {
+        let entrySectorCount = sectorCountForContentLength(UInt32(data.length))
+        var availableSector: Sector? = nil
+        var availableSectorCount = 0
+        for sector in sectors {
+            if case Status.Available = sector.status {
+                if availableSector == nil {
+                    availableSector = sector
+                    availableSectorCount = 1
+                } else {
+                    availableSectorCount += 1
+                }
+            } else {
+                if let entry = try checkCandidate(name, data: data, availableSector: availableSector, availableSectorCount: availableSectorCount, entrySectorCount: entrySectorCount) {
+                    return entry
+                }
+                availableSector = nil
+                availableSectorCount = 0
+            }
+        }
+        if let entry = try checkCandidate(name, data: data, availableSector: availableSector, availableSectorCount: availableSectorCount, entrySectorCount: entrySectorCount) {
+            return entry
+        }
+        return nil
+    }
+
+    func getLeastRecentlyUsed() throws -> Sector? {
+        var leastRecentlyUsedSector: Sector? = nil
+        var leastRecentlyUsedDate: NSDate? = nil
+        for sector in sectors {
+            if case let Status.Metadata(entry, _) = sector.status {
+                if leastRecentlyUsedSector == nil {
+                    leastRecentlyUsedSector = sector
+                    leastRecentlyUsedDate = entry.date
+                    continue
+                }
+                if entry.date.isLessThan(leastRecentlyUsedDate) {
+                    leastRecentlyUsedSector = sector
+                    leastRecentlyUsedDate = entry.date
+                }
+            }
+        }
+        return leastRecentlyUsedSector
+    }
+
+    func eraseLeastRecentlyUsed() throws -> Bool {
+        if let sector = try getLeastRecentlyUsed() {
+            try erase(sector)
+            return true
+        }
+        return false
     }
 
     // Allocate a file system entry.
     // The entry is stored in flash before this returns.
     // This will free other (least recently used) entries to make space if needed.
-    public func allocate(name: String, length: UInt32, hash: Hash, date: NSDate = NSDate()) throws -> Entry {
-        throw Error.InvalidName(name)
-    }
-
-    public func free(entry: Entry) {
-
+    public func write(name: String, data: NSData) throws -> Entry {
+        repeat {
+            if let entry = try checkWrite(name, data: data) {
+                return entry
+            }
+        } while try eraseLeastRecentlyUsed()
+        throw Error.NotEnoughSpace(name: name, length: UInt32(data.length))
     }
 
 }

@@ -25,6 +25,8 @@ public class BatteryInstrument: InternalInstrument {
         self.portal = portal
     }
 
+    public var identifier: UInt64 { get { return portal.identifier } }
+
     public func reset() throws {
         portal.send(BatteryInstrument.apiTypeReset)
         try portal.write()

@@ -40,6 +40,8 @@ public class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTran
         self.portal = portal
     }
 
+    public var identifier: UInt64 { get { return portal.identifier } }
+
     public func reset() throws {
         portal.send(SerialWireInstrument.apiTypeReset)
         try portal.write()
@@ -69,6 +71,9 @@ public class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTran
 
     public func getReset() throws -> Bool {
         return try get(0)
+    }
+
+    @objc(initialize:) public func initialize() throws {
     }
 
     @objc public func getDetect(detect: UnsafeMutablePointer<ObjCBool>) throws {

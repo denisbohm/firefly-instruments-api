@@ -23,6 +23,8 @@ public class CurrentInstrument: InternalInstrument {
         self.portal = portal
     }
 
+    public var identifier: UInt64 { get { return portal.identifier } }
+
     public func reset() throws {
         portal.send(CurrentInstrument.apiTypeReset)
         try portal.write()

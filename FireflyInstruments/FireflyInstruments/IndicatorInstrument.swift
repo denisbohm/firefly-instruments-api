@@ -19,6 +19,8 @@ public class IndicatorInstrument: InternalInstrument {
         self.portal = portal
     }
 
+    public var identifier: UInt64 { get { return portal.identifier } }
+
     public func reset() throws {
         portal.send(IndicatorInstrument.apiTypeReset)
         try portal.write()

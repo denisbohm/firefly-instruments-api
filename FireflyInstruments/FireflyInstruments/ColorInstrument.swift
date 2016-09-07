@@ -85,6 +85,8 @@ public class ColorInstrument: InternalInstrument {
         self.portal = portal
     }
 
+    public var identifier: UInt64 { get { return portal.identifier } }
+
     public func reset() throws {
         portal.send(ColorInstrument.apiTypeReset)
         try portal.write()

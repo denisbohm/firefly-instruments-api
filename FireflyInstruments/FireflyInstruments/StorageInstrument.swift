@@ -22,6 +22,8 @@ public class StorageInstrument: InternalInstrument {
         self.portal = portal
     }
 
+    public var identifier: UInt64 { get { return portal.identifier } }
+
     public func reset() throws {
         portal.send(StorageInstrument.apiTypeReset)
         try portal.write()
@@ -42,10 +44,12 @@ public class StorageInstrument: InternalInstrument {
         portal.send(StorageInstrument.apiTypeWrite, content: arguments.data)
     }
 
-    public func read(address: UInt32, length: UInt32) throws -> NSData {
+    public func read(address: UInt32, length: UInt32, sublength: UInt32 = 0, substride: UInt32 = 0) throws -> NSData {
         let arguments = Binary(byteOrder: .LittleEndian)
         arguments.writeVarUInt(UInt64(address))
         arguments.writeVarUInt(UInt64(length))
+        arguments.writeVarUInt(UInt64(sublength))
+        arguments.writeVarUInt(UInt64(substride))
         portal.send(StorageInstrument.apiTypeRead, content: arguments.data)
         let data = try portal.read(type: StorageInstrument.apiTypeRead)
         let binary = Binary(data: data, byteOrder: .LittleEndian)
