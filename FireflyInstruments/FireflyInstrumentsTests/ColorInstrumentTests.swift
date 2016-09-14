@@ -15,6 +15,8 @@ class ColorInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let colorInstrument = ColorInstrument(portal: portal)
 
+        XCTAssertEqual(colorInstrument.identifier, 1)
+
         try colorInstrument.reset()
         portal.assertDidSend(0)
         portal.assertDidWrite()

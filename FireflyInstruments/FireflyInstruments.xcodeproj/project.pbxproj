@@ -45,6 +45,8 @@
 		9289509F1D4A89E7005A5F55 /* USBHIDFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9289509E1D4A89E7005A5F55 /* USBHIDFinder.swift */; };
 		92A10B841D70B605006B708E /* StorageInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92A10B831D70B605006B708E /* StorageInstrument.swift */; };
 		92B3BEB01D3FE3D900EBBCF7 /* Instrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92B3BEAF1D3FE3D900EBBCF7 /* Instrument.swift */; };
+		92BED9AF1D88CE94007E8176 /* FileSystemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92BED9AE1D88CE94007E8176 /* FileSystemTests.swift */; };
+		92BED9B11D88CF3B007E8176 /* MockStorageInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92BED9B01D88CF3B007E8176 /* MockStorageInstrument.swift */; };
 		92BFEC9B1D3E6F6B00C2481A /* Portal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92BFEC9A1D3E6F6B00C2481A /* Portal.swift */; };
 		92E755B11D70C49A00B45C6D /* StorageInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E755B01D70C49A00B45C6D /* StorageInstrumentTests.swift */; };
 		92F9E3651D37E9EA00F16833 /* Detour.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F9E3641D37E9EA00F16833 /* Detour.swift */; };
@@ -127,6 +129,8 @@
 		9289509E1D4A89E7005A5F55 /* USBHIDFinder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = USBHIDFinder.swift; sourceTree = "<group>"; };
 		92A10B831D70B605006B708E /* StorageInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageInstrument.swift; sourceTree = "<group>"; };
 		92B3BEAF1D3FE3D900EBBCF7 /* Instrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Instrument.swift; sourceTree = "<group>"; };
+		92BED9AE1D88CE94007E8176 /* FileSystemTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSystemTests.swift; sourceTree = "<group>"; };
+		92BED9B01D88CF3B007E8176 /* MockStorageInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockStorageInstrument.swift; sourceTree = "<group>"; };
 		92BFEC9A1D3E6F6B00C2481A /* Portal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Portal.swift; sourceTree = "<group>"; };
 		92E755B01D70C49A00B45C6D /* StorageInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageInstrumentTests.swift; sourceTree = "<group>"; };
 		92F9E3641D37E9EA00F16833 /* Detour.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Detour.swift; sourceTree = "<group>"; };
@@ -211,6 +215,7 @@
 			children = (
 				9286EECE1D428D0E0078FA55 /* MockPortal.swift */,
 				9286EED01D428D4E0078FA55 /* MockUSBHIDDevice.swift */,
+				92BED9B01D88CF3B007E8176 /* MockStorageInstrument.swift */,
 			);
 			name = Mocks;
 			sourceTree = "<group>";
@@ -318,6 +323,7 @@
 		9272D9611D36D29D00830CF5 /* FireflyInstrumentsTests */ = {
 			isa = PBXGroup;
 			children = (
+				92BED9AC1D88CE73007E8176 /* Utilities */,
 				920CA8B11D494F9200661E38 /* Mocks */,
 				920CA8B01D494F7500661E38 /* Instruments */,
 				920CA8AF1D494F6300661E38 /* Manager */,
@@ -360,6 +366,14 @@
 				927795D21D397DFE000D7CFE /* DetourTests.swift */,
 			);
 			name = Data;
+			sourceTree = "<group>";
+		};
+		92BED9AC1D88CE73007E8176 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				92BED9AE1D88CE94007E8176 /* FileSystemTests.swift */,
+			);
+			name = Utilities;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -535,6 +549,8 @@
 				9286EEE81D4292410078FA55 /* IndicatorInstrumentTests.swift in Sources */,
 				927905281D3E732800623816 /* SerialWireInstrumentTests.swift in Sources */,
 				9286EEEA1D42948E0078FA55 /* RelayInstrumentTests.swift in Sources */,
+				92BED9B11D88CF3B007E8176 /* MockStorageInstrument.swift in Sources */,
+				92BED9AF1D88CE94007E8176 /* FileSystemTests.swift in Sources */,
 				9286EEEC1D4294DA0078FA55 /* CurrentInstrumentTests.swift in Sources */,
 				9286EECD1D428CE00078FA55 /* ColorInstrumentTests.swift in Sources */,
 				9286EEF01D42A3AD0078FA55 /* PortalTests.swift in Sources */,

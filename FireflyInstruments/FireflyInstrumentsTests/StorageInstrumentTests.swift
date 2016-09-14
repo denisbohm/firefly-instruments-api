@@ -15,6 +15,8 @@ class StorageInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let storageInstrument = StorageInstrument(portal: portal)
 
+        XCTAssertEqual(storageInstrument.identifier, 1)
+
         try storageInstrument.reset()
         portal.assertDidSend(0)
         portal.assertDidWrite()
@@ -49,7 +51,11 @@ class StorageInstrumentTests: XCTestCase {
             let arguments = Binary(byteOrder: .LittleEndian)
             arguments.writeVarUInt(UInt64(address))
             arguments.writeVarUInt(UInt64(length))
-            let result = try storageInstrument.read(address, length: UInt32(data.length))
+            let sublength: UInt32 = 1
+            arguments.writeVarUInt(UInt64(sublength))
+            let substride: UInt32 = 4096
+            arguments.writeVarUInt(UInt64(substride))
+            let result = try storageInstrument.read(address, length: UInt32(data.length), sublength: sublength, substride: substride)
             portal.assertDidSend(3, content: arguments.data)
             portal.assertDidReadType(type: 3)
             XCTAssertEqual(data, result)

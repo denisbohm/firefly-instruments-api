@@ -15,6 +15,8 @@ class BatteryInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let batteryInstrument = BatteryInstrument(portal: portal)
 
+        XCTAssertEqual(batteryInstrument.identifier, 1)
+
         try batteryInstrument.reset()
         portal.assertDidSend(0)
         portal.assertDidWrite()

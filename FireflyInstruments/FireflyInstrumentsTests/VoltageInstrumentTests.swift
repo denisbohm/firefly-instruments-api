@@ -15,6 +15,8 @@ class VoltageInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let voltageInstrument = VoltageInstrument(portal: portal)
 
+        XCTAssertEqual(voltageInstrument.identifier, 1)
+
         try voltageInstrument.reset()
         portal.assertDidSend(0)
         portal.assertDidWrite()

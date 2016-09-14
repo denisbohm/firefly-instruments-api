@@ -15,6 +15,8 @@ class SerialWireInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let serialWireInstrument = SerialWireInstrument(portal: portal)
 
+        XCTAssertEqual(serialWireInstrument.identifier, 1)
+
         try serialWireInstrument.reset()
         portal.assertDidSend(0)
         portal.assertDidWrite()

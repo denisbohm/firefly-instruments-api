@@ -55,10 +55,10 @@ public class FileSystem {
 
     public var minimumSectorCount = 64
 
-    public let size = 2^21
-    public let sectorSize = 2^12
+    public let size = 1<<22
+    public let sectorSize = 1<<12
 
-    let pageSize = 2^8
+    let pageSize = 1<<8
     let hashSize = 20
 
     let magic: NSData
@@ -74,14 +74,10 @@ public class FileSystem {
         magic = NSData(bytes: magicBytes, length: magicBytes.count)
     }
 
-    func sectorCountForContentLength(length: UInt32) -> Int {
-        return (Int(length) + (sectorSize - 1)) / sectorSize
-    }
-
     func erase(sector: Sector) throws {
         var sectorCount = 1
-        if case let Status.Metadata(_, contentSectorCount) = sector.status {
-            sectorCount += contentSectorCount
+        if case let Status.Metadata(_, metadataSectorCount) = sector.status {
+            sectorCount = metadataSectorCount
         }
         try storageInstrument.erase(sector.address, length: UInt32(sectorCount * sectorSize))
         let firstSectorIndex = Int(sector.address) / sectorSize
@@ -112,8 +108,9 @@ public class FileSystem {
     }
 
     func scan() throws {
+        sectors.removeAll()
         // read the first byte of each sector so we can quickly probe the status of each
-        let markersData = try storageInstrument.read(0, length: UInt32(size), sublength: 1, substride: UInt32(sectorSize))
+        let markersData = try storageInstrument.read(0, length: UInt32(sectorCount), sublength: 1, substride: UInt32(sectorSize))
         let markers = Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>(markersData.bytes), count: markersData.length))
         var sectorIndex = 0
         while sectorIndex < sectorCount {
@@ -126,23 +123,26 @@ public class FileSystem {
                     let binary = Binary(data: data, byteOrder: ByteOrder.LittleEndian)
                     try binary.read(length: magic.length) // skip header
                     let length: UInt32 = try binary.read()
-                    let date: UInt32 = try binary.read()
+                    let unixTime: UInt32 = try binary.read()
+                    let date = NSDate(timeIntervalSince1970: NSTimeInterval(unixTime))
                     let hash = try binary.read(length: hashSize)
+                    let dataAddress: UInt32 = try binary.read()
+                    let sectorCount: UInt32 = try binary.read()
                     let name: String = try binary.read()
-                    let sectorCount = max(sectorCountForContentLength(length), minimumSectorCount)
-                    let sector = Sector(address: address, status: Status.Metadata(entry: Entry(name: name, length: length, date: NSDate(timeIntervalSince1970: NSTimeInterval(date)), hash: hash, address: address + UInt32(sectorSize)), sectorCount: sectorCount))
+                    let entry = Entry(name: name, length: length, date: date, hash: hash, address: dataAddress)
+                    let status = Status.Metadata(entry: entry, sectorCount: Int(sectorCount))
+                    let sector = Sector(address: address, status: status)
                     sectors.append(sector)
                     sectorIndex += 1
 
-                    for contentSectorIndex in 0 ..< sectorCount {
-                        let contentAddress = address + UInt32(contentSectorIndex * sectorSize)
-                        sectors.append(Sector(address: contentAddress, status: Status.Content))
+                    for _ in 1 ..< Int(sectorCount) {
+                        let address = UInt32(sectorIndex * sectorSize)
+                        sectors.append(Sector(address: address, status: Status.Content))
                         sectorIndex += 1
                     }
                     continue
                 }
-                // something weird found, consider this sector available... -denis
-                NSLog("weird...")
+                // something corrupt found, consider this sector available... -denis
             }
 
             // available
@@ -156,6 +156,16 @@ public class FileSystem {
         try repair()
     }
 
+    public func list() -> [Entry] {
+        var entries = [Entry]()
+        for sector in sectors {
+            if case let Status.Metadata(entry, _) = sector.status {
+                entries.append(entry)
+            }
+        }
+        return entries
+    }
+
     public func get(name: String) -> Entry? {
         for sector in sectors {
             if case let Status.Metadata(entry, _) = sector.status {
@@ -167,14 +177,13 @@ public class FileSystem {
         return nil
     }
 
-    func write(name: String, data: NSData, sector: Sector, sectorCount: Int) throws -> Entry {
+    func write(name: String, data: NSData, date: NSDate, sector: Sector, sectorCount: Int) throws -> Entry {
         let length = UInt32(data.length)
-        let date = NSDate()
         let hash = FDCryptography.sha1(data)
         let entry = Entry(name: name, length: length, date: date, hash: hash, address: sector.address + UInt32(sectorSize))
         var sectorIndex = Int(sector.address) / sectorSize
         sectors[sectorIndex].status = Status.Metadata(entry: entry, sectorCount: sectorCount)
-        for _ in 0 ..< sectorCount {
+        for _ in 1 ..< sectorCount {
             sectorIndex += 1
             sectors[sectorIndex].status = Status.Content
         }
@@ -190,33 +199,38 @@ public class FileSystem {
         var address = sector.address
         try storageInstrument.write(address, data: binary.data)
 
+        address += UInt32(sectorSize)
         var sublocation = 0
         var sublength = pageSize
         let pageCount = (data.length + pageSize - 1) / pageSize
         for _ in 0 ..< pageCount {
-            address += UInt32(pageSize)
             if (sublocation + sublength) > data.length {
                 sublength = data.length - sublocation
             }
             let subdata = data.subdataWithRange(NSRange(location: sublocation, length: sublength))
             try storageInstrument.write(address, data: subdata)
+            address += UInt32(pageSize)
             sublocation += pageSize
         }
 
         return entry
     }
 
-    func checkCandidate(name: String, data: NSData, availableSector: Sector?, availableSectorCount: Int, entrySectorCount: Int) throws -> Entry? {
+    func checkCandidate(name: String, data: NSData, date: NSDate, availableSector: Sector?, availableSectorCount: Int, entrySectorCount: Int) throws -> Entry? {
         if let sector = availableSector {
             if availableSectorCount >= entrySectorCount {
-                return try write(name, data: data, sector: sector, sectorCount: entrySectorCount)
+                return try write(name, data: data, date: date, sector: sector, sectorCount: entrySectorCount)
             }
         }
         return nil
     }
 
-    func checkWrite(name: String, data: NSData) throws -> Entry? {
-        let entrySectorCount = sectorCountForContentLength(UInt32(data.length))
+    func sectorCountForContentLength(length: UInt32) -> Int {
+        return (Int(length) + (sectorSize - 1)) / sectorSize
+    }
+
+    func checkWrite(name: String, data: NSData, date: NSDate) throws -> Entry? {
+        let entrySectorCount = max(1 + sectorCountForContentLength(UInt32(data.length)), minimumSectorCount)
         var availableSector: Sector? = nil
         var availableSectorCount = 0
         for sector in sectors {
@@ -228,14 +242,14 @@ public class FileSystem {
                     availableSectorCount += 1
                 }
             } else {
-                if let entry = try checkCandidate(name, data: data, availableSector: availableSector, availableSectorCount: availableSectorCount, entrySectorCount: entrySectorCount) {
+                if let entry = try checkCandidate(name, data: data, date: date, availableSector: availableSector, availableSectorCount: availableSectorCount, entrySectorCount: entrySectorCount) {
                     return entry
                 }
                 availableSector = nil
                 availableSectorCount = 0
             }
         }
-        if let entry = try checkCandidate(name, data: data, availableSector: availableSector, availableSectorCount: availableSectorCount, entrySectorCount: entrySectorCount) {
+        if let entry = try checkCandidate(name, data: data, date: date, availableSector: availableSector, availableSectorCount: availableSectorCount, entrySectorCount: entrySectorCount) {
             return entry
         }
         return nil
@@ -271,9 +285,9 @@ public class FileSystem {
     // Allocate a file system entry.
     // The entry is stored in flash before this returns.
     // This will free other (least recently used) entries to make space if needed.
-    public func write(name: String, data: NSData) throws -> Entry {
+    public func write(name: String, data: NSData, date: NSDate = NSDate()) throws -> Entry {
         repeat {
-            if let entry = try checkWrite(name, data: data) {
+            if let entry = try checkWrite(name, data: data, date: date) {
                 return entry
             }
         } while try eraseLeastRecentlyUsed()

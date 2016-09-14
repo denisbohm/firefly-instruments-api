@@ -15,6 +15,8 @@ class RelayInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let relayInstrument = RelayInstrument(portal: portal)
 
+        XCTAssertEqual(relayInstrument.identifier, 1)
+
         try relayInstrument.reset()
         portal.assertDidSend(0)
         portal.assertDidWrite()

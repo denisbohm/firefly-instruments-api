@@ -41,7 +41,16 @@ class InstrumentManagerTests: XCTestCase {
         try getInstrument("Indicator", IndicatorInstrument.self)
         try getInstrument("Relay", RelayInstrument.self)
         try getInstrument("SerialWire", SerialWireInstrument.self)
+        try getInstrument("Storage", StorageInstrument.self)
         try getInstrument("Voltage", VoltageInstrument.self)
+    }
+
+    func testGetUnknownPortal() throws {
+        let device = MockUSBHIDDevice()
+        let instrumentManager = InstrumentManager(device: device)
+        queueDiscovery(device, category: "Battery")
+        try instrumentManager.discoverInstruments()
+        XCTAssertNil(instrumentManager.getPortal(99))
     }
 
     func testResetInstruments() throws {

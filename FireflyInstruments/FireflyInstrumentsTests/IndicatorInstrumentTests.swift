@@ -15,6 +15,8 @@ class IndicatorInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let indicatorInstrument = IndicatorInstrument(portal: portal)
 
+        XCTAssertEqual(indicatorInstrument.identifier, 1)
+
         try indicatorInstrument.reset()
         portal.assertDidSend(0)
         portal.assertDidWrite()

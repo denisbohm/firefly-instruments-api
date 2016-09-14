@@ -15,6 +15,8 @@ class CurrentInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let currentInstrument = CurrentInstrument(portal: portal)
 
+        XCTAssertEqual(currentInstrument.identifier, 1)
+
         try currentInstrument.reset()
         portal.assertDidSend(0)
         portal.assertDidWrite()
