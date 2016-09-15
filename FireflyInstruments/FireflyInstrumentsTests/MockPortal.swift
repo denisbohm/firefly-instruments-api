@@ -13,7 +13,7 @@ import XCTest
 class MockPortal: Portal {
 
     enum Call {
-        case send(UInt64, NSData)
+        case send(UInt64, Data)
         case write()
         case readWithLength(Int)
         case readType(UInt64)
@@ -22,11 +22,11 @@ class MockPortal: Portal {
 
     struct Read {
         let type: UInt64
-        let content: NSData
+        let content: Data
     }
 
     let identifier: UInt64 = 1
-    var timeout: NSTimeInterval = 10.0
+    var timeout: TimeInterval = 10.0
 
     var calls = [Call]()
 
@@ -44,7 +44,7 @@ class MockPortal: Portal {
         return call
     }
 
-    func assertDidSend(type: UInt64, content: [UInt8]) {
+    func assertDidSend(_ type: UInt64, content: [UInt8]) {
         guard let call = nextAssertCall() else {
             return
         }
@@ -53,20 +53,20 @@ class MockPortal: Portal {
             return
         }
         XCTAssert(callType == type)
-        let data = NSData(bytes: content, length: content.count)
-        XCTAssert(callContent.isEqualToData(data))
+        let data = Data(bytes: UnsafePointer<UInt8>(content), count: content.count)
+        XCTAssert(callContent == data)
     }
 
-    func assertDidSend(type: UInt64, content: UInt8...) {
+    func assertDidSend(_ type: UInt64, content: UInt8...) {
         assertDidSend(type, content: content)
     }
 
-    func assertDidSend(type: UInt64, content: NSData) {
-        let bytes = Array(UnsafeBufferPointer(start: UnsafePointer<UInt8>(content.bytes), count: content.length)) as [UInt8]
+    func assertDidSend(_ type: UInt64, content: Data) {
+        let bytes = Array(UnsafeBufferPointer(start: (content as NSData).bytes.bindMemory(to: UInt8.self, capacity: content.count), count: content.count)) as [UInt8]
         assertDidSend(type, content: bytes)
     }
 
-    func send(type: UInt64, content: NSData) {
+    func send(_ type: UInt64, content: Data) {
         calls.append(.send(type, content))
     }
 
@@ -84,22 +84,22 @@ class MockPortal: Portal {
         calls.append(.write())
     }
 
-    func queueRead(type: UInt64, content: NSData) {
+    func queueRead(_ type: UInt64, content: Data) {
         reads.append(Read(type: type, content: content))
     }
 
-    func queueRead(type: UInt64, content: [UInt8]) {
-        queueRead(type, content: NSData(bytes: content, length: content.count))
+    func queueRead(_ type: UInt64, content: [UInt8]) {
+        queueRead(type, content: Data(bytes: UnsafePointer<UInt8>(content), count: content.count))
     }
 
-    func queueRead(type: UInt64, content: UInt8...) {
+    func queueRead(_ type: UInt64, content: UInt8...) {
         queueRead(type, content: content)
     }
 
-    func received(type: UInt64, content: NSData) {
+    func received(_ type: UInt64, content: Data) {
     }
 
-    func assertDidReadType(type type: UInt64) {
+    func assertDidReadType(type: UInt64) {
         guard let call = nextAssertCall() else {
             return
         }
@@ -110,16 +110,16 @@ class MockPortal: Portal {
         XCTAssert(callType == type)
     }
 
-    func read(type type: UInt64) throws -> NSData {
+    func read(type: UInt64) throws -> Data {
         calls.append(.readType(type))
         guard let read = reads.first else {
-            return NSData()
+            return Data()
         }
         reads.removeFirst()
         return read.content
     }
 
-    func assertDidReadWithLength(length: Int) {
+    func assertDidReadWithLength(_ length: Int) {
         guard let call = nextAssertCall() else {
             return
         }
@@ -130,9 +130,9 @@ class MockPortal: Portal {
         XCTAssert(callLength == length)
     }
 
-    func read(length length: Int) throws -> NSData {
+    func read(length: Int) throws -> Data {
         calls.append(.readWithLength(length))
-        return NSData()
+        return Data()
     }
 
     func assertDidRead() {
@@ -145,9 +145,9 @@ class MockPortal: Portal {
         }
     }
 
-    func read() -> NSData {
+    func read() -> Data {
         calls.append(.read())
-        return NSData()
+        return Data()
     }
 
 }

@@ -9,10 +9,10 @@
 import Foundation
 import ARMSerialWireDebug
 
-public class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransfer, InternalInstrument {
+open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransfer, InternalInstrument {
 
-    public enum Error : ErrorType {
-        case MemoryTransferIssue(code: UInt64, data: NSData)
+    public enum LocalError : Error {
+        case memoryTransferIssue(code: UInt64, data: Data)
     }
 
     static let apiTypeReset = UInt64(0)
@@ -40,158 +40,158 @@ public class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTran
         self.portal = portal
     }
 
-    public var identifier: UInt64 { get { return portal.identifier } }
+    open var identifier: UInt64 { get { return portal.identifier } }
 
-    public func reset() throws {
+    open func reset() throws {
         portal.send(SerialWireInstrument.apiTypeReset)
         try portal.write()
     }
 
-    public func setEnabled(value: Bool) throws {
-        let binary = Binary(byteOrder: .LittleEndian)
+    open func setEnabled(_ value: Bool) throws {
+        let binary = Binary(byteOrder: .littleEndian)
         binary.write(UInt8(value ? 1 : 0))
         portal.send(SerialWireInstrument.apiTypeSetEnabled, content: binary.data)
         try portal.write()
     }
 
-    func set(output: Int, value: Bool) {
+    func set(_ output: Int, value: Bool) {
         let bits = UInt8(1 << output)
         let values = value ? bits : 0
         portal.send(SerialWireInstrument.apiTypeSetOutputs, content: bits, values)
     }
 
-    func get(input: Int) throws -> Bool {
+    func get(_ input: Int) throws -> Bool {
         let bits = UInt8(1 << input)
         portal.send(SerialWireInstrument.apiTypeGetInputs, content: bits)
         let data = try portal.read(type: SerialWireInstrument.apiTypeGetInputs)
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let value: UInt8 = try binary.read()
         return value != 0
     }
 
-    public func getReset() throws -> Bool {
+    open func getReset() throws -> Bool {
         return try get(0)
     }
 
-    @objc(initialize:) public func initialize() throws {
+    @objc(initialize:) open func initialize() throws {
     }
 
-    @objc public func getDetect(detect: UnsafeMutablePointer<ObjCBool>) throws {
-        detect.memory = false // not implemented -denis
+    @objc open func getDetect(_ detect: UnsafeMutablePointer<ObjCBool>) throws {
+        detect.pointee = false // not implemented -denis
     }
 
-    @objc public func setIndicator(value: Bool) {
+    @objc open func setIndicator(_ value: Bool) {
         set(SerialWireInstrument.outputIndicator, value: value)
     }
 
-    @objc public func setReset(value: Bool) {
+    @objc open func setReset(_ value: Bool) {
         set(SerialWireInstrument.outputReset, value: value)
     }
 
-    @objc public func turnToRead() {
+    @objc open func turnToRead() {
         set(SerialWireInstrument.outputDirection, value: false)
     }
 
-    @objc public func turnToWrite() {
+    @objc open func turnToWrite() {
         set(SerialWireInstrument.outputDirection, value: true)
     }
 
-    @objc public func shiftOutBits(byte: UInt8, bitCount: UInt) {
+    @objc open func shiftOutBits(_ byte: UInt8, bitCount: UInt) {
         assert(bitCount > 0)
         portal.send(SerialWireInstrument.apiTypeShiftOutBits, content: UInt8(bitCount - 1), byte)
     }
 
-    @objc public func shiftOutData(data: NSData) {
-        assert(data.length > 0)
-        let binary = Binary(byteOrder: .LittleEndian)
-        binary.writeVarUInt(UInt64(data.length - 1))
+    @objc open func shiftOutData(_ data: Data) {
+        assert(data.count > 0)
+        let binary = Binary(byteOrder: .littleEndian)
+        binary.writeVarUInt(UInt64(data.count - 1))
         binary.write(data)
         portal.send(SerialWireInstrument.apiTypeShiftOutData, content: binary.data)
     }
 
-    @objc public func shiftInBits(bitCount: UInt) {
+    @objc open func shift(inBits bitCount: UInt) {
         portal.send(SerialWireInstrument.apiTypeShiftInBits, content: UInt8(bitCount - 1))
     }
 
-    @objc public func shiftInData(byteCount: UInt) {
-        let binary = Binary(byteOrder: .LittleEndian)
+    @objc open func shift(inData byteCount: UInt) {
+        let binary = Binary(byteOrder: .littleEndian)
         binary.writeVarUInt(UInt64(byteCount - 1))
         portal.send(SerialWireInstrument.apiTypeShiftInData, content: binary.data)
     }
 
-    @objc(write:) public func write() throws {
+    @objc(write:) open func write() throws {
         try portal.write()
     }
 
-    @objc public func readWithByteCount(byteCount: UInt) throws -> NSData {
+    @objc open func read(withByteCount byteCount: UInt) throws -> Data {
         portal.send(SerialWireInstrument.apiTypeFlush)
         try portal.write()
-        return try portal.read(length: Int(byteCount))
+        return try portal.read(length: Int(byteCount)) as Data
     }
 
-    @objc(read:) public func read() throws -> NSData {
-        return portal.read()
+    @objc(read:) open func read() throws -> Data {
+        return portal.read() as Data
     }
 
-    @objc public func writeMemory(address: UInt32, data: NSData) throws {
-        let request = Binary(byteOrder: .LittleEndian)
+    @objc open func writeMemory(_ address: UInt32, data: Data) throws {
+        let request = Binary(byteOrder: .littleEndian)
         request.writeVarUInt(UInt64(address))
-        request.writeVarUInt(UInt64(data.length))
+        request.writeVarUInt(UInt64(data.count))
         request.write(data)
         portal.send(SerialWireInstrument.apiTypeWriteMemory, content: request.data)
         let data = try portal.read(type: SerialWireInstrument.apiTypeWriteMemory)
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let code = try binary.readVarUInt()
         if code != 0 {
-            throw Error.MemoryTransferIssue(code: code, data: binary.remainingData)
+            throw LocalError.memoryTransferIssue(code: code, data: binary.remainingData)
         }
     }
 
-    @objc public func readMemory(address: UInt32, length: UInt32) throws -> NSData {
-        let request = Binary(byteOrder: .LittleEndian)
+    @objc open func readMemory(_ address: UInt32, length: UInt32) throws -> Data {
+        let request = Binary(byteOrder: .littleEndian)
         request.writeVarUInt(UInt64(address))
         request.writeVarUInt(UInt64(length))
         portal.send(SerialWireInstrument.apiTypeReadMemory, content: request.data)
         let data = try portal.read(type: SerialWireInstrument.apiTypeReadMemory)
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let code = try binary.readVarUInt()
         if code != 0 {
-            throw Error.MemoryTransferIssue(code: code, data: binary.remainingData)
+            throw LocalError.memoryTransferIssue(code: code, data: binary.remainingData)
         }
         let result = binary.remainingData
-        if result.length != Int(length) {
-            throw Error.MemoryTransferIssue(code: code, data: result)
+        if result.count != Int(length) {
+            throw LocalError.memoryTransferIssue(code: code, data: result)
         }
         return result
     }
 
-    public func writeFromStorage(address: UInt32, length: UInt32, storageIdentifier: UInt64, storageAddress: UInt32) throws {
-        let request = Binary(byteOrder: .LittleEndian)
+    open func writeFromStorage(_ address: UInt32, length: UInt32, storageIdentifier: UInt64, storageAddress: UInt32) throws {
+        let request = Binary(byteOrder: .littleEndian)
         request.writeVarUInt(UInt64(address))
         request.writeVarUInt(UInt64(length))
         request.writeVarUInt(UInt64(storageIdentifier))
         request.writeVarUInt(UInt64(storageAddress))
         portal.send(SerialWireInstrument.apiTypeWriteFromStorage, content: request.data)
         let data = try portal.read(type: SerialWireInstrument.apiTypeWriteFromStorage)
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let code = try binary.readVarUInt()
         if code != 0 {
-            throw Error.MemoryTransferIssue(code: code, data: binary.remainingData)
+            throw LocalError.memoryTransferIssue(code: code, data: binary.remainingData)
         }
     }
 
-    public func compareToStorage(address: UInt32, length: UInt32, storageIdentifier: UInt64, storageAddress: UInt32) throws {
-        let request = Binary(byteOrder: .LittleEndian)
+    open func compareToStorage(_ address: UInt32, length: UInt32, storageIdentifier: UInt64, storageAddress: UInt32) throws {
+        let request = Binary(byteOrder: .littleEndian)
         request.writeVarUInt(UInt64(address))
         request.writeVarUInt(UInt64(length))
         request.writeVarUInt(UInt64(storageIdentifier))
         request.writeVarUInt(UInt64(storageAddress))
         portal.send(SerialWireInstrument.apiTypeCompareToStorage, content: request.data)
         let data = try portal.read(type: SerialWireInstrument.apiTypeCompareToStorage)
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let code = try binary.readVarUInt()
         if code != 0 {
-            throw Error.MemoryTransferIssue(code: code, data: binary.remainingData)
+            throw LocalError.memoryTransferIssue(code: code, data: binary.remainingData)
         }
     }
 

@@ -27,13 +27,13 @@ class BatteryInstrumentTests: XCTestCase {
 
         let voltage = Float32(3.8)
         try batteryInstrument.setVoltage(voltage)
-        let binaryVoltage = Binary(byteOrder: .LittleEndian)
+        let binaryVoltage = Binary(byteOrder: .littleEndian)
         binaryVoltage.write(voltage)
         portal.assertDidSend(2, content: binaryVoltage.data)
         portal.assertDidWrite()
 
         let current = Float32(0.1)
-        let binary = Binary(byteOrder: .LittleEndian)
+        let binary = Binary(byteOrder: .littleEndian)
         binary.write(current)
         portal.queueRead(UInt64(1), content: binary.data)
         let conversion = try batteryInstrument.convert()

@@ -22,7 +22,7 @@ class CurrentInstrumentTests: XCTestCase {
         portal.assertDidWrite()
 
         let current = Float32(0.1)
-        let binary = Binary(byteOrder: .LittleEndian)
+        let binary = Binary(byteOrder: .littleEndian)
         binary.write(current)
         portal.queueRead(UInt64(1), content: binary.data)
         let conversion = try currentInstrument.convert()

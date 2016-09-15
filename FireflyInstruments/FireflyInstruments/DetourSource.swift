@@ -8,31 +8,31 @@
 
 import Foundation
 
-public class DetourSource {
+open class DetourSource {
 
     var size: Int
-    var data: NSData
+    var data: Data
     var index: Int = 0
     var sequenceNumber: UInt64 = 0
-    var startDate: NSDate?
-    var endDate: NSDate?
+    var startDate: Date?
+    var endDate: Date?
 
-    public init(size: Int, data: NSData) {
+    public init(size: Int, data: Data) {
         self.size = size
-        let binary = Binary(byteOrder: .LittleEndian)
-        binary.writeVarUInt(UInt64(data.length))
+        let binary = Binary(byteOrder: .littleEndian)
+        binary.writeVarUInt(UInt64(data.count))
         binary.write(data);
         self.data = binary.data
     }
 
-    public func next() -> NSData? {
+    open func next() -> Data? {
         if startDate == nil {
-            startDate = NSDate()
+            startDate = Date()
         }
 
-        if index >= data.length {
+        if index >= data.count {
             if endDate == nil {
-                endDate = NSDate()
+                endDate = Date()
                 
                 /*
                 let duration = endDate!.timeIntervalSinceDate(startDate!)
@@ -45,14 +45,14 @@ public class DetourSource {
             return nil
         }
         
-        var n = data.length - index
+        var n = data.count - index
         if n > (size - 1) {
             n = size - 1
         }
-        let binary = Binary(byteOrder: .LittleEndian)
+        let binary = Binary(byteOrder: .littleEndian)
         binary.writeVarUInt(sequenceNumber)
-        let subdata = NSMutableData(data: binary.data)
-        subdata.appendData(data.subdataWithRange(NSRange(location: index, length: n)))
+        var subdata = binary.data
+        subdata.append(data.subdata(in: index ..< index + n))
         index += n
         sequenceNumber += 1
         return subdata

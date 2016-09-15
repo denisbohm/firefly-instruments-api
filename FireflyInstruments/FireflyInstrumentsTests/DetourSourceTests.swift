@@ -13,7 +13,7 @@ class DetourSourceTests: XCTestCase {
 
     func testSingle() {
         let bytes = [0, 1] as [UInt8]
-        let data = NSData(bytes: bytes, length: bytes.count)
+        let data = Data(bytes: UnsafePointer<UInt8>(bytes), count: bytes.count)
         let detourSource = DetourSource(size: 4, data: data)
         do {
             let next = detourSource.next()
@@ -22,15 +22,15 @@ class DetourSourceTests: XCTestCase {
                 return
             }
             let detourBytes = [0, 2, 0, 1] as [UInt8]
-            let detourData = NSData(bytes: detourBytes, length: detourBytes.count)
-            XCTAssert(subdata.isEqualToData(detourData))
+            let detourData = Data(bytes: UnsafePointer<UInt8>(detourBytes), count: detourBytes.count)
+            XCTAssertEqual(subdata, detourData)
         }
         XCTAssert(detourSource.next() == nil)
     }
 
     func testMultiple() {
         let bytes = [0, 1, 2] as [UInt8]
-        let data = NSData(bytes: bytes, length: bytes.count)
+        let data = Data(bytes: UnsafePointer<UInt8>(bytes), count: bytes.count)
         let detourSource = DetourSource(size: 4, data: data)
         do {
             let next = detourSource.next()
@@ -39,8 +39,8 @@ class DetourSourceTests: XCTestCase {
                 return
             }
             let detourBytes = [0, 3, 0, 1] as [UInt8]
-            let detourData = NSData(bytes: detourBytes, length: detourBytes.count)
-            XCTAssert(subdata.isEqualToData(detourData))
+            let detourData = Data(bytes: UnsafePointer<UInt8>(detourBytes), count: detourBytes.count)
+            XCTAssertEqual(subdata, detourData)
         }
         do {
             let next = detourSource.next()
@@ -49,8 +49,8 @@ class DetourSourceTests: XCTestCase {
                 return
             }
             let detourBytes = [1, 2] as [UInt8]
-            let detourData = NSData(bytes: detourBytes, length: detourBytes.count)
-            XCTAssert(subdata.isEqualToData(detourData))
+            let detourData = Data(bytes: UnsafePointer<UInt8>(detourBytes), count: detourBytes.count)
+            XCTAssertEqual(subdata, detourData)
         }
         XCTAssert(detourSource.next() == nil)
     }

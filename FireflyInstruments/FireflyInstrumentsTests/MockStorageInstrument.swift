@@ -14,7 +14,7 @@ class MockStorageInstrument: StorageInstrument {
     var memory: [UInt8]
 
     init() {
-        memory = [UInt8](count: 1 << 22, repeatedValue: 0xff as UInt8)
+        memory = [UInt8](repeating: 0xff as UInt8, count: 1 << 22)
 
         super.init(portal: MockPortal())
     }
@@ -22,19 +22,19 @@ class MockStorageInstrument: StorageInstrument {
     override func reset() throws {
     }
 
-    override func erase(address: UInt32, length: UInt32) throws {
+    override func erase(_ address: UInt32, length: UInt32) throws {
         for index in Int(address) ..< Int(address + length) {
             memory[index] = 0xff
         }
     }
 
-    override func write(address: UInt32, data: NSData) throws {
-        var array = [UInt8](count: data.length, repeatedValue: 0)
-        data.getBytes(&array, length: data.length)
-        memory.replaceRange(Int(address) ..< Int(address) + data.length, with: array)
+    override func write(_ address: UInt32, data: Data) throws {
+        var array = [UInt8](repeating: 0, count: data.count)
+        (data as NSData).getBytes(&array, length: data.count)
+        memory.replaceSubrange(Int(address) ..< Int(address) + data.count, with: array)
     }
 
-    override func read(address: UInt32, length: UInt32, sublength: UInt32 = 0, substride: UInt32 = 0) throws -> NSData {
+    override func read(_ address: UInt32, length: UInt32, sublength: UInt32 = 0, substride: UInt32 = 0) throws -> Data {
         let address: Int = Int(address)
         let length: Int = Int(length)
         var sublength: Int = Int(sublength)
@@ -48,16 +48,16 @@ class MockStorageInstrument: StorageInstrument {
         let data = NSMutableData()
         while amount < length {
             let subdata = Array(memory[index ..< index + sublength])
-            data.appendBytes(subdata, length: subdata.count)
+            data.append(subdata, length: subdata.count)
             amount += sublength
             index += substride
         }
-        return data
+        return data as Data
     }
 
-    override func hash(address: UInt32, length: UInt32) throws -> NSData {
+    override func hash(_ address: UInt32, length: UInt32) throws -> Data {
         let subarray = Array(memory[Int(address) ..< Int(address + length)])
-        let subdata = NSData(bytes: subarray, length: subarray.count)
+        let subdata = Data(bytes: UnsafePointer<UInt8>(subarray), count: subarray.count)
         return FDCryptography.sha1(subdata)
     }
 

@@ -22,7 +22,7 @@ class VoltageInstrumentTests: XCTestCase {
         portal.assertDidWrite()
 
         let voltage = Float32(0.1)
-        let binary = Binary(byteOrder: .LittleEndian)
+        let binary = Binary(byteOrder: .littleEndian)
         binary.write(voltage)
         portal.queueRead(UInt64(1), content: binary.data)
         let conversion = try voltageInstrument.convert()

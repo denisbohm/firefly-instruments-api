@@ -9,25 +9,25 @@
 import Foundation
 import ARMSerialWireDebug
 
-public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
+open class InstrumentManager : NSObject, USBHIDDeviceDelegate {
 
     static let apiTypeResetInstruments = UInt64(0)
     static let apiTypeDiscoverInstruments = UInt64(1)
     static let apiTypeEcho = UInt64(2)
 
-    public enum Error: ErrorType {
-        case InvalidIdentifier(String)
-        case InvalidType(String)
-        case PortalNotFound(UInt64)
-        case InvalidInputReport(ErrorType)
+    public enum LocalError: Error {
+        case invalidIdentifier(String)
+        case invalidType(String)
+        case portalNotFound(UInt64)
+        indirect case invalidInputReport(Error)
     }
 
     public typealias ErrorHandler = (Error) -> (Void)
 
     typealias InstrumentConstructor = (Portal) -> (InternalInstrument)
 
-    public let device: USBHIDDevice
-    public var errorHandler: ErrorHandler?
+    open let device: USBHIDDevice
+    open var errorHandler: ErrorHandler?
 
     let constructorByCategory: [String: InstrumentConstructor]
     let detour = Detour()
@@ -54,17 +54,17 @@ public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
         device.delegate = self
     }
 
-    public func resetInstruments() throws {
+    open func resetInstruments() throws {
         portal.send(InstrumentManager.apiTypeResetInstruments)
         try portal.write()
     }
 
-    public func discoverInstruments() throws {
+    open func discoverInstruments() throws {
         var instruments = [String : InternalInstrument]()
         portal.send(InstrumentManager.apiTypeDiscoverInstruments)
         let data = try portal.read(type: InstrumentManager.apiTypeDiscoverInstruments)
         var countByCategory = [String : Int]()
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let count = try binary.readVarUInt()
         for _ in 1 ... count {
             let category: String = try binary.read()
@@ -82,17 +82,17 @@ public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
         self.instruments = instruments
     }
 
-    public func getInstrument<T>(identifier: String) throws -> T {
+    open func getInstrument<T>(_ identifier: String) throws -> T {
         guard let instrument = instruments[identifier] else {
-            throw Error.InvalidIdentifier(identifier)
+            throw LocalError.invalidIdentifier(identifier)
         }
         guard let t = instrument as? T else {
-            throw Error.InvalidType(identifier)
+            throw LocalError.invalidType(identifier)
         }
         return t
     }
 
-    func getPortal(identifier: UInt64) -> Portal? {
+    func getPortal(_ identifier: UInt64) -> Portal? {
         if identifier == 0 {
             return portal
         }
@@ -104,28 +104,28 @@ public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
         return nil
     }
 
-    func notifyErrorHandler(error: Error) {
+    func notifyErrorHandler(_ error: Error) {
         if let errorHandler = errorHandler {
             errorHandler(error)
         }
     }
 
-    @objc public func usbHidDevice(device: USBHIDDevice, inputReport data: NSData) {
+    @objc open func usbHidDevice(_ device: USBHIDDevice, inputReport data: Data) {
         do {
             try detour.event(data)
             switch detour.state {
-            case .Success:
-                let binary = Binary(data: detour.data, byteOrder: .LittleEndian)
+            case .success:
+                let binary = Binary(data: detour.data, byteOrder: .littleEndian)
                 let identifier = try binary.readVarUInt()
                 let type = try binary.readVarUInt()
                 let length = try binary.readVarUInt()
                 let content = binary.remainingData
-                if content.length != Int(length) {
+                if content.count != Int(length) {
                     NSLog("invalid content length")
                 }
                 detour.clear()
                 guard let portal = getPortal(identifier) else {
-                    notifyErrorHandler(Error.PortalNotFound(identifier))
+                    notifyErrorHandler(LocalError.portalNotFound(identifier))
                     break
                 }
                 portal.received(type, content: content)
@@ -133,7 +133,7 @@ public class InstrumentManager : NSObject, USBHIDDeviceDelegate {
                 break
             }
         } catch let error {
-            notifyErrorHandler(Error.InvalidInputReport(error))
+            notifyErrorHandler(LocalError.invalidInputReport(error))
             detour.clear()
         }
     }

@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class ColorInstrument: InternalInstrument {
+open class ColorInstrument: InternalInstrument {
 
     public struct Conversion {
 
@@ -85,20 +85,20 @@ public class ColorInstrument: InternalInstrument {
         self.portal = portal
     }
 
-    public var identifier: UInt64 { get { return portal.identifier } }
+    open var identifier: UInt64 { get { return portal.identifier } }
 
-    public func reset() throws {
+    open func reset() throws {
         portal.send(ColorInstrument.apiTypeReset)
         try portal.write()
     }
 
-    public func convert(integrationTime integrationTime: Float32 = 0.6144, gain: Float32 = 1) throws -> Conversion {
-        let arguments = Binary(byteOrder: .LittleEndian)
+    open func convert(integrationTime: Float32 = 0.6144, gain: Float32 = 1) throws -> Conversion {
+        let arguments = Binary(byteOrder: .littleEndian)
         arguments.write(integrationTime)
         arguments.write(gain)
         portal.send(ColorInstrument.apiTypeConvert, content: arguments.data)
         let data = try portal.read(type: ColorInstrument.apiTypeConvert)
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let c: Float32 = try binary.read()
         let r: Float32 = try binary.read()
         let g: Float32 = try binary.read()

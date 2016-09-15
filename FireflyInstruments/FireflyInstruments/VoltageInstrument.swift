@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class VoltageInstrument: InternalInstrument {
+open class VoltageInstrument: InternalInstrument {
 
     public struct Conversion {
         public let voltage: Float32
@@ -23,17 +23,17 @@ public class VoltageInstrument: InternalInstrument {
         self.portal = portal
     }
 
-    public var identifier: UInt64 { get { return portal.identifier } }
+    open var identifier: UInt64 { get { return portal.identifier } }
 
-    public func reset() throws {
+    open func reset() throws {
         portal.send(VoltageInstrument.apiTypeReset)
         try portal.write()
     }
 
-    public func convert() throws -> Conversion {
+    open func convert() throws -> Conversion {
         portal.send(VoltageInstrument.apiTypeConvertVoltage)
         let data = try portal.read(type: VoltageInstrument.apiTypeConvertVoltage)
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let voltage: Float32 = try binary.read()
         return Conversion(voltage: voltage)
     }

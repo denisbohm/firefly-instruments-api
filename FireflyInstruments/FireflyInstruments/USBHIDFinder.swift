@@ -8,17 +8,17 @@
 
 import Foundation
 
-public class USBHIDFinder : NSObject, USBHIDMonitorDelegate {
+open class USBHIDFinder : NSObject, USBHIDMonitorDelegate {
 
-    enum Error: ErrorType {
-        case Timeout
+    enum LocalError: Error {
+        case timeout
     }
 
     let matcher: USBHIDMonitorMatcher
     var monitor: USBHIDMonitor? = nil
     let condition = NSCondition()
     var usbDevices = [USBHIDDevice]()
-    public var timeout: NSTimeInterval = 10.0
+    open var timeout: TimeInterval = 10.0
 
     public init(name: String, vid: UInt16, pid: UInt16) {
         matcher = USBHIDMonitorMatcher("Firefly Instrument", vid: 0x0483, pid: 0x5710)
@@ -28,29 +28,29 @@ public class USBHIDFinder : NSObject, USBHIDMonitorDelegate {
         stop()
     }
 
-    public func usbHidMonitor(usbMonitor: USBHIDMonitor, deviceAdded usbDevice: USBHIDDevice) {
+    open func usbHidMonitor(_ usbMonitor: USBHIDMonitor, deviceAdded usbDevice: USBHIDDevice) {
         condition.lock()
         defer {
             condition.broadcast()
             condition.unlock()
         }
-        if usbDevices.indexOf(usbDevice) == nil {
+        if usbDevices.index(of: usbDevice) == nil {
             usbDevices.append(usbDevice)
         }
     }
 
-    public func usbHidMonitor(usbMonitor: USBHIDMonitor, deviceRemoved usbDevice: USBHIDDevice) {
+    open func usbHidMonitor(_ usbMonitor: USBHIDMonitor, deviceRemoved usbDevice: USBHIDDevice) {
         condition.lock()
         defer {
             condition.broadcast()
             condition.unlock()
         }
-        if let index = usbDevices.indexOf(usbDevice) {
-            usbDevices.removeAtIndex(index)
+        if let index = usbDevices.index(of: usbDevice) {
+            usbDevices.remove(at: index)
         }
     }
 
-    public func find() throws -> USBHIDDevice {
+    open func find() throws -> USBHIDDevice {
         if monitor == nil {
             let monitor = USBHIDMonitor([matcher])
             monitor.delegate = self
@@ -63,16 +63,16 @@ public class USBHIDFinder : NSObject, USBHIDMonitorDelegate {
         }
         var usbDevice = usbDevices.first
         if usbDevice == nil {
-            condition.waitUntilDate(NSDate(timeIntervalSinceNow: timeout))
+            condition.wait(until: Date(timeIntervalSinceNow: timeout))
             usbDevice = usbDevices.first
         }
         if usbDevice == nil {
-            throw Error.Timeout
+            throw LocalError.timeout
         }
         return usbDevice!
     }
 
-    public func stop() {
+    open func stop() {
         if let monitor = monitor {
             monitor.stop()
             self.monitor = nil

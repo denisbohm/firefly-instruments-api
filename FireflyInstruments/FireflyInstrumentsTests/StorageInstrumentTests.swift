@@ -24,12 +24,12 @@ class StorageInstrumentTests: XCTestCase {
         let address = UInt32(9)
         let length = UInt32(1)
         let bytes = [1] as [UInt8]
-        let data = NSData(bytes: bytes, length: bytes.count)
+        let data = Data(bytes: UnsafePointer<UInt8>(bytes), count: bytes.count)
         let hashBytes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 ] as [UInt8]
-        let hash = NSData(bytes: hashBytes, length: hashBytes.count)
+        let hash = Data(bytes: UnsafePointer<UInt8>(hashBytes), count: hashBytes.count)
 
         do {
-            let arguments = Binary(byteOrder: .LittleEndian)
+            let arguments = Binary(byteOrder: .littleEndian)
             arguments.writeVarUInt(UInt64(address))
             arguments.writeVarUInt(UInt64(length))
             try storageInstrument.erase(address, length: length)
@@ -37,7 +37,7 @@ class StorageInstrumentTests: XCTestCase {
         }
 
         do {
-            let arguments = Binary(byteOrder: .LittleEndian)
+            let arguments = Binary(byteOrder: .littleEndian)
             arguments.writeVarUInt(UInt64(address))
             arguments.writeVarUInt(UInt64(length))
             arguments.write(data)
@@ -48,14 +48,14 @@ class StorageInstrumentTests: XCTestCase {
         do {
             portal.queueRead(UInt64(3), content: data)
 
-            let arguments = Binary(byteOrder: .LittleEndian)
+            let arguments = Binary(byteOrder: .littleEndian)
             arguments.writeVarUInt(UInt64(address))
             arguments.writeVarUInt(UInt64(length))
             let sublength: UInt32 = 1
             arguments.writeVarUInt(UInt64(sublength))
             let substride: UInt32 = 4096
             arguments.writeVarUInt(UInt64(substride))
-            let result = try storageInstrument.read(address, length: UInt32(data.length), sublength: sublength, substride: substride)
+            let result = try storageInstrument.read(address, length: UInt32(data.count), sublength: sublength, substride: substride)
             portal.assertDidSend(3, content: arguments.data)
             portal.assertDidReadType(type: 3)
             XCTAssertEqual(data, result)
@@ -64,10 +64,10 @@ class StorageInstrumentTests: XCTestCase {
         do {
             portal.queueRead(UInt64(4), content: hash)
 
-            let arguments = Binary(byteOrder: .LittleEndian)
+            let arguments = Binary(byteOrder: .littleEndian)
             arguments.writeVarUInt(UInt64(address))
             arguments.writeVarUInt(UInt64(length))
-            let result = try storageInstrument.hash(address, length: UInt32(data.length))
+            let result = try storageInstrument.hash(address, length: UInt32(data.count))
             portal.assertDidSend(4, content: arguments.data)
             portal.assertDidReadType(type: 4)
             XCTAssertEqual(hash, result)

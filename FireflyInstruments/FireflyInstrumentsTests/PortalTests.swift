@@ -15,8 +15,7 @@ class PortalTests: XCTestCase {
         let device = MockUSBHIDDevice()
         let instrumentPortal = InstrumentPortal(device: device, identifier: 1)
 
-        let bytes = [1, 2, 3] as [UInt8]
-        let data = NSData(bytes: bytes, length: bytes.count)
+        let data = Data(bytes: [1, 2, 3])
         instrumentPortal.send(0x20, content: data)
         try instrumentPortal.write()
         device.assertDidSetReport(0, 6, 1, 0x20, 3, 1, 2, 3)
@@ -26,28 +25,28 @@ class PortalTests: XCTestCase {
         let device = MockUSBHIDDevice()
         let instrumentPortal = InstrumentPortal(device: device, identifier: 1)
 
-        instrumentPortal.received(UInt64(1), content: NSData())
+        instrumentPortal.received(UInt64(1), content: Data())
         let empty = try instrumentPortal.read(type: UInt64(1))
-        XCTAssert(empty.length == 0)
+        XCTAssert(empty.count == 0)
 
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-            NSThread.sleepForTimeInterval(0.1)
-            instrumentPortal.received(UInt64(1), content: NSMutableData(length: 1)!)
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            Thread.sleep(forTimeInterval: 0.1)
+            instrumentPortal.received(UInt64(1), content: NSMutableData(length: 1)! as Data)
         }
         let one = try instrumentPortal.read(type: UInt64(1))
-        XCTAssert(one.length == 1)
+        XCTAssert(one.count == 1)
 
-        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
-            NSThread.sleepForTimeInterval(0.1)
-            instrumentPortal.received(UInt64(1), content: NSMutableData(length: 2)!)
+        DispatchQueue.global(qos: DispatchQoS.QoSClass.default).async {
+            Thread.sleep(forTimeInterval: 0.1)
+            instrumentPortal.received(UInt64(1), content: NSMutableData(length: 2)! as Data)
         }
         let two = try instrumentPortal.read(length: 2)
-        XCTAssert(two.length == 2)
+        XCTAssert(two.count == 2)
 
         instrumentPortal.timeout = 0.001
         XCTAssertThrowsError(try instrumentPortal.read(type: UInt64(1)))
 
-        instrumentPortal.received(UInt64(2), content: NSData())
+        instrumentPortal.received(UInt64(2), content: Data())
         XCTAssertThrowsError(try instrumentPortal.read(type: UInt64(1)))
     }
     

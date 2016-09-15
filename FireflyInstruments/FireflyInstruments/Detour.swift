@@ -8,79 +8,79 @@
 
 import Foundation
 
-public class Detour {
+open class Detour {
 
     public enum State {
-        case Clear
-        case Intermediate
-        case Success
+        case clear
+        case intermediate
+        case success
     }
 
-    public enum Error: ErrorType {
-        case UnexpectedStart
-        case OutOfSequence(UInt64, UInt64)
+    public enum LocalError: Error {
+        case unexpectedStart
+        case outOfSequence(UInt64, UInt64)
     }
 
-    public private(set) var state = State.Clear
-    private let buffer = NSMutableData()
-    private var length: Int = 0
-    private var sequenceNumber: UInt64 = 0
-    private var startDate: NSDate? = nil
-    private var endDate: NSDate? = nil
+    open fileprivate(set) var state = State.clear
+    fileprivate var buffer = Data()
+    fileprivate var length: Int = 0
+    fileprivate var sequenceNumber: UInt64 = 0
+    fileprivate var startDate: Date? = nil
+    fileprivate var endDate: Date? = nil
 
-    public var data: NSData {
+    open var data: Data {
         get {
-            return NSData(data: buffer)
+            return buffer
         }
     }
 
     public init() {
     }
 
-    public func clear() {
-        state = .Clear
+    open func clear() {
+        state = .clear
         length = 0
         sequenceNumber = 0
-        buffer.length = 0
+        buffer.count = 0
     }
 
-    public func event(data: NSData) throws {
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+    open func event(_ data: Data) throws {
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let eventSequenceNumber = try binary.readVarUInt()
         if eventSequenceNumber == 0 {
             if sequenceNumber != 0 {
-                throw Error.UnexpectedStart
+                throw LocalError.unexpectedStart
             }
             try start(binary.remainingData)
         } else {
             if eventSequenceNumber != sequenceNumber {
-                throw Error.OutOfSequence(eventSequenceNumber, sequenceNumber)
+                throw LocalError.outOfSequence(eventSequenceNumber, sequenceNumber)
             }
             append(binary.remainingData)
         }
     }
     
-    private func start(data: NSData) throws {
-        startDate = NSDate()
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
-        state = .Intermediate;
+    fileprivate func start(_ data: Data) throws {
+        startDate = Date()
+        let binary = Binary(data: data, byteOrder: .littleEndian)
+        state = .intermediate;
         length = Int(try binary.readVarUInt())
         sequenceNumber = 0;
-        buffer.length = 0;
+        buffer.count = 0;
         append(binary.remainingData)
     }
 
-    private func append(data: NSData) {
-        let total = buffer.length + data.length
+    fileprivate func append(_ data: Data) {
+        let total = buffer.count + data.count
         if total <= length {
-            buffer.appendData(data)
+            buffer.append(data)
         } else {
             // silently ignore any extra data at the end of the transfer (due to fixed size transport) -denis
-            buffer.appendData(data.subdataWithRange(NSMakeRange(0, length - buffer.length)))
+            buffer.append(data.subdata(in: 0 ..< length - buffer.count))
         }
-        if buffer.length >= length {
-            endDate = NSDate()
-            state = .Success
+        if buffer.count >= length {
+            endDate = Date()
+            state = .success
 
             /*
             let duration = endDate!.timeIntervalSinceDate(startDate!)

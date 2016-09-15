@@ -13,13 +13,13 @@ import XCTest
 class MockUSBHIDDevice: USBHIDDevice {
 
     enum Call {
-        case setReport(NSData)
+        case setReport(Data)
     }
 
     var calls = [Call]()
-    var inputReports = [NSData]()
+    var inputReports = [Data]()
 
-    func assertDidSetReport(content: UInt8...) {
+    func assertDidSetReport(_ content: UInt8...) {
         XCTAssert(calls.count > 0)
         guard let call = calls.last else {
             return
@@ -28,11 +28,11 @@ class MockUSBHIDDevice: USBHIDDevice {
             XCTFail("unexpected func called")
             return
         }
-        let data = NSData(bytes: content, length: content.count)
-        XCTAssert(callData.isEqualToData(data))
+        let data = Data(bytes: UnsafePointer<UInt8>(content), count: content.count)
+        XCTAssert(callData == data)
     }
 
-    @objc override func setReport(data: NSData) throws {
+    @objc override func setReport(_ data: Data) throws {
         calls.append(.setReport(data))
 
         for inputReport in inputReports {
@@ -40,7 +40,7 @@ class MockUSBHIDDevice: USBHIDDevice {
         }
     }
 
-    func queue(inputReport: NSData) {
+    func queue(_ inputReport: Data) {
         inputReports.append(inputReport)
     }
 

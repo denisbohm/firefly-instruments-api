@@ -29,7 +29,7 @@ class FireflySystemTests: XCTestCase {
         XCTAssertNil(entry)
     }
 
-    func checkList(fileSystem: FileSystem, names: [String]) {
+    func checkList(_ fileSystem: FileSystem, names: [String]) {
         let entries = fileSystem.list()
         XCTAssertEqual(entries.count, names.count)
         if entries.count < names.count {
@@ -48,13 +48,13 @@ class FireflySystemTests: XCTestCase {
         try fileSystem.inspect()
         let name = "File"
         let bytes = [1, 2, 3, 4] as [UInt8]
-        let date = NSDate()
-        let data = NSData(bytes: bytes, length: bytes.count)
+        let date = Date()
+        let data = Data(bytes: UnsafePointer<UInt8>(bytes), count: bytes.count)
         let hash = FDCryptography.sha1(data)
         let entry = try fileSystem.write(name, data: data)
         XCTAssertEqual(entry.name, name)
         XCTAssertEqual(entry.length, UInt32(bytes.count))
-        XCTAssert(entry.date.isGreaterThanOrEqualTo(date))
+        XCTAssert(entry.date >= date)
         XCTAssertEqual(entry.hash, hash)
         XCTAssertEqual(entry.address, 4096)
         checkList(fileSystem, names: [name])
@@ -83,7 +83,7 @@ class FireflySystemTests: XCTestCase {
 
         var names = [String]()
         let bytes = [1, 2, 3, 4] as [UInt8]
-        let data = NSData(bytes: bytes, length: bytes.count)
+        let data = Data(bytes: UnsafePointer<UInt8>(bytes), count: bytes.count)
         for index in 0 ..< count {
             let name = "\(index)"
             names.append(name)
@@ -92,8 +92,7 @@ class FireflySystemTests: XCTestCase {
         checkList(fileSystem, names: names)
 
         let name = "\(count)"
-        names.removeFirst()
-        names.append(name)
+        names[0] = name
         let entry = try fileSystem.write(name, data: data)
         checkList(fileSystem, names: names)
         XCTAssertEqual(entry.address, 4096)

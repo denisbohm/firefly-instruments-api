@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class CurrentInstrument: InternalInstrument {
+open class CurrentInstrument: InternalInstrument {
 
     public struct Conversion {
         public let current: Float32
@@ -23,17 +23,17 @@ public class CurrentInstrument: InternalInstrument {
         self.portal = portal
     }
 
-    public var identifier: UInt64 { get { return portal.identifier } }
+    open var identifier: UInt64 { get { return portal.identifier } }
 
-    public func reset() throws {
+    open func reset() throws {
         portal.send(CurrentInstrument.apiTypeReset)
         try portal.write()
     }
 
-    public func convert() throws -> Conversion {
+    open func convert() throws -> Conversion {
         portal.send(CurrentInstrument.apiTypeConvertCurrent)
         let data = try portal.read(type: CurrentInstrument.apiTypeConvertCurrent)
-        let binary = Binary(data: data, byteOrder: .LittleEndian)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
         let current: Float32 = try binary.read()
         return Conversion(current: current)
     }

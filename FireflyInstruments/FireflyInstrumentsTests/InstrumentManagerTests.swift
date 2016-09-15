@@ -12,10 +12,10 @@ import XCTest
 
 class InstrumentManagerTests: XCTestCase {
 
-    func queueDiscovery(device: MockUSBHIDDevice, category: String) {
-        let binary = Binary(byteOrder: .LittleEndian)
+    func queueDiscovery(_ device: MockUSBHIDDevice, category: String) {
+        let binary = Binary(byteOrder: .littleEndian)
         binary.writeVarUInt(0) // ordinal
-        let categoryLength = category.lengthOfBytesUsingEncoding(NSUTF8StringEncoding)
+        let categoryLength = category.lengthOfBytes(using: String.Encoding.utf8)
         binary.writeVarUInt(UInt64(6 + categoryLength)) // length
         binary.writeVarUInt(0) // instrument identifier
         binary.writeVarUInt(1) // type
@@ -26,7 +26,7 @@ class InstrumentManagerTests: XCTestCase {
         device.queue(binary.data)
     }
 
-    func getInstrument<T>(category: String, _: T.Type) throws -> T {
+    func getInstrument<T>(_ category: String, _: T.Type) throws -> T {
         let device = MockUSBHIDDevice()
         let instrumentManager = InstrumentManager(device: device)
         queueDiscovery(device, category: category)
@@ -35,14 +35,14 @@ class InstrumentManagerTests: XCTestCase {
     }
 
     func testGetInstruments() throws {
-        try getInstrument("Battery", BatteryInstrument.self)
-        try getInstrument("Color", ColorInstrument.self)
-        try getInstrument("Current", CurrentInstrument.self)
-        try getInstrument("Indicator", IndicatorInstrument.self)
-        try getInstrument("Relay", RelayInstrument.self)
-        try getInstrument("SerialWire", SerialWireInstrument.self)
-        try getInstrument("Storage", StorageInstrument.self)
-        try getInstrument("Voltage", VoltageInstrument.self)
+        let _ = try getInstrument("Battery", BatteryInstrument.self)
+        let _ = try getInstrument("Color", ColorInstrument.self)
+        let _ = try getInstrument("Current", CurrentInstrument.self)
+        let _ = try getInstrument("Indicator", IndicatorInstrument.self)
+        let _ = try getInstrument("Relay", RelayInstrument.self)
+        let _ = try getInstrument("SerialWire", SerialWireInstrument.self)
+        let _ = try getInstrument("Storage", StorageInstrument.self)
+        let _ = try getInstrument("Voltage", VoltageInstrument.self)
     }
 
     func testGetUnknownPortal() throws {
@@ -87,12 +87,12 @@ class InstrumentManagerTests: XCTestCase {
         device.assertDidSetReport(0, 5, 1, 1, 2, 0b001, 0b001)
 
         serialWire.portal.timeout = 0.001
-        XCTAssertThrowsError(try serialWire.readWithByteCount(1))
+        XCTAssertThrowsError(try serialWire.read(withByteCount: 1))
 
         let empty = try serialWire.read()
-        XCTAssert(empty.length == 0)
+        XCTAssert(empty.count == 0)
 
-        var binary = Binary(byteOrder: .LittleEndian)
+        var binary = Binary(byteOrder: .littleEndian)
         binary.writeVarUInt(0) // detour sequence number
         binary.writeVarUInt(5) // detour data length
         binary.writeVarUInt(serialWire.portal.identifier)
@@ -103,45 +103,45 @@ class InstrumentManagerTests: XCTestCase {
         let data = binary.data
         instrumentManager.usbHidDevice(device, inputReport: data)
         let two = try serialWire.read()
-        XCTAssert(two.length == 2)
-        var remaining = try serialWire.read().length
+        XCTAssert(two.count == 2)
+        var remaining = try serialWire.read().count
         XCTAssert(remaining == 0)
 
         instrumentManager.usbHidDevice(device, inputReport: data)
-        let one = try serialWire.readWithByteCount(1)
-        XCTAssert(one.length == 1)
-        remaining = try serialWire.read().length
+        let one = try serialWire.read(withByteCount: 1)
+        XCTAssert(one.count == 1)
+        remaining = try serialWire.read().count
         XCTAssert(remaining == 1)
 
-        var sequenceNumber: UInt8 = 1
-        let outOfSequenceData = NSData(bytes: &sequenceNumber, length: 1)
-        var lastError: InstrumentManager.Error? = nil
+        let sequenceNumber: UInt8 = 1
+        let outOfSequenceData = Data([sequenceNumber])
+        var lastError: Error? = nil
         instrumentManager.errorHandler = { error in
             lastError = error
         }
         instrumentManager.usbHidDevice(device, inputReport: outOfSequenceData)
         XCTAssert(lastError != nil)
         let bytes = [0, 2, 80, 1] as [UInt8]
-        let invalidInstrumentIdentiferData = NSData(bytes: bytes, length: bytes.count)
+        let invalidInstrumentIdentiferData = Data(bytes: UnsafePointer<UInt8>(bytes), count: bytes.count)
         lastError = nil
         instrumentManager.usbHidDevice(device, inputReport: invalidInstrumentIdentiferData)
         XCTAssert(lastError != nil)
-        remaining = try serialWire.read().length
+        remaining = try serialWire.read().count
         XCTAssert(remaining == 0)
 
-        binary = Binary(byteOrder: .LittleEndian)
+        binary = Binary(byteOrder: .littleEndian)
         binary.writeVarUInt(0) // detour sequence number
         binary.writeVarUInt(4) // detour data length
         binary.writeVarUInt(serialWire.portal.identifier)
         binary.writeVarUInt(1) // type
         binary.writeVarUInt(1) // length
         instrumentManager.usbHidDevice(device, inputReport: binary.data)
-        binary = Binary(byteOrder: .LittleEndian)
+        binary = Binary(byteOrder: .littleEndian)
         binary.writeVarUInt(1) // detour sequence number
         binary.write(UInt8(7)) // content
         instrumentManager.usbHidDevice(device, inputReport: binary.data)
         let combined = try serialWire.read()
-        XCTAssert(combined.length == 1)
+        XCTAssert(combined.count == 1)
     }
 
 }

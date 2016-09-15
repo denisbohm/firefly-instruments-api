@@ -48,13 +48,13 @@ class SerialWireInstrumentTests: XCTestCase {
         portal.assertDidSend(0x03, content: 0, 0b00000001)
         
         let bytes = [1, 2, 3] as [UInt8]
-        serialWireInstrument.shiftOutData(NSData(bytes: bytes, length: bytes.count))
+        serialWireInstrument.shiftOutData(Data(bytes))
         portal.assertDidSend(0x04, content: 2, 1, 2, 3)
 
-        serialWireInstrument.shiftInBits(2)
+        serialWireInstrument.shift(inBits: 2)
         portal.assertDidSend(0x05, content: 1)
 
-        serialWireInstrument.shiftInData(2)
+        serialWireInstrument.shift(inData: 2)
         portal.assertDidSend(0x06, content: 1)
 
         portal.queueRead(2, content: 1)
@@ -64,12 +64,12 @@ class SerialWireInstrumentTests: XCTestCase {
         XCTAssert(value)
 
         portal.queueRead(10, content: 0)
-        try serialWireInstrument.writeMemory(9, data: NSData(bytes: bytes, length: bytes.count))
+        try serialWireInstrument.writeMemory(9, data: Data(bytes))
         portal.assertDidSend(10, content: 9, 3, 1, 2, 3)
         portal.assertDidReadType(type: 10)
 
         portal.queueRead(10, content: 1)
-        XCTAssertThrowsError(try serialWireInstrument.writeMemory(9, data: NSData(bytes: bytes, length: bytes.count)))
+        XCTAssertThrowsError(try serialWireInstrument.writeMemory(9, data: Data(bytes)))
         portal.assertDidSend(10, content: 9, 3, 1, 2, 3)
         portal.assertDidReadType(type: 10)
 
@@ -77,7 +77,7 @@ class SerialWireInstrumentTests: XCTestCase {
         let memory = try serialWireInstrument.readMemory(9, length: UInt32(bytes.count))
         portal.assertDidSend(11, content: 9, 3)
         portal.assertDidReadType(type: 11)
-        XCTAssert(memory.isEqualToData(NSData(bytes: bytes, length: bytes.count)))
+        XCTAssertEqual(memory, Data(bytes))
 
         portal.queueRead(11, content: 1)
         XCTAssertThrowsError(try serialWireInstrument.readMemory(9, length: UInt32(bytes.count)))
@@ -121,30 +121,30 @@ class SerialWireInstrumentTests: XCTestCase {
         let portal = MockPortal()
         let serialWireInstrument = SerialWireInstrument(portal: portal)
 
-        try serialWireInstrument.read()
+        let _ = try serialWireInstrument.read()
         portal.assertDidRead()
 
-        try serialWireInstrument.readWithByteCount(1)
+        let _ = try serialWireInstrument.read(withByteCount: 1)
         portal.assertDidSend(7)
         portal.assertDidWrite()
         portal.assertDidReadWithLength(1)
     }
 
-    class Thread: NSThread {
+    class TestThread: Foundation.Thread {
 
         let condition = NSCondition()
-        let block: () throws -> ()
-        var error: ErrorType? = nil
+        let closure: () throws -> ()
+        var error: Error? = nil
         var done = false
 
-        init(block: () throws -> ()) {
-            self.block = block
+        init(closure: @escaping () throws -> ()) {
+            self.closure = closure
         }
 
         override func main() {
             cancel()
             do {
-                try block()
+                try closure()
             } catch (let error) {
                 self.error = error
             }
@@ -158,8 +158,8 @@ class SerialWireInstrumentTests: XCTestCase {
 
         func run() {
             start()
-            let deadline = NSDate(timeIntervalSinceNow: 10)
-            while deadline.isGreaterThan(NSDate()) {
+            let deadline = Date(timeIntervalSinceNow: 10)
+            while (deadline as NSDate).isGreaterThan(Date()) {
                 condition.lock()
                 defer {
                     condition.unlock()
@@ -174,8 +174,8 @@ class SerialWireInstrumentTests: XCTestCase {
     
     func testReadCancel() {
         let portal = InstrumentPortal(device: USBHIDDevice(), identifier: 0)
-        portal.send(0, content: NSData())
-        let thread = Thread() {
+        portal.send(0, content: Data())
+        let thread = TestThread() {
             try portal.write()
         }
         thread.run()
@@ -188,7 +188,7 @@ class SerialWireInstrumentTests: XCTestCase {
 
         var detect: ObjCBool = true
         try serialWireInstrument.getDetect(&detect)
-        XCTAssertFalse(detect)
+        XCTAssertFalse(detect.boolValue)
     }
 
 }

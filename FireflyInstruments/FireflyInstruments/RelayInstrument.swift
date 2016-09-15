@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class RelayInstrument: InternalInstrument {
+open class RelayInstrument: InternalInstrument {
 
     static let apiTypeReset = UInt64(0)
     static let apiTypeSetState = UInt64(1)
@@ -19,14 +19,14 @@ public class RelayInstrument: InternalInstrument {
         self.portal = portal
     }
 
-    public var identifier: UInt64 { get { return portal.identifier } }
+    open var identifier: UInt64 { get { return portal.identifier } }
 
-    public func reset() throws {
+    open func reset() throws {
         portal.send(RelayInstrument.apiTypeReset)
         try portal.write()
     }
 
-    public func set(value: Bool) throws {
+    open func set(_ value: Bool) throws {
         portal.send(RelayInstrument.apiTypeSetState, content: value ? 1 : 0)
         try portal.write()
     }

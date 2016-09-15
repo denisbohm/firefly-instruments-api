@@ -10,22 +10,22 @@ import Foundation
 
 class InstrumentPortal: Portal {
 
-    enum Error: ErrorType {
-        case Timeout
-        case Cancelled
-        case UnexpectedType(type: UInt64, packet: Packet)
+    enum LocalError: Error {
+        case timeout
+        case cancelled
+        case unexpectedType(type: UInt64, packet: Packet)
     }
 
     struct Packet {
         let type: UInt64
-        let content: NSData
+        let content: Data
     }
 
     let device: USBHIDDevice
     let identifier: UInt64
     var writeQueue = [Packet]()
     var readQueue = [Packet]()
-    var timeout: NSTimeInterval = 10.0
+    var timeout: TimeInterval = 10.0
     let readCondition = NSCondition()
     let readData = NSMutableData()
 
@@ -34,7 +34,7 @@ class InstrumentPortal: Portal {
         self.identifier = identifier
     }
 
-    func send(type: UInt64, content: NSData) {
+    func send(_ type: UInt64, content: Data) {
         writeQueue.append(Packet(type: type, content: content))
     }
 
@@ -43,25 +43,25 @@ class InstrumentPortal: Portal {
             return
         }
         
-        let binary = Binary(byteOrder: .LittleEndian)
+        let binary = Binary(byteOrder: .littleEndian)
         while !writeQueue.isEmpty {
             let packet = writeQueue.first!
             binary.writeVarUInt(identifier)
             binary.writeVarUInt(packet.type)
-            binary.writeVarUInt(UInt64(packet.content.length))
+            binary.writeVarUInt(UInt64(packet.content.count))
             binary.write(packet.content)
             writeQueue.removeFirst()
         }
         let detourSource = DetourSource(size: 64, data: binary.data)
         while let subdata = detourSource.next() {
-            if NSThread.currentThread().cancelled {
-                throw Error.Cancelled
+            if Thread.current.isCancelled {
+                throw LocalError.cancelled
             }
             try device.setReport(subdata)
         }
     }
 
-    func received(type: UInt64, content: NSData) {
+    func received(_ type: UInt64, content: Data) {
         readCondition.lock()
         defer {
             readCondition.broadcast()
@@ -71,10 +71,10 @@ class InstrumentPortal: Portal {
         readQueue.append(Packet(type: type, content: content))
     }
 
-    func read(type type: UInt64) throws -> NSData {
+    func read(type: UInt64) throws -> Data {
         try write()
 
-        let deadline = NSDate(timeIntervalSinceNow: timeout)
+        let deadline = Date(timeIntervalSinceNow: timeout)
         while true {
             readCondition.lock()
             defer {
@@ -84,31 +84,31 @@ class InstrumentPortal: Portal {
 
             if let packet = readQueue.first {
                 if packet.type != type {
-                    throw Error.UnexpectedType(type: type, packet: packet)
+                    throw LocalError.unexpectedType(type: type, packet: packet)
                 }
                 readQueue.removeFirst()
                 return packet.content
             }
 
-            if (!readCondition.waitUntilDate(deadline)) {
+            if (!readCondition.wait(until: deadline)) {
                 break
             }
         }
-        throw Error.Timeout
+        throw LocalError.timeout
     }
     
     func movePacketContentFromReadQueueToData() {
         for packet in readQueue {
-            readData.appendData(packet.content)
+            readData.append(packet.content)
         }
         readQueue.removeAll()
     }
 
-    func read(length length: Int) throws -> NSData {
+    func read(length: Int) throws -> Data {
         try write()
 
         assert(length >= 0)
-        let deadline = NSDate(timeIntervalSinceNow: timeout)
+        let deadline = Date(timeIntervalSinceNow: timeout)
         while true {
             readCondition.lock()
             defer {
@@ -120,19 +120,19 @@ class InstrumentPortal: Portal {
 
             if readData.length >= length {
                 let range = NSRange(location: 0, length: length)
-                let data = readData.subdataWithRange(range)
-                readData.replaceBytesInRange(range, withBytes: nil, length: 0)
+                let data = readData.subdata(with: range)
+                readData.replaceBytes(in: range, withBytes: nil, length: 0)
                 return data
             }
 
-            if (!readCondition.waitUntilDate(deadline)) {
+            if (!readCondition.wait(until: deadline)) {
                 break
             }
         }
-        throw Error.Timeout
+        throw LocalError.timeout
     }
 
-    func read() -> NSData {
+    func read() -> Data {
         readCondition.lock()
         defer {
             readCondition.broadcast()
@@ -141,7 +141,7 @@ class InstrumentPortal: Portal {
 
         movePacketContentFromReadQueueToData()
 
-        let data = NSMutableData(data: readData)
+        let data = NSData(data: readData as Data) as Data
         readData.length = 0
         return data
     }

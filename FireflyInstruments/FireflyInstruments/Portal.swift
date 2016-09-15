@@ -11,28 +11,28 @@ import Foundation
 public protocol Portal {
 
     var identifier: UInt64 { get }
-    var timeout: NSTimeInterval { get set }
+    var timeout: TimeInterval { get set }
 
-    func send(type: UInt64, content: NSData)
+    func send(_ type: UInt64, content: Data)
     func write() throws
 
-    func received(type: UInt64, content: NSData)
+    func received(_ type: UInt64, content: Data)
 
-    func read(type type: UInt64) throws -> NSData
+    func read(type: UInt64) throws -> Data
 
     // These functions are for reading the result content as a stream of bytes.
-    func read(length length: Int) throws -> NSData
-    func read() -> NSData
+    func read(length: Int) throws -> Data
+    func read() -> Data
 
 }
 
 extension Portal {
 
-    func send(type: UInt64, content: [UInt8]) {
-        send(type, content: NSData(bytes: content, length: content.count))
+    func send(_ type: UInt64, content: [UInt8]) {
+        send(type, content: Data(bytes: content))
     }
 
-    func send(type: UInt64, content: UInt8...) {
+    func send(_ type: UInt64, content: UInt8...) {
         send(type, content: content)
     }
 

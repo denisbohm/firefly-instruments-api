@@ -25,7 +25,7 @@ class IndicatorInstrumentTests: XCTestCase {
         let green = Float32(0.2)
         let blue = Float32(0.3)
         try indicatorInstrument.set(red: red, green: green, blue: blue)
-        let binary = Binary(byteOrder: .LittleEndian)
+        let binary = Binary(byteOrder: .littleEndian)
         binary.write(red)
         binary.write(green)
         binary.write(blue)
