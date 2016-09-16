@@ -13,9 +13,11 @@ open class IndicatorInstrument: InternalInstrument {
     static let apiTypeReset = UInt64(0)
     static let apiTypeSetRGB = UInt64(1)
 
+    unowned public private(set) var instrumentManager: InstrumentManager
     var portal: Portal
 
-    public init(portal: Portal) {
+    public init(instrumentManager: InstrumentManager, portal: Portal) {
+        self.instrumentManager = instrumentManager
         self.portal = portal
     }
 

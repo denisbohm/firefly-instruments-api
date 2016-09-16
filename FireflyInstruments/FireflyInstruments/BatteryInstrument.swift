@@ -19,9 +19,11 @@ open class BatteryInstrument: InternalInstrument {
     static let apiTypeSetVoltage = UInt64(2)
     static let apiTypeSetEnabled = UInt64(3)
 
+    unowned public private(set) var instrumentManager: InstrumentManager
     var portal: Portal
 
-    public init(portal: Portal) {
+    public init(instrumentManager: InstrumentManager, portal: Portal) {
+        self.instrumentManager = instrumentManager
         self.portal = portal
     }
 

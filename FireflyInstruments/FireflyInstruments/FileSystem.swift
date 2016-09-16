@@ -25,6 +25,7 @@ open class FileSystem {
     public enum LocalError: Error {
         case invalidName(String)
         case duplicateName(String)
+        case notFound(String)
         case notEnoughSpace(name: String, length: UInt32)
     }
 
@@ -171,6 +172,13 @@ open class FileSystem {
         return nil
     }
 
+    open func read(_ name: String) throws -> Data {
+        guard let entry = get(name) else {
+            throw LocalError.notFound(name)
+        }
+        return try storageInstrument.read(entry.address, length: entry.length)
+    }
+
     func write(_ name: String, data: Data, date: Date, sector: Sector, sectorCount: Int) throws -> Entry {
         let length = UInt32(data.count)
         let hash = FDCryptography.sha1(data)!
@@ -194,18 +202,7 @@ open class FileSystem {
         try storageInstrument.write(address, data: binary.data)
 
         address += UInt32(sectorSize)
-        var sublocation = 0
-        var sublength = pageSize
-        let pageCount = (data.count + pageSize - 1) / pageSize
-        for _ in 0 ..< pageCount {
-            if (sublocation + sublength) > data.count {
-                sublength = data.count - sublocation
-            }
-            let subdata = data.subdata(in: sublocation ..< sublocation + sublength)
-            try storageInstrument.write(address, data: subdata)
-            address += UInt32(pageSize)
-            sublocation += pageSize
-        }
+        try storageInstrument.write(address, data: data)
 
         return entry
     }

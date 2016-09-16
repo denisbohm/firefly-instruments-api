@@ -10,6 +10,8 @@ import Foundation
 
 public protocol Instrument {
 
+    var instrumentManager: InstrumentManager { get }
+    
     var identifier: UInt64 { get }
 
 }

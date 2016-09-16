@@ -34,9 +34,11 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransf
     static let outputReset = 1
     static let outputDirection = 2
 
+    unowned public private(set) var instrumentManager: InstrumentManager
     var portal: Portal
 
-    public init(portal: Portal) {
+    public init(instrumentManager: InstrumentManager, portal: Portal) {
+        self.instrumentManager = instrumentManager
         self.portal = portal
     }
 
