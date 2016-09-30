@@ -12,8 +12,9 @@ import XCTest
 class BatteryInstrumentTests: XCTestCase {
 
     func testSends() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let batteryInstrument = BatteryInstrument(portal: portal)
+        let batteryInstrument = BatteryInstrument(instrumentManager: instrumentManager, portal: portal)
 
         XCTAssertEqual(batteryInstrument.identifier, 1)
 

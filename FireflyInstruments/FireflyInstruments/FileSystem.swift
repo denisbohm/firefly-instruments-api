@@ -54,7 +54,7 @@ open class FileSystem {
 
     open let storageInstrument: StorageInstrument
 
-    open var minimumSectorCount = 1 // !!! should be 64 normally
+    open var minimumSectorCount = 2 // !!! should be 64 normally
 
     open let size = 1<<22
     open let sectorSize = 1<<12
@@ -139,6 +139,7 @@ open class FileSystem {
                     continue
                 }
                 // something corrupt found, consider this sector available... -denis
+                NSLog("File System: corruption in sector \(sectorIndex)?")
             }
 
             // available

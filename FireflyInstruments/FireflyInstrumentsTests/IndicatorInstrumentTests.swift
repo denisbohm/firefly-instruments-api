@@ -12,8 +12,9 @@ import XCTest
 class IndicatorInstrumentTests: XCTestCase {
 
     func testSends() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let indicatorInstrument = IndicatorInstrument(portal: portal)
+        let indicatorInstrument = IndicatorInstrument(instrumentManager: instrumentManager, portal: portal)
 
         XCTAssertEqual(indicatorInstrument.identifier, 1)
 

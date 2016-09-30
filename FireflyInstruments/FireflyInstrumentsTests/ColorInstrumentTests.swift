@@ -12,8 +12,9 @@ import XCTest
 class ColorInstrumentTests: XCTestCase {
 
     func testSends() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let colorInstrument = ColorInstrument(portal: portal)
+        let colorInstrument = ColorInstrument(instrumentManager: instrumentManager, portal: portal)
 
         XCTAssertEqual(colorInstrument.identifier, 1)
 

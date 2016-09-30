@@ -12,8 +12,9 @@ import XCTest
 class VoltageInstrumentTests: XCTestCase {
 
     func testSends() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let voltageInstrument = VoltageInstrument(portal: portal)
+        let voltageInstrument = VoltageInstrument(instrumentManager: instrumentManager, portal: portal)
 
         XCTAssertEqual(voltageInstrument.identifier, 1)
 

@@ -12,8 +12,9 @@ import XCTest
 class CurrentInstrumentTests: XCTestCase {
 
     func testSends() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let currentInstrument = CurrentInstrument(portal: portal)
+        let currentInstrument = CurrentInstrument(instrumentManager: instrumentManager, portal: portal)
 
         XCTAssertEqual(currentInstrument.identifier, 1)
 

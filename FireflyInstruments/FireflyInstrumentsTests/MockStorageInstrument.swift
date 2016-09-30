@@ -16,7 +16,7 @@ class MockStorageInstrument: StorageInstrument {
     init() {
         memory = [UInt8](repeating: 0xff as UInt8, count: 1 << 22)
 
-        super.init(portal: MockPortal())
+        super.init(instrumentManager: MockInstrumentManager(), portal: MockPortal())
     }
 
     override func reset() throws {

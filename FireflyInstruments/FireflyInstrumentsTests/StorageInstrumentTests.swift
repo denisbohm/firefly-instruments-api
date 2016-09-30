@@ -12,8 +12,9 @@ import XCTest
 class StorageInstrumentTests: XCTestCase {
 
     func testSends() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let storageInstrument = StorageInstrument(portal: portal)
+        let storageInstrument = StorageInstrument(instrumentManager: instrumentManager, portal: portal)
 
         XCTAssertEqual(storageInstrument.identifier, 1)
 

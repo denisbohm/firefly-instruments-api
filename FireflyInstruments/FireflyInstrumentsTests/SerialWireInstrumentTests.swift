@@ -12,8 +12,9 @@ import XCTest
 class SerialWireInstrumentTests: XCTestCase {
 
     func testSends() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let serialWireInstrument = SerialWireInstrument(portal: portal)
+        let serialWireInstrument = SerialWireInstrument(instrumentManager: instrumentManager, portal: portal)
 
         XCTAssertEqual(serialWireInstrument.identifier, 1)
 
@@ -111,15 +112,17 @@ class SerialWireInstrumentTests: XCTestCase {
     }
 
     func testWrite() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let serialWireInstrument = SerialWireInstrument(portal: portal)
+        let serialWireInstrument = SerialWireInstrument(instrumentManager: instrumentManager, portal: portal)
         try serialWireInstrument.write()
         portal.assertDidWrite()
     }
 
     func testRead() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let serialWireInstrument = SerialWireInstrument(portal: portal)
+        let serialWireInstrument = SerialWireInstrument(instrumentManager: instrumentManager, portal: portal)
 
         let _ = try serialWireInstrument.read()
         portal.assertDidRead()
@@ -183,8 +186,9 @@ class SerialWireInstrumentTests: XCTestCase {
     }
 
     func testDetect() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let serialWireInstrument = SerialWireInstrument(portal: portal)
+        let serialWireInstrument = SerialWireInstrument(instrumentManager: instrumentManager, portal: portal)
 
         var detect: ObjCBool = true
         try serialWireInstrument.getDetect(&detect)

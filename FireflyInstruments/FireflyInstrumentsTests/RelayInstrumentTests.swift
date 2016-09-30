@@ -12,8 +12,9 @@ import XCTest
 class RelayInstrumentTests: XCTestCase {
 
     func testSends() throws {
+        let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()
-        let relayInstrument = RelayInstrument(portal: portal)
+        let relayInstrument = RelayInstrument(instrumentManager: instrumentManager, portal: portal)
 
         XCTAssertEqual(relayInstrument.identifier, 1)
 
