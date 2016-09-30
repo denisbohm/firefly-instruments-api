@@ -9,10 +9,13 @@
 import Foundation
 import ARMSerialWireDebug
 
-open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransfer, InternalInstrument {
+open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransport, InternalInstrument {
 
     public enum LocalError : Error {
         case memoryTransferIssue(code: UInt64, data: Data)
+        case unknownTransferType(type: FDSerialWireDebugTransferType)
+        case transferIssue(code: UInt64)
+        case transferMismatch
     }
 
     static let apiTypeReset = UInt64(0)
@@ -29,6 +32,7 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransf
     static let apiTypeReadMemory = UInt64(11)
     static let apiTypeWriteFromStorage = UInt64(12)
     static let apiTypeCompareToStorage = UInt64(13)
+    static let apiTypeTransfer = UInt64(14)
 
     static let outputIndicator = 0
     static let outputReset = 1
@@ -67,7 +71,7 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransf
         portal.send(SerialWireInstrument.apiTypeGetInputs, content: bits)
         let data = try portal.read(type: SerialWireInstrument.apiTypeGetInputs)
         let binary = Binary(data: data, byteOrder: .littleEndian)
-        let value: UInt8 = try binary.read()
+        let value: UInt64 = try binary.readVarUInt()
         return value != 0
     }
 
@@ -165,6 +169,78 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransf
             throw LocalError.memoryTransferIssue(code: code, data: result)
         }
         return result
+    }
+
+    @objc open func transfer(_ transfers: [FDSerialWireDebugTransfer]) throws {
+        var responseCount = 0
+        let request = Binary(byteOrder: .littleEndian)
+        request.writeVarUInt(UInt64(transfers.count))
+        for transfer in transfers {
+            request.writeVarUInt(UInt64(transfer.type.rawValue))
+            switch transfer.type {
+            case .readRegister:
+                responseCount += 1
+                request.writeVarUInt(UInt64(transfer.registerID))
+            case .writeRegister:
+                request.writeVarUInt(UInt64(transfer.registerID))
+                request.write(transfer.value as UInt32)
+            case .readMemory:
+                responseCount += 1
+                request.write(transfer.address as UInt32)
+                request.writeVarUInt(UInt64(transfer.length))
+            case .writeMemory:
+                request.write(transfer.address as UInt32)
+                if let data = transfer.data {
+                    request.writeVarUInt(UInt64(data.count))
+                    request.write(data)
+                } else {
+                    request.writeVarUInt(0)
+                }
+            }
+        }
+        portal.send(SerialWireInstrument.apiTypeTransfer, content: request.data)
+        let data = try portal.read(type: SerialWireInstrument.apiTypeTransfer)
+        let binary = Binary(data: data, byteOrder: .littleEndian)
+        let code = try binary.readVarUInt()
+        if code != 0 {
+            throw LocalError.transferIssue(code: code)
+        }
+        let count = try binary.readVarUInt()
+        if count != UInt64(responseCount) {
+            throw LocalError.transferMismatch
+        }
+        for transfer in transfers {
+            switch transfer.type {
+            case .readRegister:
+                let type = try binary.readVarUInt()
+                if type != UInt64(transfer.type.rawValue) {
+                    throw LocalError.transferMismatch
+                }
+                let registerID: UInt16 = try binary.read()
+                if registerID != transfer.registerID {
+                    throw LocalError.transferMismatch
+                }
+                transfer.value = try binary.read() as UInt32
+            case .writeRegister:
+                break
+            case .readMemory:
+                let type = try binary.readVarUInt()
+                if type != UInt64(transfer.type.rawValue) {
+                    throw LocalError.transferMismatch
+                }
+                let address: UInt32 = try binary.read()
+                if address != transfer.address {
+                    throw LocalError.transferMismatch
+                }
+                let length: UInt32 = try binary.read()
+                if length != transfer.length {
+                    throw LocalError.transferMismatch
+                }
+                transfer.data = try binary.read(length: Int(length))
+            case .writeMemory:
+                break
+            }
+        }
     }
 
     open func writeFromStorage(_ address: UInt32, length: UInt32, storageIdentifier: UInt64, storageAddress: UInt32) throws {

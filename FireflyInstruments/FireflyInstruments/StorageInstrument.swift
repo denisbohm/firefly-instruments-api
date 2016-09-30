@@ -49,7 +49,7 @@ open class StorageInstrument: InternalInstrument {
             arguments.writeVarUInt(UInt64(length))
             arguments.write(data.subdata(in: offset ..< offset + length))
             portal.send(StorageInstrument.apiTypeWrite, content: arguments.data)
-            try portal.write()
+//            try portal.write() // !!! extra write here causes loss of next write for echo? -denis
             try instrumentManager.echo(data: Data(bytes: [0xbe, 0xef]))
             offset += length
         }
@@ -73,6 +73,7 @@ open class StorageInstrument: InternalInstrument {
             arguments.writeVarUInt(UInt64(transferLength))
             arguments.writeVarUInt(UInt64(transferSublength))
             arguments.writeVarUInt(UInt64(substride))
+            NSLog("Storage Instrument: read \(transferLength) \(transferSublength) \(substride)")
             portal.send(StorageInstrument.apiTypeRead, content: arguments.data)
             let result = try portal.read(type: StorageInstrument.apiTypeRead)
             let binary = Binary(data: result, byteOrder: .littleEndian)

@@ -54,7 +54,7 @@ open class FileSystem {
 
     open let storageInstrument: StorageInstrument
 
-    open var minimumSectorCount = 64
+    open var minimumSectorCount = 1 // !!! should be 64 normally
 
     open let size = 1<<22
     open let sectorSize = 1<<12
@@ -73,6 +73,7 @@ open class FileSystem {
     }
 
     func erase(_ sector: Sector) throws {
+        NSLog("File System: erase: \(sector.address)")
         var sectorCount = 1
         if case let Status.metadata(_, metadataSectorCount) = sector.status {
             sectorCount = metadataSectorCount
@@ -176,6 +177,7 @@ open class FileSystem {
         guard let entry = get(name) else {
             throw LocalError.notFound(name)
         }
+        NSLog("File System: read: reading \(name) \(entry.length)")
         return try storageInstrument.read(entry.address, length: entry.length)
     }
 
@@ -190,6 +192,7 @@ open class FileSystem {
             sectors[sectorIndex].status = Status.content
         }
 
+        NSLog("File System: write: erasing")
         try storageInstrument.erase(sector.address, length: UInt32(sectorCount * sectorSize))
 
         let binary = Binary(byteOrder: ByteOrder.littleEndian)
@@ -199,9 +202,11 @@ open class FileSystem {
         binary.write(hash)
         binary.write(name)
         var address = sector.address
+        NSLog("File System: write: writing metadata")
         try storageInstrument.write(address, data: binary.data)
 
         address += UInt32(sectorSize)
+        NSLog("File System: write: writing content")
         try storageInstrument.write(address, data: data)
 
         return entry
@@ -210,6 +215,7 @@ open class FileSystem {
     func checkCandidate(_ name: String, data: Data, date: Date, availableSector: Sector?, availableSectorCount: Int, entrySectorCount: Int) throws -> Entry? {
         if let sector = availableSector {
             if availableSectorCount >= entrySectorCount {
+                NSLog("File System: found candidate")
                 return try write(name, data: data, date: date, sector: sector, sectorCount: entrySectorCount)
             }
         }
@@ -281,6 +287,7 @@ open class FileSystem {
             if let entry = try checkWrite(name, data: data, date: date) {
                 return entry
             }
+            NSLog("File System: write: not enough room - erasing least recently used entry")
         } while try eraseLeastRecentlyUsed()
         throw LocalError.notEnoughSpace(name: name, length: UInt32(data.count))
     }

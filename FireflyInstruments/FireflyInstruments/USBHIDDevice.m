@@ -80,7 +80,7 @@
     [data getBytes:(void *)_outputData.bytes length:_outputData.length];
     IOReturn ioReturn = IOHIDDeviceSetReport(_hidDeviceRef, kIOHIDReportTypeOutput, 0x81, _outputData.bytes, _outputData.length);
     if (ioReturn != kIOReturnSuccess) {
-
+        NSLog(@"IOHIDDeviceSetReport failure: 0x%08x", ioReturn);
     }
     return YES;
 }
