@@ -19,7 +19,7 @@ open class StorageInstrument: InternalInstrument {
     unowned public private(set) var instrumentManager: InstrumentManager
     var portal: Portal
 
-    public var maxTransferLength = 1024
+    public var maxTransferLength = 4096
 
     public init(instrumentManager: InstrumentManager, portal: Portal) {
         self.instrumentManager = instrumentManager
@@ -49,7 +49,7 @@ open class StorageInstrument: InternalInstrument {
             arguments.writeVarUInt(UInt64(length))
             arguments.write(data.subdata(in: offset ..< offset + length))
             portal.send(StorageInstrument.apiTypeWrite, content: arguments.data)
-//            try portal.write() // !!! extra write here causes loss of next write for echo? -denis
+            try portal.write() // need to flush this portals write queue before doing an echo on the instrument manager write queue -denis
             try instrumentManager.echo(data: Data(bytes: [0xbe, 0xef]))
             offset += length
         }
@@ -66,14 +66,14 @@ open class StorageInstrument: InternalInstrument {
         var data = Data(count: length)
         var offset = 0
         while offset < length {
+            let transferAddress = address + UInt32(offset)
             let transferLength = min(data.count - offset, maxTransferLength)
             let transferSublength = min(Int(sublength), transferLength)
             let arguments = Binary(byteOrder: .littleEndian)
-            arguments.writeVarUInt(UInt64(address + UInt32(offset)))
+            arguments.writeVarUInt(UInt64(transferAddress))
             arguments.writeVarUInt(UInt64(transferLength))
             arguments.writeVarUInt(UInt64(transferSublength))
             arguments.writeVarUInt(UInt64(substride))
-            NSLog("Storage Instrument: read \(transferLength) \(transferSublength) \(substride)")
             portal.send(StorageInstrument.apiTypeRead, content: arguments.data)
             let result = try portal.read(type: StorageInstrument.apiTypeRead)
             let binary = Binary(data: result, byteOrder: .littleEndian)

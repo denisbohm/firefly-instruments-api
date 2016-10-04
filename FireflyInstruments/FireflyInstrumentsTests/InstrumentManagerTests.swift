@@ -59,6 +59,33 @@ class InstrumentManagerTests: XCTestCase {
         try instrumentManager.resetInstruments()
     }
 
+    func queueEcho(device: MockUSBHIDDevice, data: Data) {
+        let binary = Binary(byteOrder: .littleEndian)
+        binary.writeVarUInt(0) // ordinal
+        binary.writeVarUInt(UInt64(3 + data.count)) // length
+        binary.writeVarUInt(0) // instrument identifier
+        binary.writeVarUInt(2) // type
+        binary.writeVarUInt(UInt64(data.count)) // data length
+        binary.write(data)
+        device.queue(binary.data)
+    }
+
+    func testEcho() throws {
+        let data = Data(bytes: [1, 2] as [UInt8])
+        let device = MockUSBHIDDevice()
+        queueEcho(device: device, data: data)
+        let instrumentManager = InstrumentManager(device: device)
+        try instrumentManager.echo(data: data)
+    }
+
+    func testEchoMismatch() throws {
+        let data = Data(bytes: [1, 2] as [UInt8])
+        let device = MockUSBHIDDevice()
+        queueEcho(device: device, data: data)
+        let instrumentManager = InstrumentManager(device: device)
+        XCTAssertThrowsError(try instrumentManager.echo(data: Data(bytes: [3] as [UInt8])))
+    }
+
     func testUnknownInstrument() throws {
         let device = MockUSBHIDDevice()
         let instrumentManager = InstrumentManager(device: device)

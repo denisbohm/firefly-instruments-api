@@ -11,12 +11,19 @@ import FireflyInstruments
 
 class MockStorageInstrument: StorageInstrument {
 
+    var size = 1 << 21
     var memory: [UInt8]
 
     init() {
-        memory = [UInt8](repeating: 0xff as UInt8, count: 1 << 22)
+        memory = [UInt8](repeating: 0xff as UInt8, count: size)
 
         super.init(instrumentManager: MockInstrumentManager(), portal: MockPortal())
+    }
+
+    func randomize() {
+        for i in 0 ..< size {
+            memory[i] = UInt8(arc4random_uniform(256))
+        }
     }
 
     override func reset() throws {

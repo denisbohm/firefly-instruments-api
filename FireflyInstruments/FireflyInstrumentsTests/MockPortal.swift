@@ -6,7 +6,7 @@
 //  Copyright © 2016 Firefly Design LLC. All rights reserved.
 //
 
-import FireflyInstruments
+@testable import FireflyInstruments
 import Foundation
 import XCTest
 
@@ -33,6 +33,10 @@ class MockPortal: Portal {
     var reads = [Read]()
 
     var assertIndex = 0
+
+    func assertEndOfCalls() {
+        XCTAssert(calls.count == assertIndex)
+    }
 
     func nextAssertCall() -> Call? {
         XCTAssert(calls.count > assertIndex)

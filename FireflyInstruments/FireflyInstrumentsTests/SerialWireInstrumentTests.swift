@@ -6,11 +6,37 @@
 //  Copyright © 2016 Firefly Design LLC. All rights reserved.
 //
 
+import ARMSerialWireDebug
 @testable import FireflyInstruments
 import XCTest
 
 class SerialWireInstrumentTests: XCTestCase {
 
+    func testTransfers() throws {
+        let instrumentManager = MockInstrumentManager()
+        let portal = MockPortal()
+        let serialWireInstrument = SerialWireInstrument(instrumentManager: instrumentManager, portal: portal)
+
+        portal.queueRead(2, content:
+            0, // success
+            2, // 2 transfers back
+            0, // read register type
+            0, // register id
+            0, 0, 0, 0, // read register value
+            2, // read memory type
+            0, 0, 0, 0, // read memory address
+            1, // read memory length
+            0 // read memory data
+        )
+        let transfers = [
+            FDSerialWireDebugTransfer.readRegister(0),
+            FDSerialWireDebugTransfer.writeRegister(0, value: 1),
+            FDSerialWireDebugTransfer.readMemory(0, length: 1),
+            FDSerialWireDebugTransfer.writeMemory(0, data: Data(bytes: [1] as [UInt8])),
+        ]
+        try serialWireInstrument.transfer(transfers)
+    }
+    
     func testSends() throws {
         let instrumentManager = MockInstrumentManager()
         let portal = MockPortal()

@@ -139,7 +139,7 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
         return portal.read() as Data
     }
 
-    @objc open func writeMemory(_ address: UInt32, data: Data) throws {
+    @objc open func serialWireDebugTransportWriteMemory(_ address: UInt32, data: Data) throws {
         let request = Binary(byteOrder: .littleEndian)
         request.writeVarUInt(UInt64(address))
         request.writeVarUInt(UInt64(data.count))
@@ -153,7 +153,7 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
         }
     }
 
-    @objc open func readMemory(_ address: UInt32, length: UInt32) throws -> Data {
+    @objc open func serialWireDebugTransportReadMemory(_ address: UInt32, length: UInt32) throws -> Data {
         let request = Binary(byteOrder: .littleEndian)
         request.writeVarUInt(UInt64(address))
         request.writeVarUInt(UInt64(length))
@@ -171,7 +171,7 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
         return result
     }
 
-    @objc open func transfer(_ transfers: [FDSerialWireDebugTransfer]) throws {
+    @objc open func serialWireDebugTransportTransfer(_ transfers: [FDSerialWireDebugTransfer]) throws {
         var responseCount = 0
         let request = Binary(byteOrder: .littleEndian)
         request.writeVarUInt(UInt64(transfers.count))
@@ -216,8 +216,8 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
                 if type != UInt64(transfer.type.rawValue) {
                     throw LocalError.transferMismatch
                 }
-                let registerID: UInt16 = try binary.read()
-                if registerID != transfer.registerID {
+                let registerID = try binary.readVarUInt()
+                if registerID != UInt64(transfer.registerID) {
                     throw LocalError.transferMismatch
                 }
                 transfer.value = try binary.read() as UInt32
@@ -232,8 +232,8 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
                 if address != transfer.address {
                     throw LocalError.transferMismatch
                 }
-                let length: UInt32 = try binary.read()
-                if length != transfer.length {
+                let length = try binary.readVarUInt()
+                if length != UInt64(transfer.length) {
                     throw LocalError.transferMismatch
                 }
                 transfer.data = try binary.read(length: Int(length))

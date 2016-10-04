@@ -25,7 +25,7 @@ class InstrumentPortal: Portal {
     let identifier: UInt64
     var writeQueue = [Packet]()
     var readQueue = [Packet]()
-    var timeout: TimeInterval = 10.0
+    var timeout: TimeInterval = 15.0
     let readCondition = NSCondition()
     let readData = NSMutableData()
 
