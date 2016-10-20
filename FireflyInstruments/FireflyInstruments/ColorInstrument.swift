@@ -94,6 +94,9 @@ open class ColorInstrument: InternalInstrument {
         try portal.write()
     }
 
+    // TCS3471
+    // gains: 1, 4, 16, 60
+    // integration times: 2.4 ms to 614.4 ms
     open func convert(integrationTime: Float32 = 0.6144, gain: Float32 = 1) throws -> Conversion {
         let arguments = Binary(byteOrder: .littleEndian)
         arguments.write(integrationTime)
