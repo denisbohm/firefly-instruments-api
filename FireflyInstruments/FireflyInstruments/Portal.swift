@@ -8,10 +8,19 @@
 
 import Foundation
 
+public protocol PortalDelegate : class {
+
+    func portalReceived(_ portal: Portal, type: UInt64, content: Data) throws
+
+}
+
 public protocol Portal {
 
     var identifier: UInt64 { get }
     var timeout: TimeInterval { get set }
+
+    func addDelegate(type: UInt64, delegate: PortalDelegate)
+    func removeDelegate(type: UInt64)
 
     func send(_ type: UInt64, content: Data)
     func write() throws

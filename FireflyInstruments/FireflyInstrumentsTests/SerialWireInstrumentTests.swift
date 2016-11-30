@@ -34,7 +34,7 @@ class SerialWireInstrumentTests: XCTestCase {
             FDSerialWireDebugTransfer.readMemory(0, length: 1),
             FDSerialWireDebugTransfer.writeMemory(0, data: Data(bytes: [1] as [UInt8])),
         ]
-        try serialWireInstrument.transfer(transfers)
+        try serialWireInstrument.serialWireDebugTransportTransfer(transfers)
     }
     
     func testSends() throws {
@@ -91,28 +91,28 @@ class SerialWireInstrumentTests: XCTestCase {
         XCTAssert(value)
 
         portal.queueRead(10, content: 0)
-        try serialWireInstrument.writeMemory(9, data: Data(bytes))
+        try serialWireInstrument.serialWireDebugTransportWriteMemory(9, data: Data(bytes))
         portal.assertDidSend(10, content: 9, 3, 1, 2, 3)
         portal.assertDidReadType(type: 10)
 
         portal.queueRead(10, content: 1)
-        XCTAssertThrowsError(try serialWireInstrument.writeMemory(9, data: Data(bytes)))
+        XCTAssertThrowsError(try serialWireInstrument.serialWireDebugTransportWriteMemory(9, data: Data(bytes)))
         portal.assertDidSend(10, content: 9, 3, 1, 2, 3)
         portal.assertDidReadType(type: 10)
 
         portal.queueRead(11, content: 0, 1, 2, 3)
-        let memory = try serialWireInstrument.readMemory(9, length: UInt32(bytes.count))
+        let memory = try serialWireInstrument.serialWireDebugTransportReadMemory(9, length: UInt32(bytes.count))
         portal.assertDidSend(11, content: 9, 3)
         portal.assertDidReadType(type: 11)
         XCTAssertEqual(memory, Data(bytes))
 
         portal.queueRead(11, content: 1)
-        XCTAssertThrowsError(try serialWireInstrument.readMemory(9, length: UInt32(bytes.count)))
+        XCTAssertThrowsError(try serialWireInstrument.serialWireDebugTransportReadMemory(9, length: UInt32(bytes.count)))
         portal.assertDidSend(11, content: 9, 3)
         portal.assertDidReadType(type: 11)
 
         portal.queueRead(11, content: 0, 1)
-        XCTAssertThrowsError(try serialWireInstrument.readMemory(9, length: UInt32(bytes.count)))
+        XCTAssertThrowsError(try serialWireInstrument.serialWireDebugTransportReadMemory(9, length: UInt32(bytes.count)))
         portal.assertDidSend(11, content: 9, 3)
         portal.assertDidReadType(type: 11)
 

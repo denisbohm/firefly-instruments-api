@@ -21,6 +21,11 @@ class InstrumentPortal: Portal {
         let content: Data
     }
 
+    struct DelegateEntry {
+        let type: UInt64
+        unowned let delegate: PortalDelegate
+    }
+
     let device: USBHIDDevice
     let identifier: UInt64
     var writeQueue = [Packet]()
@@ -28,10 +33,19 @@ class InstrumentPortal: Portal {
     var timeout: TimeInterval = 15.0
     let readCondition = NSCondition()
     let readData = NSMutableData()
+    var delegateByType: [UInt64 : PortalDelegate] = [:]
 
     init(device: USBHIDDevice, identifier: UInt64) {
         self.device = device
         self.identifier = identifier
+    }
+
+    func addDelegate(type: UInt64, delegate: PortalDelegate) {
+        delegateByType[type] = delegate
+    }
+
+    func removeDelegate(type: UInt64) {
+        delegateByType.removeValue(forKey: type)
     }
 
     func send(_ type: UInt64, content: Data) {
@@ -62,6 +76,15 @@ class InstrumentPortal: Portal {
     }
 
     func received(_ type: UInt64, content: Data) {
+        if let delegate = delegateByType[type] {
+            do {
+                try delegate.portalReceived(self, type: type, content: content)
+            } catch {
+                NSLog("portal delegate error")
+            }
+            return
+        }
+
         readCondition.lock()
         defer {
             readCondition.broadcast()

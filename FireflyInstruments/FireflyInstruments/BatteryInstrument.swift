@@ -8,7 +8,13 @@
 
 import Foundation
 
-open class BatteryInstrument: InternalInstrument {
+public protocol BatteryInstrumentConvertDelegate {
+
+    func batteryInstrumentConvertContinuousComplete(_ batteryInstrument: BatteryInstrument)
+
+}
+
+open class BatteryInstrument: InternalInstrument, PortalDelegate {
 
     public struct Conversion {
         public let current: Float32
@@ -18,13 +24,18 @@ open class BatteryInstrument: InternalInstrument {
     static let apiTypeConvertCurrent = UInt64(1)
     static let apiTypeSetVoltage = UInt64(2)
     static let apiTypeSetEnabled = UInt64(3)
+    static let apiTypeConvertCurrentContinuous = UInt64(4)
+    static let apiTypeConvertCurrentContinuousComplete = UInt64(5)
 
     unowned public private(set) var instrumentManager: InstrumentManager
     var portal: Portal
+    public var convertDelegate: BatteryInstrumentConvertDelegate? = nil
 
     public init(instrumentManager: InstrumentManager, portal: Portal) {
         self.instrumentManager = instrumentManager
         self.portal = portal
+
+        portal.addDelegate(type: BatteryInstrument.apiTypeConvertCurrentContinuousComplete, delegate: self)
     }
 
     open var identifier: UInt64 { get { return portal.identifier } }
@@ -54,6 +65,27 @@ open class BatteryInstrument: InternalInstrument {
         let binary = Binary(data: data, byteOrder: .littleEndian)
         let current: Float32 = try binary.read()
         return Conversion(current: current)
+    }
+
+    open func convertContinuous(rate: Float32, decimation: UInt64, samples: UInt64, address: UInt32) throws {
+        let binary = Binary(byteOrder: .littleEndian)
+        binary.write(rate)
+        binary.writeVarUInt(decimation)
+        binary.writeVarUInt(samples)
+        binary.write(address)
+        portal.send(BatteryInstrument.apiTypeConvertCurrentContinuous, content: binary.data)
+        let _ = try portal.read(type: BatteryInstrument.apiTypeConvertCurrentContinuous)
+    }
+
+    func receivedConvertCurrentContinuous(data: Data) throws {
+        let binary = Binary(data: data, byteOrder: .littleEndian)
+        convertDelegate?.batteryInstrumentConvertContinuousComplete(self)
+    }
+
+    public func portalReceived(_ portal: Portal, type: UInt64, content: Data) throws {
+        if type == BatteryInstrument.apiTypeConvertCurrentContinuous {
+            try receivedConvertCurrentContinuous(data: content)
+        }
     }
     
 }

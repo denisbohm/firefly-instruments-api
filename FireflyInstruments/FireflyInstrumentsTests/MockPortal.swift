@@ -27,12 +27,18 @@ class MockPortal: Portal {
 
     let identifier: UInt64 = 1
     var timeout: TimeInterval = 10.0
-
     var calls = [Call]()
-
     var reads = [Read]()
-
     var assertIndex = 0
+    var delegateByType: [UInt64 : PortalDelegate] = [:]
+
+    public func addDelegate(type: UInt64, delegate: PortalDelegate) {
+        delegateByType[type] = delegate
+    }
+
+    public func removeDelegate(type: UInt64) {
+        delegateByType.removeValue(forKey: type)
+    }
 
     func assertEndOfCalls() {
         XCTAssert(calls.count == assertIndex)
