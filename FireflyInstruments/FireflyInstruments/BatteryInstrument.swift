@@ -20,6 +20,10 @@ open class BatteryInstrument: InternalInstrument, PortalDelegate {
         public let current: Float32
     }
 
+    public enum LocalError: Error {
+        case invalidParameter
+    }
+
     static let apiTypeReset = UInt64(0)
     static let apiTypeConvertCurrent = UInt64(1)
     static let apiTypeSetVoltage = UInt64(2)
@@ -74,7 +78,12 @@ open class BatteryInstrument: InternalInstrument, PortalDelegate {
         binary.writeVarUInt(samples)
         binary.write(address)
         portal.send(BatteryInstrument.apiTypeConvertCurrentContinuous, content: binary.data)
-        let _ = try portal.read(type: BatteryInstrument.apiTypeConvertCurrentContinuous)
+        let data = try portal.read(type: BatteryInstrument.apiTypeConvertCurrentContinuous)
+        let response = Binary(data: data, byteOrder: .littleEndian)
+        let result = try response.readVarUInt()
+        if result != 0 {
+            throw LocalError.invalidParameter
+        }
     }
 
     func receivedConvertCurrentContinuous(data: Data) throws {
