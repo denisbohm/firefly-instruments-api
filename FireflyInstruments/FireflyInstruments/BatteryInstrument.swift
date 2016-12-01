@@ -44,6 +44,10 @@ open class BatteryInstrument: InternalInstrument, PortalDelegate {
 
     open var identifier: UInt64 { get { return portal.identifier } }
 
+    open func flush() throws {
+        try portal.write()
+    }
+
     open func reset() throws {
         portal.send(BatteryInstrument.apiTypeReset)
         try portal.write()
@@ -92,7 +96,7 @@ open class BatteryInstrument: InternalInstrument, PortalDelegate {
     }
 
     public func portalReceived(_ portal: Portal, type: UInt64, content: Data) throws {
-        if type == BatteryInstrument.apiTypeConvertCurrentContinuous {
+        if type == BatteryInstrument.apiTypeConvertCurrentContinuousComplete {
             try receivedConvertCurrentContinuous(data: content)
         }
     }

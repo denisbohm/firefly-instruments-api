@@ -12,4 +12,6 @@ protocol InternalInstrument: Instrument {
 
     var portal: Portal { get set }
 
+    func flush() throws
+
 }

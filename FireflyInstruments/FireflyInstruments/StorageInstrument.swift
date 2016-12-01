@@ -28,6 +28,10 @@ open class StorageInstrument: InternalInstrument {
 
     open var identifier: UInt64 { get { return portal.identifier } }
 
+    open func flush() throws {
+        try portal.write()
+    }
+
     open func reset() throws {
         portal.send(StorageInstrument.apiTypeReset)
         try portal.write()
@@ -49,7 +53,7 @@ open class StorageInstrument: InternalInstrument {
             arguments.writeVarUInt(UInt64(length))
             arguments.write(data.subdata(in: offset ..< offset + length))
             portal.send(StorageInstrument.apiTypeWrite, content: arguments.data)
-            try portal.write() // need to flush this portals write queue before doing an echo on the instrument manager write queue -denis
+            try flush() // need to flush this portals write queue before doing an echo on the instrument manager write queue -denis
             try instrumentManager.echo(data: Data(bytes: [0xbe, 0xef]))
             offset += length
         }

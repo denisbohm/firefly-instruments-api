@@ -23,6 +23,10 @@ open class IndicatorInstrument: InternalInstrument {
 
     open var identifier: UInt64 { get { return portal.identifier } }
 
+    open func flush() throws {
+        try portal.write()
+    }
+
     open func reset() throws {
         portal.send(IndicatorInstrument.apiTypeReset)
         try portal.write()

@@ -23,6 +23,10 @@ open class RelayInstrument: InternalInstrument {
 
     open var identifier: UInt64 { get { return portal.identifier } }
 
+    open func flush() throws {
+        try portal.write()
+    }
+
     open func reset() throws {
         portal.send(RelayInstrument.apiTypeReset)
         try portal.write()
