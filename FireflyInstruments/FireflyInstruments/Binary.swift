@@ -268,7 +268,7 @@ open class Binary {
     open func read() throws -> String {
         let length = try readVarUInt()
         let data = try read(length: Int(length))
-        guard let string = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as? String else {
+        guard let string = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as String? else {
             throw LocalError.invalidRepresentation
         }
         return string

@@ -50,6 +50,9 @@
 		92BED9B11D88CF3B007E8176 /* MockStorageInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92BED9B01D88CF3B007E8176 /* MockStorageInstrument.swift */; };
 		92BFEC9B1D3E6F6B00C2481A /* Portal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92BFEC9A1D3E6F6B00C2481A /* Portal.swift */; };
 		92E755B11D70C49A00B45C6D /* StorageInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92E755B01D70C49A00B45C6D /* StorageInstrumentTests.swift */; };
+		92F647091EC1603F003A7027 /* IntelHex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F647061EC1603F003A7027 /* IntelHex.swift */; };
+		92F6470A1EC1603F003A7027 /* IntelHexFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F647071EC1603F003A7027 /* IntelHexFormatter.swift */; };
+		92F6470B1EC1603F003A7027 /* IntelHexParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F647081EC1603F003A7027 /* IntelHexParser.swift */; };
 		92F9E3651D37E9EA00F16833 /* Detour.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F9E3641D37E9EA00F16833 /* Detour.swift */; };
 		92F9E3681D37F1DE00F16833 /* Binary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92F9E3671D37F1DE00F16833 /* Binary.swift */; };
 		92F9E36E1D38491600F16833 /* fd_ieee754.c in Sources */ = {isa = PBXBuildFile; fileRef = 92F9E36C1D38491600F16833 /* fd_ieee754.c */; };
@@ -135,6 +138,9 @@
 		92BED9B01D88CF3B007E8176 /* MockStorageInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockStorageInstrument.swift; sourceTree = "<group>"; };
 		92BFEC9A1D3E6F6B00C2481A /* Portal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Portal.swift; sourceTree = "<group>"; };
 		92E755B01D70C49A00B45C6D /* StorageInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StorageInstrumentTests.swift; sourceTree = "<group>"; };
+		92F647061EC1603F003A7027 /* IntelHex.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntelHex.swift; sourceTree = "<group>"; };
+		92F647071EC1603F003A7027 /* IntelHexFormatter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntelHexFormatter.swift; sourceTree = "<group>"; };
+		92F647081EC1603F003A7027 /* IntelHexParser.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IntelHexParser.swift; sourceTree = "<group>"; };
 		92F9E3641D37E9EA00F16833 /* Detour.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Detour.swift; sourceTree = "<group>"; };
 		92F9E3671D37F1DE00F16833 /* Binary.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Binary.swift; sourceTree = "<group>"; };
 		92F9E36C1D38491600F16833 /* fd_ieee754.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = fd_ieee754.c; sourceTree = "<group>"; };
@@ -226,6 +232,7 @@
 		920DFFF51D3943EC00E92859 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				92F647041EC1601C003A7027 /* Firmware Formats */,
 				924431421D3FBB8A00F03EAC /* Data */,
 				924431431D3FBBFA00F03EAC /* Private */,
 				924431391D3FB52A00F03EAC /* USB */,
@@ -379,6 +386,16 @@
 			name = Utilities;
 			sourceTree = "<group>";
 		};
+		92F647041EC1601C003A7027 /* Firmware Formats */ = {
+			isa = PBXGroup;
+			children = (
+				92F647061EC1603F003A7027 /* IntelHex.swift */,
+				92F647071EC1603F003A7027 /* IntelHexFormatter.swift */,
+				92F647081EC1603F003A7027 /* IntelHexParser.swift */,
+			);
+			name = "Firmware Formats";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -523,6 +540,7 @@
 				92B3BEB01D3FE3D900EBBCF7 /* Instrument.swift in Sources */,
 				92BFEC9B1D3E6F6B00C2481A /* Portal.swift in Sources */,
 				9286EEC91D4281F70078FA55 /* CurrentInstrument.swift in Sources */,
+				92F6470B1EC1603F003A7027 /* IntelHexParser.swift in Sources */,
 				924431411D3FB94400F03EAC /* USBHIDDevice.m in Sources */,
 				92F9E3651D37E9EA00F16833 /* Detour.swift in Sources */,
 				9286EEC61D42810F0078FA55 /* RelayInstrument.swift in Sources */,
@@ -536,9 +554,11 @@
 				92A10B841D70B605006B708E /* StorageInstrument.swift in Sources */,
 				924B6B581D4184BC000CBAB7 /* InternalInstrument.swift in Sources */,
 				926CE0911D71F7E2000E5A70 /* FileSystem.swift in Sources */,
+				92F647091EC1603F003A7027 /* IntelHex.swift in Sources */,
 				9244314D1D3FC11C00F03EAC /* USBHIDMonitor.m in Sources */,
 				9272D98E1D36D45F00830CF5 /* SerialWireInstrument.swift in Sources */,
 				920DFFF41D39406200E92859 /* ColorInstrument.swift in Sources */,
+				92F6470A1EC1603F003A7027 /* IntelHexFormatter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
