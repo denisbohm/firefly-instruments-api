@@ -22,7 +22,7 @@ open class IntelHexFormatter: NSObject {
 
         public var computedChecksum: UInt8 {
             get {
-                let (result, _) = UInt8.addWithOverflow(~runningChecksum, 1)
+                let (result, _) = (~runningChecksum).addingReportingOverflow(1)
                 return result
             }
         }
@@ -39,7 +39,7 @@ open class IntelHexFormatter: NSObject {
 
         open func formatUInt8(byte: UInt8) {
             string += String(format: "%02X", byte)
-            (runningChecksum, _) = UInt8.addWithOverflow(runningChecksum, byte)
+            (runningChecksum, _) = runningChecksum.addingReportingOverflow(byte)
         }
 
         open func formatUInt16(value: UInt16) {

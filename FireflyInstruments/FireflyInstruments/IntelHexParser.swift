@@ -46,7 +46,7 @@ open class IntelHexParser: NSObject {
 
         public var computedChecksum: UInt8 {
             get {
-                let (result, _) = UInt8.addWithOverflow(~runningChecksum, 1)
+                let (result, _) = (~runningChecksum).addingReportingOverflow(1)
                 return result
             }
         }
@@ -80,7 +80,7 @@ open class IntelHexParser: NSObject {
             let nibble1 = try parseUInt4()
             let nibble0 = try parseUInt4()
             let byte = UInt8((nibble1 << 4) | nibble0)
-            (runningChecksum, _) = UInt8.addWithOverflow(runningChecksum, byte)
+            (runningChecksum, _) = runningChecksum.addingReportingOverflow(byte)
             return byte
         }
 

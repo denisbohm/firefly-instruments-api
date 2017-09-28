@@ -294,11 +294,11 @@ open class Binary {
             if remainder <= 0x7f {
                 break
             }
-            var byte = UInt8(truncatingBitPattern: remainder) | 0x80
+            var byte = UInt8(truncatingIfNeeded: remainder) | 0x80
             buffer.append(&byte, count: 1)
             remainder = (remainder & 0xffffffffffffff80) >> 7
         }
-        var byte = UInt8(truncatingBitPattern: remainder)
+        var byte = UInt8(truncatingIfNeeded: remainder)
         buffer.append(&byte, count: 1)
     }
 
