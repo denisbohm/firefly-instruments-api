@@ -32,7 +32,7 @@ class MockUSBHIDDevice: USBHIDDevice {
         XCTAssert(callData == data)
     }
 
-    @objc override func setReport(_ data: Data) throws {
+    override func setReport(_ data: Data) throws {
         calls.append(.setReport(data))
 
         for inputReport in inputReports {

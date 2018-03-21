@@ -268,7 +268,7 @@ open class Binary {
     open func read() throws -> String {
         let length = try readVarUInt()
         let data = try read(length: Int(length))
-        guard let string = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as? String else {
+        guard let string = NSString(data: data, encoding: String.Encoding.utf8.rawValue) as String? else {
             throw LocalError.invalidRepresentation
         }
         return string
@@ -294,11 +294,11 @@ open class Binary {
             if remainder <= 0x7f {
                 break
             }
-            var byte = UInt8(truncatingBitPattern: remainder) | 0x80
+            var byte = UInt8(truncatingIfNeeded: remainder) | 0x80
             buffer.append(&byte, count: 1)
             remainder = (remainder & 0xffffffffffffff80) >> 7
         }
-        var byte = UInt8(truncatingBitPattern: remainder)
+        var byte = UInt8(truncatingIfNeeded: remainder)
         buffer.append(&byte, count: 1)
     }
 

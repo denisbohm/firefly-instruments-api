@@ -119,7 +119,7 @@ open class InstrumentManager : NSObject, USBHIDDeviceDelegate {
         }
     }
 
-    @objc open func usbHidDevice(_ device: USBHIDDevice, inputReport data: Data) {
+    open func usbHidDevice(_ device: USBHIDDevice, inputReport data: Data) {
         do {
             try detour.event(data)
             switch detour.state {
