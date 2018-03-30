@@ -39,32 +39,68 @@ public protocol BinaryConvertable {
     
 }
 
-extension UInt8: BinaryConvertable {
+extension Bool: BinaryConvertable {
+    
+    public static func fromBinary(_ data: Data) -> Bool {
+        return data[0] != 0
+    }
+    
+    public static func toBinary(_ value: Bool) -> Data {
+        return Data(bytes: [value ? 1 : 0])
+    }
+    
+}
 
+extension UInt8: BinaryConvertable {
+    
     public static func fromBinary(_ data: Data) -> UInt8 {
         return fromBinaryNative(data)
     }
-
+    
     public static func toBinary(_ value: UInt8) -> Data {
         return toBinaryNative(value)
     }
+    
+}
 
+extension Int8: BinaryConvertable {
+    
+    public static func fromBinary(_ data: Data) -> Int8 {
+        return fromBinaryNative(data)
+    }
+    
+    public static func toBinary(_ value: Int8) -> Data {
+        return toBinaryNative(value)
+    }
+    
 }
 
 extension UInt16: BinaryConvertable {
-
+    
     public static func fromBinary(_ data: Data) -> UInt16 {
         return fromBinaryNative(data)
     }
-
+    
     public static func toBinary(_ value: UInt16) -> Data {
         return toBinaryNative(value)
     }
+    
+}
 
+extension Int16: BinaryConvertable {
+    
+    public static func fromBinary(_ data: Data) -> Int16 {
+        return fromBinaryNative(data)
+    }
+    
+    public static func toBinary(_ value: Int16) -> Data {
+        return toBinaryNative(value)
+    }
+    
 }
 
 extension UInt32: BinaryConvertable {
-
+    
     public static func fromBinary(_ data: Data) -> UInt32 {
         return fromBinaryNative(data)
     }
@@ -72,19 +108,43 @@ extension UInt32: BinaryConvertable {
     public static func toBinary(_ value: UInt32) -> Data {
         return toBinaryNative(value)
     }
+    
+}
 
+extension Int32: BinaryConvertable {
+    
+    public static func fromBinary(_ data: Data) -> Int32 {
+        return fromBinaryNative(data)
+    }
+    
+    public static func toBinary(_ value: Int32) -> Data {
+        return toBinaryNative(value)
+    }
+    
 }
 
 extension UInt64: BinaryConvertable {
-
+    
     public static func fromBinary(_ data: Data) -> UInt64 {
         return fromBinaryNative(data)
     }
-
+    
     public static func toBinary(_ value: UInt64) -> Data {
         return toBinaryNative(value)
     }
+    
+}
 
+extension Int64: BinaryConvertable {
+    
+    public static func fromBinary(_ data: Data) -> Int64 {
+        return fromBinaryNative(data)
+    }
+    
+    public static func toBinary(_ value: Int64) -> Data {
+        return toBinaryNative(value)
+    }
+    
 }
 
 extension Float32: BinaryConvertable {
