@@ -123,15 +123,15 @@ open class IntelHexParser: NSObject {
 
     }
 
-    open static func parse(line: String) throws -> IntelHex.Record {
+    public static func parse(line: String) throws -> IntelHex.Record {
         return try RecordParser(line: line).parse()
     }
 
-    open static func parse(lines: [String]) throws -> [IntelHex.Record] {
+    public static func parse(lines: [String]) throws -> [IntelHex.Record] {
         return try lines.map { try parse(line: $0) }
     }
 
-    open static func parse(content: String) throws -> IntelHex {
+    public static func parse(content: String) throws -> IntelHex {
         var lines: [String] = []
         content.enumerateLines { line, _ in lines.append(line) }
         return IntelHex(records: try parse(lines: lines))

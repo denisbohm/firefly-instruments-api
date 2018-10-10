@@ -54,12 +54,12 @@ open class FileSystem {
         var status: Status
     }
 
-    open let storageInstrument: StorageInstrument
+    public let storageInstrument: StorageInstrument
 
     open var minimumSectorCount = 2 // increase to reduce fragmentation
 
-    open let size = 1<<21
-    open let sectorSize = 1<<12
+    public let size = 1<<21
+    public let sectorSize = 1<<12
 
     let pageSize = 1<<8
     let hashSize = 20

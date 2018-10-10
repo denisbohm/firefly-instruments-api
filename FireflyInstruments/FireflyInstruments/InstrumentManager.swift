@@ -27,7 +27,7 @@ open class InstrumentManager : NSObject, USBHIDDeviceDelegate {
 
     typealias InstrumentConstructor = (InstrumentManager, Portal) -> (InternalInstrument)
 
-    open let device: USBHIDDevice
+    public let device: USBHIDDevice
     open var errorHandler: ErrorHandler?
 
     let constructorByCategory: [String: InstrumentConstructor]

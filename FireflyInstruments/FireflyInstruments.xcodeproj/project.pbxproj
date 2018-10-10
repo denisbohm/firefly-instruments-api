@@ -17,6 +17,7 @@
 		9244314D1D3FC11C00F03EAC /* USBHIDMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 9244314B1D3FC11C00F03EAC /* USBHIDMonitor.m */; };
 		924B6B551D418284000CBAB7 /* IndicatorInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924B6B541D418284000CBAB7 /* IndicatorInstrument.swift */; };
 		924B6B581D4184BC000CBAB7 /* InternalInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924B6B571D4184BC000CBAB7 /* InternalInstrument.swift */; };
+		9254ECFD210106C900D96FA7 /* FireflyFlashExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9254ECFC210106C900D96FA7 /* FireflyFlashExport.swift */; };
 		9255D6431D3D9EFC00655D79 /* DetourSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9255D6421D3D9EFC00655D79 /* DetourSource.swift */; };
 		9255D6461D3DBA3E00655D79 /* DetourSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9255D6451D3DBA3E00655D79 /* DetourSourceTests.swift */; };
 		926CE0911D71F7E2000E5A70 /* FileSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926CE0901D71F7E2000E5A70 /* FileSystem.swift */; };
@@ -102,6 +103,7 @@
 		9244314E1D3FC71600F03EAC /* USBHIDDevice_Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBHIDDevice_Private.h; sourceTree = "<group>"; };
 		924B6B541D418284000CBAB7 /* IndicatorInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IndicatorInstrument.swift; sourceTree = "<group>"; };
 		924B6B571D4184BC000CBAB7 /* InternalInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InternalInstrument.swift; sourceTree = "<group>"; };
+		9254ECFC210106C900D96FA7 /* FireflyFlashExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyFlashExport.swift; sourceTree = "<group>"; };
 		9255D6421D3D9EFC00655D79 /* DetourSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourSource.swift; sourceTree = "<group>"; };
 		9255D6451D3DBA3E00655D79 /* DetourSourceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourSourceTests.swift; sourceTree = "<group>"; };
 		926CE0901D71F7E2000E5A70 /* FileSystem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSystem.swift; sourceTree = "<group>"; };
@@ -295,6 +297,7 @@
 			isa = PBXGroup;
 			children = (
 				926CE0901D71F7E2000E5A70 /* FileSystem.swift */,
+				9254ECFC210106C900D96FA7 /* FireflyFlashExport.swift */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -463,7 +466,7 @@
 				TargetAttributes = {
 					9272D9521D36D29D00830CF5 = {
 						CreatedOnToolsVersion = 7.3.1;
-						LastSwiftMigration = 0920;
+						LastSwiftMigration = 1000;
 					};
 					9272D95C1D36D29D00830CF5 = {
 						CreatedOnToolsVersion = 7.3.1;
@@ -534,6 +537,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9254ECFD210106C900D96FA7 /* FireflyFlashExport.swift in Sources */,
 				9272D9901D36D51C00830CF5 /* InstrumentManager.swift in Sources */,
 				9289509F1D4A89E7005A5F55 /* USBHIDFinder.swift in Sources */,
 				924431491D3FBC2300F03EAC /* FDError.m in Sources */,
@@ -730,8 +734,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Debug;
 		};
@@ -752,8 +755,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.fireflydesign.FireflyInstruments;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 			};
 			name = Release;
 		};

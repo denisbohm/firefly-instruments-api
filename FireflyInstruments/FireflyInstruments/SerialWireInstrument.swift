@@ -33,6 +33,7 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
     static let apiTypeWriteFromStorage = UInt64(12)
     static let apiTypeCompareToStorage = UInt64(13)
     static let apiTypeTransfer = UInt64(14)
+    static let apiTypeSetHalfBitDelay = UInt64(15)
 
     static let outputIndicator = 0
     static let outputReset = 1
@@ -61,6 +62,13 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
         let binary = Binary(byteOrder: .littleEndian)
         binary.write(UInt8(value ? 1 : 0))
         portal.send(SerialWireInstrument.apiTypeSetEnabled, content: binary.data)
+        try portal.write()
+    }
+    
+    open func setHalfBitDelay(_ value: UInt32) throws {
+        let binary = Binary(byteOrder: .littleEndian)
+        binary.write(value)
+        portal.send(SerialWireInstrument.apiTypeSetHalfBitDelay, content: binary.data)
         try portal.write()
     }
 

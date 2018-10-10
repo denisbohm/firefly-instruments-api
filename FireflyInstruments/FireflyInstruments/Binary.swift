@@ -238,7 +238,7 @@ open class Binary {
         self.init(data: data, swapBytes: !isByteOrderNative(byteOrder))
     }
 
-    open static func unpack<B: BinaryConvertable>(_ data: Data, index: Int, swapBytes: Bool) throws -> B {
+    public static func unpack<B: BinaryConvertable>(_ data: Data, index: Int, swapBytes: Bool) throws -> B {
         if data.count < (index + MemoryLayout<B>.size) {
             throw LocalError.outOfBounds
         }
@@ -248,7 +248,7 @@ open class Binary {
         return value
     }
 
-    open static func unpackFloat16(_ data: Data, index: Int, swapBytes: Bool) throws -> Float {
+    public static func unpackFloat16(_ data: Data, index: Int, swapBytes: Bool) throws -> Float {
         if data.count < (index + MemoryLayout<UInt16>.size) {
             throw LocalError.outOfBounds
         }
@@ -257,13 +257,13 @@ open class Binary {
         return value
     }
 
-    open static func pack<B: BinaryConvertable>(_ value: B, swapBytes: Bool) -> Data {
+    public static func pack<B: BinaryConvertable>(_ value: B, swapBytes: Bool) -> Data {
         let data = B.toBinary(value)
         let ordered = swapBytes ? Data(data.reversed()) : data
         return ordered
     }
 
-    open static func packFloat16(_ value: Float, swapBytes: Bool) -> Data {
+    public static func packFloat16(_ value: Float, swapBytes: Bool) -> Data {
         let bitPattern = fd_ieee754_half_from_float(value)
         let data = pack(bitPattern, swapBytes: swapBytes)
         return data
