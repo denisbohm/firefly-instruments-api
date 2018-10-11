@@ -16,7 +16,10 @@ open class Programmer {
         case firmwareMismatch
     }
     
-    public func loadIntoRAM(serialWireDebugScript: SerialWireDebugScript, resource: String, executable: FDExecutable, address: UInt32, length: UInt32) throws {
+    public init() {
+    }
+    
+    open func loadIntoRAM(serialWireDebugScript: SerialWireDebugScript, resource: String, executable: FDExecutable, address: UInt32, length: UInt32) throws {
         let fixture = serialWireDebugScript.fixture
         guard
             let fileSystem = fixture.fileSystem,
@@ -38,7 +41,7 @@ open class Programmer {
         try serialWireInstrument.compareToStorage(section.address, length: length, storageIdentifier: storageInstrument.identifier, storageAddress: entry.address)
     }
 
-    public func setupFlash(serialWireDebugScript: SerialWireDebugScript, processor: String) throws -> FDFireflyFlash {
+    open func setupFlash(serialWireDebugScript: SerialWireDebugScript, processor: String) throws -> FDFireflyFlash {
         let fixture = serialWireDebugScript.fixture
         guard let serialWireDebug = serialWireDebugScript.serialWireDebug else {
             throw LocalError.preconditionFailure
@@ -63,7 +66,7 @@ open class Programmer {
         return flash
     }
     
-    func programResult(presenter: Presenter, name: String, data: Data, verify: Data) {
+    open func programResult(presenter: Presenter, name: String, data: Data, verify: Data) {
         let pass = data == verify
         if !pass {
             var offset = 0
@@ -77,31 +80,31 @@ open class Programmer {
             }
             let value = verifyBytes[offset]
             let expected = firmwareBytes[offset]
-            presenter.show(message: "\(name) error: offset: \(offset), value: \(value), expected: \(expected)")
+            presenter.show(message: "\(name) error: offset: \(offset), value: \(value), expected: \(expected)", pass: false)
         } else {
-            presenter.show(message: "\(name) pass")
+            presenter.show(message: "\(name) firmware", pass: true)
         }
     }
     
-    class WriteViaStorage : NSObject, FDFireflyFlashWriter {
+    open class WriteViaStorage : NSObject, FDFireflyFlashWriter {
         
-        let serialWireInstrument: SerialWireInstrument
-        let storageInstrument: StorageInstrument
-        let storageAddress: UInt32
+        public let serialWireInstrument: SerialWireInstrument
+        public let storageInstrument: StorageInstrument
+        public let storageAddress: UInt32
         
-        init(serialWireInstrument: SerialWireInstrument, storageInstrument: StorageInstrument, storageAddress: UInt32) {
+        public init(serialWireInstrument: SerialWireInstrument, storageInstrument: StorageInstrument, storageAddress: UInt32) {
             self.serialWireInstrument = serialWireInstrument
             self.storageInstrument = storageInstrument
             self.storageAddress = storageAddress
         }
         
-        public func write(_ heapAddress: UInt32, offset: UInt32, data: Data) throws {
+        open func write(_ heapAddress: UInt32, offset: UInt32, data: Data) throws {
             try serialWireInstrument.writeFromStorage(heapAddress, length: UInt32(data.count), storageIdentifier: storageInstrument.identifier, storageAddress: storageAddress + offset)
         }
         
     }
     
-    public func programFlash(presenter: Presenter, fixture: Fixture, flash: FDFireflyFlash, name: String, firmware: IntelHex) throws {
+    open func programFlash(presenter: Presenter, fixture: Fixture, flash: FDFireflyFlash, name: String, firmware: IntelHex) throws {
         var (addressBounds, data) = try firmware.combineData()
         presenter.show(message: String(format: "\(name) firmware address: %08X - %08X", addressBounds.min, addressBounds.max))
         let address = addressBounds.min

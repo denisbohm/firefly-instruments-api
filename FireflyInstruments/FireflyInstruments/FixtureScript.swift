@@ -8,21 +8,21 @@
 
 open class FixtureScript {
 
-    enum ScriptError: Error {
+    public enum ScriptError: Error {
         case setupFailure
     }
     
-    let fixture: Fixture
-    let presenter: Presenter
-    var doSetupInstruments = true
-    var batteryVoltage: Float = 4.1
+    public let fixture: Fixture
+    public let presenter: Presenter
+    public var doSetupInstruments = true
+    public var batteryVoltage: Float = 4.1
 
     public init(fixture: Fixture, presenter: Presenter) {
         self.fixture = fixture
         self.presenter = presenter
     }
     
-    func powerOnUSB() throws {
+    open func powerOnUSB() throws {
         presenter.show(message: "powering on USB...")
         Thread.sleep(forTimeInterval: 1.0)
         try fixture.voltageSenseRelayInstrument?.set(true)
@@ -35,7 +35,7 @@ open class FixtureScript {
         try fixture.voltageSenseRelayInstrument?.set(false)
     }
     
-    func powerOnBatterySimulator() throws {
+    open func powerOnBatterySimulator() throws {
         presenter.show(message: "powering on battery simulator at \(self.batteryVoltage) V...")
         Thread.sleep(forTimeInterval: 1.0)
         try fixture.voltageSenseRelayInstrument?.set(true)
@@ -50,18 +50,18 @@ open class FixtureScript {
         try fixture.voltageSenseRelayInstrument?.set(false)
     }
     
-    func powerOn() throws {
+    open func powerOn() throws {
         try powerOnBatterySimulator()
     }
     
-    func setupInstruments() throws {
+    open func setupInstruments() throws {
         presenter.show(message: "connecting to instruments...")
         try fixture.collectInstruments()
         
         try powerOn()
     }
     
-    func setup() throws {
+    open func setup() throws {
         if doSetupInstruments {
             try setupInstruments()
         }

@@ -9,7 +9,7 @@
 import Foundation
 import ARMSerialWireDebug
 
-open class ProgramScript: SpiFlashTestScript {
+open class ProgramScript: SerialWireDebugScript, Script {
     
     enum LocalError: Error {
         case unknownProcessor
@@ -124,7 +124,7 @@ open class ProgramScript: SpiFlashTestScript {
         programmer.programResult(presenter: presenter, name: "ManufacturingInformation", data: data, verify: verify)
     }
     
-    override func setup() throws {
+    override open func setup() throws {
         try super.setup()
         let programmer = Programmer()
         flash = try programmer.setupFlash(serialWireDebugScript: self, processor: "NRF52")
@@ -136,7 +136,7 @@ open class ProgramScript: SpiFlashTestScript {
         presenter.show(message: "chip erased")
     }
     
-    override open func main() throws {
+    open func main() throws {
         try setup()
         try eraseChip()
         try programBoot()

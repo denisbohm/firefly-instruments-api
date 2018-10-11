@@ -8,10 +8,6 @@
 
 open class BatteryPowerScript: FixtureScript, Script {
     
-    enum LocalError: Error {
-        case conversionError
-    }
-    
     open func main() throws {
         self.batteryVoltage = 3.6
         

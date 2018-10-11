@@ -8,21 +8,22 @@
 
 import ARMSerialWireDebug
 
-open class SerialWireDebugScript: FixtureScript {
+open class SerialWireDebugScript: FixtureScript, FireflyDesignSwdRpc {
 
-    let serialWireInstrumentIdentifier: String
-    var serialWireInstrument: SerialWireInstrument? = nil
-    var serialWireDebug: FDSerialWireDebug? = nil
-    let executable = FDExecutable()
-    let cortex = FDCortexM()
-    var trace = false
+    public let serialWireInstrumentIdentifier: String
+    public var serialWireInstrument: SerialWireInstrument? = nil
+    public var serialWireDebug: FDSerialWireDebug? = nil
+    public let executable = FDExecutable()
+    public let cortex = FDCortexM()
+    public var doHardReset = true
+    public var trace = false
     
     public init(fixture: Fixture, presenter: Presenter, serialWireInstrumentIdentifier: String) {
         self.serialWireInstrumentIdentifier = serialWireInstrumentIdentifier
         super.init(fixture: fixture, presenter: presenter)
     }
     
-    func setupSerialWireDebug() throws {
+    open func setupSerialWireDebug() throws {
         guard let serialWireInstrument = serialWireInstrument else {
             return
         }
@@ -33,12 +34,15 @@ open class SerialWireDebugScript: FixtureScript {
         let serialWireDebug = FDSerialWireDebug()
         serialWireDebug.serialWire = serialWireInstrument
         let serialWire = serialWireDebug.serialWire!
-        serialWire.setReset(true)
-        try serialWire.write()
-        Thread.sleep(forTimeInterval: 0.1)
-        serialWire.setReset(false)
-        try serialWire.write()
-        Thread.sleep(forTimeInterval: 1.0)
+        
+        if (doHardReset) {
+            serialWire.setReset(true)
+            try serialWire.write()
+            Thread.sleep(forTimeInterval: 0.1)
+            serialWire.setReset(false)
+            try serialWire.write()
+            Thread.sleep(forTimeInterval: 1.0)
+        }
         
         serialWireDebug.resetDebugPort()
         try serialWire.write()
@@ -59,13 +63,13 @@ open class SerialWireDebugScript: FixtureScript {
         self.serialWireDebug = serialWireDebug
     }
     
-    override func setup() throws {
+    override open func setup() throws {
         try super.setup()
         serialWireInstrument = fixture.getSerialWireInstrument(serialWireInstrumentIdentifier)
         try setupSerialWireDebug()
     }
     
-    func setupExecutable(resource: String, address: UInt32, length: UInt32) throws {
+    open func setupExecutable(resource: String, address: UInt32, length: UInt32) throws {
         presenter.show(message: "locating executable resource \(resource)...")
         guard let path = Bundle(for: SerialWireDebugScript.self).path(forResource: resource, ofType: "elf") else {
             throw ScriptError.setupFailure
@@ -111,7 +115,7 @@ open class SerialWireDebugScript: FixtureScript {
         try setupCortex(address: address, length: length, stackSize: 0x1000, heapSize: 0x1000)
     }
     
-    func getFunction(name: String) throws -> FDExecutableFunction {
+    open func getFunction(name: String) throws -> FDExecutableFunction {
         let functions = executable.functions
         let object = functions[name]
         guard let function = object as? FDExecutableFunction else {
@@ -123,7 +127,7 @@ open class SerialWireDebugScript: FixtureScript {
         return function
     }
 
-    func setupCortex(address: UInt32, length: UInt32, stackSize: UInt32, heapSize: UInt32) throws {
+    open func setupCortex(address: UInt32, length: UInt32, stackSize: UInt32, heapSize: UInt32) throws {
         presenter.show(message: "setting up MCU RPC...")
 
         cortex.logger = serialWireDebug!.logger
@@ -159,7 +163,7 @@ open class SerialWireDebugScript: FixtureScript {
         }
     }
     
-    func run(_ address: UInt32, r0: UInt32 = 0, r1: UInt32 = 0, r2: UInt32 = 0, r3: UInt32 = 0, timeout: TimeInterval = 1.0) throws -> UInt32 {
+    open func run(_ address: UInt32, r0: UInt32 = 0, r1: UInt32 = 0, r2: UInt32 = 0, r3: UInt32 = 0, timeout: TimeInterval = 1.0) throws -> UInt32 {
         try cortex.setupCall(address, r0: r0, r1: r1, r2: r2, r3: r3, run: !trace)
         var resultR0: UInt32 = 0
         if trace {
@@ -179,12 +183,16 @@ open class SerialWireDebugScript: FixtureScript {
         return resultR0
     }
     
-    struct Location {
+    public func run(function: String, r0: UInt32 = 0, r1: UInt32 = 0, r2: UInt32 = 0, r3: UInt32 = 0, timeout: TimeInterval = 1.0) throws -> UInt32 {
+        return try run(getFunction(name: function).address, r0:r0, r1: r1, r2: r2, r3:r3, timeout:timeout)
+    }
+    
+    public struct Location {
         let offset: UInt32
         let name: String
     }
     
-    func dump(name: String, base: UInt32, locations: [Location]) throws {
+    open func dump(name: String, base: UInt32, locations: [Location]) throws {
         for location in locations {
             var value: UInt32 = 0
             try serialWireDebug?.readMemory(base + location.offset, value: &value)
@@ -192,7 +200,7 @@ open class SerialWireDebugScript: FixtureScript {
         }
     }
     
-    func dumpP0() throws {
+    open func dumpP0() throws {
         try dump(name: "P0", base: 0x50000000, locations: [
             Location(offset: 0x700, name: "PIN_CNF[0]"),
             Location(offset: 0x704, name: "PIN_CNF[1]"),
@@ -205,7 +213,7 @@ open class SerialWireDebugScript: FixtureScript {
             ])
     }
     
-    func dumpP1() throws {
+    open func dumpP1() throws {
         try dump(name: "P1", base: 0x50000300, locations: [
             Location(offset: 0x700, name: "PIN_CNF[0]"),
             Location(offset: 0x704, name: "PIN_CNF[1]"),

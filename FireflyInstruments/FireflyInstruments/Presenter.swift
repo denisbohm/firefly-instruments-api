@@ -8,9 +8,27 @@
 
 import Cocoa
 
+public enum PresenterType {
+    case info
+    case pass
+    case fail
+}
+
 public protocol Presenter {
     
-    func show(message: String)
+    func show(message: String, type: PresenterType)
     func completed()
+
+}
+
+extension Presenter {
+    
+    public func show(message: String) {
+        show(message: message, type: .info)
+    }
+    
+    public func show(message: String, pass: Bool) {
+        show(message: message, type: pass ? .pass : .fail)
+    }
 
 }

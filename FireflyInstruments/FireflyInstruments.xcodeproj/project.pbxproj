@@ -10,6 +10,15 @@
 		920BD7FD216E641400C23D13 /* FireflyInstrumentsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920BD7FC216E641400C23D13 /* FireflyInstrumentsViewController.swift */; };
 		920DFFF11D39356D00E92859 /* BinaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920DFFF01D39356D00E92859 /* BinaryTests.swift */; };
 		920DFFF41D39406200E92859 /* ColorInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920DFFF31D39406200E92859 /* ColorInstrument.swift */; };
+		920E63B0216E8778002C2684 /* FireflyDesignGpio.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63AF216E8778002C2684 /* FireflyDesignGpio.swift */; };
+		920E63B2216E8DB8002C2684 /* FireflyDesignI2cm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63B1216E8DB8002C2684 /* FireflyDesignI2cm.swift */; };
+		920E63B4216E93E2002C2684 /* FireflyDesignBq25120.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63B3216E93E2002C2684 /* FireflyDesignBq25120.swift */; };
+		920E63B6216EAEEA002C2684 /* FireflyDesignSpim.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63B5216EAEEA002C2684 /* FireflyDesignSpim.swift */; };
+		920E63B8216EB005002C2684 /* FireflyDesignSpimFlash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63B7216EB005002C2684 /* FireflyDesignSpimFlash.swift */; };
+		920E63BA216EB0D3002C2684 /* FireflyDesignLsm6dsl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63B9216EB0D3002C2684 /* FireflyDesignLsm6dsl.swift */; };
+		920E63BC216EB2D4002C2684 /* FireflyDesignPwm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63BB216EB2D4002C2684 /* FireflyDesignPwm.swift */; };
+		920E63C3216F8E57002C2684 /* FireflyDesignCrystal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63C2216F8E57002C2684 /* FireflyDesignCrystal.swift */; };
+		920E63C9216F922D002C2684 /* FireflyDesignSwdRpc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920E63C8216F922D002C2684 /* FireflyDesignSwdRpc.swift */; };
 		924431401D3FB94400F03EAC /* USBHIDDevice.h in Headers */ = {isa = PBXBuildFile; fileRef = 9244313E1D3FB94400F03EAC /* USBHIDDevice.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		924431411D3FB94400F03EAC /* USBHIDDevice.m in Sources */ = {isa = PBXBuildFile; fileRef = 9244313F1D3FB94400F03EAC /* USBHIDDevice.m */; };
 		924431481D3FBC2300F03EAC /* FDError.h in Headers */ = {isa = PBXBuildFile; fileRef = 924431461D3FBC2300F03EAC /* FDError.h */; };
@@ -35,19 +44,13 @@
 		927905281D3E732800623816 /* SerialWireInstrumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 927905271D3E732800623816 /* SerialWireInstrumentTests.swift */; };
 		9279052B1D3E909600623816 /* InstrumentManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279052A1D3E909600623816 /* InstrumentManagerTests.swift */; };
 		9279BD3E216E5D5E00EEEC92 /* SerialWireDebugScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD2C216E5D5E00EEEC92 /* SerialWireDebugScript.swift */; };
-		9279BD3F216E5D5E00EEEC92 /* DisplayTestScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD2D216E5D5E00EEEC92 /* DisplayTestScript.swift */; };
 		9279BD40216E5D5E00EEEC92 /* Fixture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD2E216E5D5E00EEEC92 /* Fixture.swift */; };
 		9279BD41216E5D5E00EEEC92 /* Heap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD2F216E5D5E00EEEC92 /* Heap.swift */; };
 		9279BD42216E5D5E00EEEC92 /* IdentifyScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD30216E5D5E00EEEC92 /* IdentifyScript.swift */; };
-		9279BD43216E5D5E00EEEC92 /* DualProgramScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD31216E5D5E00EEEC92 /* DualProgramScript.swift */; };
-		9279BD44216E5D5E00EEEC92 /* HeartRateScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD32216E5D5E00EEEC92 /* HeartRateScript.swift */; };
-		9279BD45216E5D5E00EEEC92 /* ChargeScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD33216E5D5E00EEEC92 /* ChargeScript.swift */; };
 		9279BD46216E5D5E00EEEC92 /* Programmer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD34216E5D5E00EEEC92 /* Programmer.swift */; };
 		9279BD47216E5D5E00EEEC92 /* ProgramScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD35216E5D5E00EEEC92 /* ProgramScript.swift */; };
 		9279BD48216E5D5E00EEEC92 /* FixtureScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD36216E5D5E00EEEC92 /* FixtureScript.swift */; };
-		9279BD49216E5D5E00EEEC92 /* PowerSetupScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD37216E5D5E00EEEC92 /* PowerSetupScript.swift */; };
 		9279BD4A216E5D5E00EEEC92 /* Runner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD38216E5D5E00EEEC92 /* Runner.swift */; };
-		9279BD4B216E5D5E00EEEC92 /* SpiFlashTestScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD39216E5D5E00EEEC92 /* SpiFlashTestScript.swift */; };
 		9279BD4C216E5D5E00EEEC92 /* Presenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD3A216E5D5E00EEEC92 /* Presenter.swift */; };
 		9279BD4D216E5D5E00EEEC92 /* QuiescentScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD3B216E5D5E00EEEC92 /* QuiescentScript.swift */; };
 		9279BD4E216E5D5E00EEEC92 /* Script.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9279BD3C216E5D5E00EEEC92 /* Script.swift */; };
@@ -118,6 +121,15 @@
 		920BD7FC216E641400C23D13 /* FireflyInstrumentsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyInstrumentsViewController.swift; sourceTree = "<group>"; };
 		920DFFF01D39356D00E92859 /* BinaryTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BinaryTests.swift; sourceTree = "<group>"; };
 		920DFFF31D39406200E92859 /* ColorInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorInstrument.swift; sourceTree = "<group>"; };
+		920E63AF216E8778002C2684 /* FireflyDesignGpio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignGpio.swift; sourceTree = "<group>"; };
+		920E63B1216E8DB8002C2684 /* FireflyDesignI2cm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignI2cm.swift; sourceTree = "<group>"; };
+		920E63B3216E93E2002C2684 /* FireflyDesignBq25120.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignBq25120.swift; sourceTree = "<group>"; };
+		920E63B5216EAEEA002C2684 /* FireflyDesignSpim.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignSpim.swift; sourceTree = "<group>"; };
+		920E63B7216EB005002C2684 /* FireflyDesignSpimFlash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignSpimFlash.swift; sourceTree = "<group>"; };
+		920E63B9216EB0D3002C2684 /* FireflyDesignLsm6dsl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignLsm6dsl.swift; sourceTree = "<group>"; };
+		920E63BB216EB2D4002C2684 /* FireflyDesignPwm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignPwm.swift; sourceTree = "<group>"; };
+		920E63C2216F8E57002C2684 /* FireflyDesignCrystal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignCrystal.swift; sourceTree = "<group>"; };
+		920E63C8216F922D002C2684 /* FireflyDesignSwdRpc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyDesignSwdRpc.swift; sourceTree = "<group>"; };
 		9244313E1D3FB94400F03EAC /* USBHIDDevice.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBHIDDevice.h; sourceTree = "<group>"; };
 		9244313F1D3FB94400F03EAC /* USBHIDDevice.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = USBHIDDevice.m; sourceTree = "<group>"; };
 		924431461D3FBC2300F03EAC /* FDError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FDError.h; sourceTree = "<group>"; };
@@ -147,19 +159,13 @@
 		927905271D3E732800623816 /* SerialWireInstrumentTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialWireInstrumentTests.swift; sourceTree = "<group>"; };
 		9279052A1D3E909600623816 /* InstrumentManagerTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InstrumentManagerTests.swift; sourceTree = "<group>"; };
 		9279BD2C216E5D5E00EEEC92 /* SerialWireDebugScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SerialWireDebugScript.swift; sourceTree = "<group>"; };
-		9279BD2D216E5D5E00EEEC92 /* DisplayTestScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DisplayTestScript.swift; sourceTree = "<group>"; };
 		9279BD2E216E5D5E00EEEC92 /* Fixture.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Fixture.swift; sourceTree = "<group>"; };
 		9279BD2F216E5D5E00EEEC92 /* Heap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Heap.swift; sourceTree = "<group>"; };
 		9279BD30216E5D5E00EEEC92 /* IdentifyScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IdentifyScript.swift; sourceTree = "<group>"; };
-		9279BD31216E5D5E00EEEC92 /* DualProgramScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DualProgramScript.swift; sourceTree = "<group>"; };
-		9279BD32216E5D5E00EEEC92 /* HeartRateScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeartRateScript.swift; sourceTree = "<group>"; };
-		9279BD33216E5D5E00EEEC92 /* ChargeScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ChargeScript.swift; sourceTree = "<group>"; };
 		9279BD34216E5D5E00EEEC92 /* Programmer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Programmer.swift; sourceTree = "<group>"; };
 		9279BD35216E5D5E00EEEC92 /* ProgramScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProgramScript.swift; sourceTree = "<group>"; };
 		9279BD36216E5D5E00EEEC92 /* FixtureScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixtureScript.swift; sourceTree = "<group>"; };
-		9279BD37216E5D5E00EEEC92 /* PowerSetupScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PowerSetupScript.swift; sourceTree = "<group>"; };
 		9279BD38216E5D5E00EEEC92 /* Runner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Runner.swift; sourceTree = "<group>"; };
-		9279BD39216E5D5E00EEEC92 /* SpiFlashTestScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SpiFlashTestScript.swift; sourceTree = "<group>"; };
 		9279BD3A216E5D5E00EEEC92 /* Presenter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Presenter.swift; sourceTree = "<group>"; };
 		9279BD3B216E5D5E00EEEC92 /* QuiescentScript.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = QuiescentScript.swift; sourceTree = "<group>"; };
 		9279BD3C216E5D5E00EEEC92 /* Script.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Script.swift; sourceTree = "<group>"; };
@@ -305,6 +311,55 @@
 			name = Configuration;
 			sourceTree = "<group>";
 		};
+		920E63CC216F9346002C2684 /* Container */ = {
+			isa = PBXGroup;
+			children = (
+				9279BD3A216E5D5E00EEEC92 /* Presenter.swift */,
+				9279BD38216E5D5E00EEEC92 /* Runner.swift */,
+				9279BD3C216E5D5E00EEEC92 /* Script.swift */,
+			);
+			name = Container;
+			sourceTree = "<group>";
+		};
+		920E63CD216F9379002C2684 /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				9279BD3D216E5D5E00EEEC92 /* BatteryPowerScript.swift */,
+				9279BD36216E5D5E00EEEC92 /* FixtureScript.swift */,
+				9279BD30216E5D5E00EEEC92 /* IdentifyScript.swift */,
+				9279BD35216E5D5E00EEEC92 /* ProgramScript.swift */,
+				9279BD3B216E5D5E00EEEC92 /* QuiescentScript.swift */,
+				9279BD2C216E5D5E00EEEC92 /* SerialWireDebugScript.swift */,
+			);
+			name = Scripts;
+			sourceTree = "<group>";
+		};
+		920E63CE216F93CB002C2684 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				9279BD2E216E5D5E00EEEC92 /* Fixture.swift */,
+				9279BD2F216E5D5E00EEEC92 /* Heap.swift */,
+				9279BD34216E5D5E00EEEC92 /* Programmer.swift */,
+			);
+			name = Utilities;
+			sourceTree = "<group>";
+		};
+		920E63CF216F93E3002C2684 /* Mixins */ = {
+			isa = PBXGroup;
+			children = (
+				920E63AF216E8778002C2684 /* FireflyDesignGpio.swift */,
+				920E63B1216E8DB8002C2684 /* FireflyDesignI2cm.swift */,
+				920E63B3216E93E2002C2684 /* FireflyDesignBq25120.swift */,
+				920E63B5216EAEEA002C2684 /* FireflyDesignSpim.swift */,
+				920E63B7216EB005002C2684 /* FireflyDesignSpimFlash.swift */,
+				920E63B9216EB0D3002C2684 /* FireflyDesignLsm6dsl.swift */,
+				920E63BB216EB2D4002C2684 /* FireflyDesignPwm.swift */,
+				920E63C2216F8E57002C2684 /* FireflyDesignCrystal.swift */,
+				920E63C8216F922D002C2684 /* FireflyDesignSwdRpc.swift */,
+			);
+			name = Mixins;
+			sourceTree = "<group>";
+		};
 		924431391D3FB52A00F03EAC /* USB */ = {
 			isa = PBXGroup;
 			children = (
@@ -425,25 +480,11 @@
 		9279BD2A216E5D3500EEEC92 /* Scripting */ = {
 			isa = PBXGroup;
 			children = (
+				920E63CF216F93E3002C2684 /* Mixins */,
+				920E63CE216F93CB002C2684 /* Utilities */,
+				920E63CD216F9379002C2684 /* Scripts */,
+				920E63CC216F9346002C2684 /* Container */,
 				9264A83C216E735000D2943F /* Firmware */,
-				9279BD3D216E5D5E00EEEC92 /* BatteryPowerScript.swift */,
-				9279BD33216E5D5E00EEEC92 /* ChargeScript.swift */,
-				9279BD2D216E5D5E00EEEC92 /* DisplayTestScript.swift */,
-				9279BD31216E5D5E00EEEC92 /* DualProgramScript.swift */,
-				9279BD2E216E5D5E00EEEC92 /* Fixture.swift */,
-				9279BD36216E5D5E00EEEC92 /* FixtureScript.swift */,
-				9279BD2F216E5D5E00EEEC92 /* Heap.swift */,
-				9279BD32216E5D5E00EEEC92 /* HeartRateScript.swift */,
-				9279BD30216E5D5E00EEEC92 /* IdentifyScript.swift */,
-				9279BD37216E5D5E00EEEC92 /* PowerSetupScript.swift */,
-				9279BD3A216E5D5E00EEEC92 /* Presenter.swift */,
-				9279BD34216E5D5E00EEEC92 /* Programmer.swift */,
-				9279BD35216E5D5E00EEEC92 /* ProgramScript.swift */,
-				9279BD3B216E5D5E00EEEC92 /* QuiescentScript.swift */,
-				9279BD38216E5D5E00EEEC92 /* Runner.swift */,
-				9279BD3C216E5D5E00EEEC92 /* Script.swift */,
-				9279BD2C216E5D5E00EEEC92 /* SerialWireDebugScript.swift */,
-				9279BD39216E5D5E00EEEC92 /* SpiFlashTestScript.swift */,
 			);
 			name = Scripting;
 			sourceTree = "<group>";
@@ -636,20 +677,15 @@
 			files = (
 				920BD7FD216E641400C23D13 /* FireflyInstrumentsViewController.swift in Sources */,
 				9254ECFD210106C900D96FA7 /* FireflyFlashExport.swift in Sources */,
-				9279BD3F216E5D5E00EEEC92 /* DisplayTestScript.swift in Sources */,
 				9272D9901D36D51C00830CF5 /* InstrumentManager.swift in Sources */,
 				9279BD47216E5D5E00EEEC92 /* ProgramScript.swift in Sources */,
 				9289509F1D4A89E7005A5F55 /* USBHIDFinder.swift in Sources */,
 				924431491D3FBC2300F03EAC /* FDError.m in Sources */,
-				9279BD49216E5D5E00EEEC92 /* PowerSetupScript.swift in Sources */,
-				9279BD43216E5D5E00EEEC92 /* DualProgramScript.swift in Sources */,
 				92B3BEB01D3FE3D900EBBCF7 /* Instrument.swift in Sources */,
 				92BFEC9B1D3E6F6B00C2481A /* Portal.swift in Sources */,
-				9279BD4B216E5D5E00EEEC92 /* SpiFlashTestScript.swift in Sources */,
 				9286EEC91D4281F70078FA55 /* CurrentInstrument.swift in Sources */,
 				92F6470B1EC1603F003A7027 /* IntelHexParser.swift in Sources */,
 				9279BD4A216E5D5E00EEEC92 /* Runner.swift in Sources */,
-				9279BD45216E5D5E00EEEC92 /* ChargeScript.swift in Sources */,
 				9279BD46216E5D5E00EEEC92 /* Programmer.swift in Sources */,
 				9279BD42216E5D5E00EEEC92 /* IdentifyScript.swift in Sources */,
 				924431411D3FB94400F03EAC /* USBHIDDevice.m in Sources */,
@@ -657,14 +693,15 @@
 				9279BD48216E5D5E00EEEC92 /* FixtureScript.swift in Sources */,
 				9286EEC61D42810F0078FA55 /* RelayInstrument.swift in Sources */,
 				9279BD4E216E5D5E00EEEC92 /* Script.swift in Sources */,
+				920E63C9216F922D002C2684 /* FireflyDesignSwdRpc.swift in Sources */,
 				9286EECB1D4284150078FA55 /* BatteryInstrument.swift in Sources */,
+				920E63B2216E8DB8002C2684 /* FireflyDesignI2cm.swift in Sources */,
 				9279BD4D216E5D5E00EEEC92 /* QuiescentScript.swift in Sources */,
 				9279BD4F216E5D5E00EEEC92 /* BatteryPowerScript.swift in Sources */,
 				924B6B551D418284000CBAB7 /* IndicatorInstrument.swift in Sources */,
 				9279BD3E216E5D5E00EEEC92 /* SerialWireDebugScript.swift in Sources */,
 				9255D6431D3D9EFC00655D79 /* DetourSource.swift in Sources */,
 				9286EEF61D42B4470078FA55 /* VoltageInstrument.swift in Sources */,
-				9279BD44216E5D5E00EEEC92 /* HeartRateScript.swift in Sources */,
 				927D13EA1D3EC61A00466EE8 /* InstrumentPortal.swift in Sources */,
 				92F9E3681D37F1DE00F16833 /* Binary.swift in Sources */,
 				92F9E36E1D38491600F16833 /* fd_ieee754.c in Sources */,
@@ -672,12 +709,19 @@
 				9279BD41216E5D5E00EEEC92 /* Heap.swift in Sources */,
 				924B6B581D4184BC000CBAB7 /* InternalInstrument.swift in Sources */,
 				926CE0911D71F7E2000E5A70 /* FileSystem.swift in Sources */,
+				920E63B8216EB005002C2684 /* FireflyDesignSpimFlash.swift in Sources */,
 				92F647091EC1603F003A7027 /* IntelHex.swift in Sources */,
+				920E63B0216E8778002C2684 /* FireflyDesignGpio.swift in Sources */,
+				920E63B4216E93E2002C2684 /* FireflyDesignBq25120.swift in Sources */,
+				920E63C3216F8E57002C2684 /* FireflyDesignCrystal.swift in Sources */,
 				9279BD4C216E5D5E00EEEC92 /* Presenter.swift in Sources */,
 				9244314D1D3FC11C00F03EAC /* USBHIDMonitor.m in Sources */,
 				9272D98E1D36D45F00830CF5 /* SerialWireInstrument.swift in Sources */,
 				920DFFF41D39406200E92859 /* ColorInstrument.swift in Sources */,
+				920E63BC216EB2D4002C2684 /* FireflyDesignPwm.swift in Sources */,
 				9279BD40216E5D5E00EEEC92 /* Fixture.swift in Sources */,
+				920E63BA216EB0D3002C2684 /* FireflyDesignLsm6dsl.swift in Sources */,
+				920E63B6216EAEEA002C2684 /* FireflyDesignSpim.swift in Sources */,
 				92F6470A1EC1603F003A7027 /* IntelHexFormatter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

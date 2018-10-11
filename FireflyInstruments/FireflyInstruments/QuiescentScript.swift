@@ -78,10 +78,10 @@ open class QuiescentScript: FixtureScript, Script {
         }
         let limit: Float32 = 0.000100 // 100 uA
         let pass = conversion.current <= limit
-        presenter.show(message: "quiescent current \(conversion.current) <= \(limit): \(pass)")
+        presenter.show(message: "quiescent current \(conversion.current) <= \(limit)", pass: pass)
     }
     
-    override func setup() throws {
+    override open func setup() throws {
         try super.setup()
     }
     

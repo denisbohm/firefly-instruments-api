@@ -24,7 +24,7 @@ open class Runner: Thread {
         do {
             try script.main()
         } catch {
-            presenter.show(message: "Unexpected Error: \(error.localizedDescription)")
+            presenter.show(message: "Unexpected Error: \(error.localizedDescription)", pass: false)
         }
         presenter.completed()
     }
