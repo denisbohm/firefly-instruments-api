@@ -11,11 +11,26 @@ import ARMSerialWireDebug
 
 open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransport, InternalInstrument {
 
-    public enum LocalError : Error {
+    public enum LocalError: Error, CustomStringConvertible {
+        
         case memoryTransferIssue(code: UInt64, data: Data)
         case unknownTransferType(type: FDSerialWireDebugTransferType)
         case transferIssue(code: UInt64)
         case transferMismatch
+        
+        public var description: String {
+            switch self {
+            case let .memoryTransferIssue(code, data):
+                return "memory transfer issue \(code) \(data)"
+            case let .unknownTransferType(type):
+                return "unknown transfer type \(type)"
+            case let .transferIssue(code):
+                return "transfer issue \(code)"
+            case .transferMismatch:
+                return "transfer mismatch"
+            }
+        }
+
     }
 
     static let apiTypeReset = UInt64(0)

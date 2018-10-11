@@ -227,12 +227,12 @@ extension FireflyDesignLsm6dsl {
         try subheap.decode()
         let pass =
             (count > 0) && (count < 100) &&
-            isInRange(sample.accelerometer.x.value, -100, 100) &&
-            isInRange(sample.accelerometer.y.value, -100, 100) &&
+            isInRange(sample.accelerometer.x.value, -400, 400) &&
+            isInRange(sample.accelerometer.y.value, -400, 400) &&
             isInRange(sample.accelerometer.z.value, -9000, -8000) &&
-            isInRange(sample.gyro.x.value, -100, 100) &&
-            isInRange(sample.gyro.y.value, -100, 100) &&
-            isInRange(sample.gyro.z.value, -100, 100)
+            isInRange(sample.gyro.x.value, -400, 400) &&
+            isInRange(sample.gyro.y.value, -400, 400) &&
+            isInRange(sample.gyro.z.value, -400, 400)
         presenter.show(message: String(format: "n=\(count) ax=%d, ay=%d, az=%d, gx=%d, gy=%d, gz=%d",
             sample.accelerometer.x.value,
             sample.accelerometer.y.value,

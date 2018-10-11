@@ -23,6 +23,8 @@ open class Runner: Thread {
     override open func main() {
         do {
             try script.main()
+        } catch let error as CustomStringConvertible {
+            presenter.show(message: "Unexpected Error: \(error.description)", pass: false)
         } catch {
             presenter.show(message: "Unexpected Error: \(error.localizedDescription)", pass: false)
         }

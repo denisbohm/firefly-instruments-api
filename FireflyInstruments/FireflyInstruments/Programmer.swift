@@ -16,6 +16,8 @@ open class Programmer {
         case firmwareMismatch
     }
     
+    public var doUseStorage = true
+    
     public init() {
     }
     
@@ -113,20 +115,26 @@ open class Programmer {
         length = ((length + pageSize - 1) / pageSize) * pageSize
         data.count = length
         
-        /*
-        if let storageInstrument = fixture.storageInstrument, let fileSystem = fixture.fileSystem, let serialWireInstrument = fixture.serialWire1Instrument {
+        if doUseStorage, let storageInstrument = fixture.storageInstrument, let fileSystem = fixture.fileSystem, let serialWireInstrument = fixture.serialWire1Instrument {
             let entry = try fileSystem.ensure(name, data: data)
-            
+
             let writer = WriteViaStorage(serialWireInstrument: serialWireInstrument, storageInstrument: storageInstrument, storageAddress: entry.address)
             try flash.writePages(address, data: data, erase: true, writer: writer)
-            try serialWireInstrument.compareToStorage(address, length: UInt32(length), storageIdentifier: storageInstrument.identifier, storageAddress: entry.address)
-            presenter.show(message: "\(name) program: pass")
+            var pass = false
+            do {
+                try serialWireInstrument.compareToStorage(address, length: UInt32(length), storageIdentifier: storageInstrument.identifier, storageAddress: entry.address)
+                pass = true
+            } catch let error as CustomStringConvertible {
+                presenter.show(message: "verify error: \(error.description)")
+            } catch {
+                presenter.show(message: "verify error: \(error.localizedDescription)")
+            }
+            presenter.show(message: "\(name) firmware", pass: pass)
         } else {
- */
             try flash.writePages(address, data: data, erase: true)
             let verify = try flash.serialWireDebug!.readMemory(address, length: UInt32(data.count))
             programResult(presenter: presenter, name: name, data: data, verify: verify)
-//        }
+        }
     }
     
 }
