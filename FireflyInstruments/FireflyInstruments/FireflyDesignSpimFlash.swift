@@ -29,6 +29,10 @@ public protocol FireflyDesignSpimFlash: FireflyDesignSwdRpc {
     
     func fd_spi_flash_get_information(heap: Heap, device: fd_spim_device_t) throws -> fd_spi_flash_information_t
     
+    func fd_spi_flash_chip_erase(device: fd_spim_device_t) throws
+    
+    func fd_spi_flash_enable_write(device: fd_spim_device_t) throws
+
 }
 
 extension FireflyDesignSpimFlash {
@@ -45,5 +49,13 @@ extension FireflyDesignSpimFlash {
         try subheap.decode()
         return information
     }
-
+    
+    public func fd_spi_flash_chip_erase(device: fd_spim_device_t) throws {
+        let _ = try run(function: "fd_spi_flash_chip_erase", r0: device.heapAddress!)
+    }
+    
+    public func fd_spi_flash_enable_write(device: fd_spim_device_t) throws {
+        let _ = try run(function: "fd_spi_flash_enable_write", r0: device.heapAddress!)
+    }
+    
 }
