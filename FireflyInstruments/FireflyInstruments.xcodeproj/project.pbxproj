@@ -30,6 +30,7 @@
 		9254ECFD210106C900D96FA7 /* FireflyFlashExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9254ECFC210106C900D96FA7 /* FireflyFlashExport.swift */; };
 		9255D6431D3D9EFC00655D79 /* DetourSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9255D6421D3D9EFC00655D79 /* DetourSource.swift */; };
 		9255D6461D3DBA3E00655D79 /* DetourSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9255D6451D3DBA3E00655D79 /* DetourSourceTests.swift */; };
+		925C219F218A3466000347AA /* UsbPowerScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 925C219E218A3466000347AA /* UsbPowerScript.swift */; };
 		9264A842216E736D00D2943F /* fd_quiescent_test_nrf5.hex in Resources */ = {isa = PBXBuildFile; fileRef = 9264A83E216E736D00D2943F /* fd_quiescent_test_nrf5.hex */; };
 		9264A843216E736D00D2943F /* fd_test_suite_apollo.elf in Resources */ = {isa = PBXBuildFile; fileRef = 9264A83F216E736D00D2943F /* fd_test_suite_apollo.elf */; };
 		9264A844216E736D00D2943F /* fd_test_suite_nrf5.elf in Resources */ = {isa = PBXBuildFile; fileRef = 9264A840216E736D00D2943F /* fd_test_suite_nrf5.elf */; };
@@ -142,6 +143,7 @@
 		9254ECFC210106C900D96FA7 /* FireflyFlashExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyFlashExport.swift; sourceTree = "<group>"; };
 		9255D6421D3D9EFC00655D79 /* DetourSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourSource.swift; sourceTree = "<group>"; };
 		9255D6451D3DBA3E00655D79 /* DetourSourceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourSourceTests.swift; sourceTree = "<group>"; };
+		925C219E218A3466000347AA /* UsbPowerScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsbPowerScript.swift; sourceTree = "<group>"; };
 		9264A83E216E736D00D2943F /* fd_quiescent_test_nrf5.hex */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = fd_quiescent_test_nrf5.hex; path = "../../../firefly-ice-firmware/fixture/fd_quiescent_test_nrf5 THUMB Release/fd_quiescent_test_nrf5.hex"; sourceTree = "<group>"; };
 		9264A83F216E736D00D2943F /* fd_test_suite_apollo.elf */ = {isa = PBXFileReference; lastKnownFileType = file; name = fd_test_suite_apollo.elf; path = "../../../firefly-ice-firmware/fixture/fd_test_suite_apollo THUMB Debug/fd_test_suite_apollo.elf"; sourceTree = "<group>"; };
 		9264A840216E736D00D2943F /* fd_test_suite_nrf5.elf */ = {isa = PBXFileReference; lastKnownFileType = file; name = fd_test_suite_nrf5.elf; path = "../../../firefly-ice-firmware/fixture/fd_test_suite_nrf5 THUMB Debug/fd_test_suite_nrf5.elf"; sourceTree = "<group>"; };
@@ -330,6 +332,7 @@
 				9279BD35216E5D5E00EEEC92 /* ProgramScript.swift */,
 				9279BD3B216E5D5E00EEEC92 /* QuiescentScript.swift */,
 				9279BD2C216E5D5E00EEEC92 /* SerialWireDebugScript.swift */,
+				925C219E218A3466000347AA /* UsbPowerScript.swift */,
 			);
 			name = Scripts;
 			sourceTree = "<group>";
@@ -702,6 +705,7 @@
 				9279BD3E216E5D5E00EEEC92 /* SerialWireDebugScript.swift in Sources */,
 				9255D6431D3D9EFC00655D79 /* DetourSource.swift in Sources */,
 				9286EEF61D42B4470078FA55 /* VoltageInstrument.swift in Sources */,
+				925C219F218A3466000347AA /* UsbPowerScript.swift in Sources */,
 				927D13EA1D3EC61A00466EE8 /* InstrumentPortal.swift in Sources */,
 				92F9E3681D37F1DE00F16833 /* Binary.swift in Sources */,
 				92F9E36E1D38491600F16833 /* fd_ieee754.c in Sources */,
