@@ -51,6 +51,7 @@ open class QuiescentScript: FixtureScript, Script {
         try flash.massErase()
         presenter.show(message: "apollo erased")
         
+        programmer.doUseStorage = false // !!! storage method fails for Apollo - why? -denis
         try programmer.programFlash(presenter: presenter, fixture: fixture, flash: flash, name: "fd_quiescent_test_apollo", firmware: apolloFirmware)
         
         try serialWireDebugScript.serialWireInstrument?.setEnabled(false)

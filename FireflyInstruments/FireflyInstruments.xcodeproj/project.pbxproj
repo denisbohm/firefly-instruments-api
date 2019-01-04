@@ -25,6 +25,9 @@
 		924431491D3FBC2300F03EAC /* FDError.m in Sources */ = {isa = PBXBuildFile; fileRef = 924431471D3FBC2300F03EAC /* FDError.m */; };
 		9244314C1D3FC11C00F03EAC /* USBHIDMonitor.h in Headers */ = {isa = PBXBuildFile; fileRef = 9244314A1D3FC11B00F03EAC /* USBHIDMonitor.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9244314D1D3FC11C00F03EAC /* USBHIDMonitor.m in Sources */ = {isa = PBXBuildFile; fileRef = 9244314B1D3FC11C00F03EAC /* USBHIDMonitor.m */; };
+		924818D0219F2053006FBC95 /* CurrentChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924818CE219F2053006FBC95 /* CurrentChart.swift */; };
+		924818D4219F2334006FBC95 /* CurrentTimelineScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924818D3219F2334006FBC95 /* CurrentTimelineScript.swift */; };
+		924818D6219F29C3006FBC95 /* Semaphore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924818D5219F29C3006FBC95 /* Semaphore.swift */; };
 		924B6B551D418284000CBAB7 /* IndicatorInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924B6B541D418284000CBAB7 /* IndicatorInstrument.swift */; };
 		924B6B581D4184BC000CBAB7 /* InternalInstrument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 924B6B571D4184BC000CBAB7 /* InternalInstrument.swift */; };
 		9254ECFD210106C900D96FA7 /* FireflyFlashExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9254ECFC210106C900D96FA7 /* FireflyFlashExport.swift */; };
@@ -138,16 +141,19 @@
 		9244314A1D3FC11B00F03EAC /* USBHIDMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = USBHIDMonitor.h; sourceTree = "<group>"; };
 		9244314B1D3FC11C00F03EAC /* USBHIDMonitor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = USBHIDMonitor.m; sourceTree = "<group>"; };
 		9244314E1D3FC71600F03EAC /* USBHIDDevice_Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = USBHIDDevice_Private.h; sourceTree = "<group>"; };
+		924818CE219F2053006FBC95 /* CurrentChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentChart.swift; sourceTree = "<group>"; };
+		924818D3219F2334006FBC95 /* CurrentTimelineScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentTimelineScript.swift; sourceTree = "<group>"; };
+		924818D5219F29C3006FBC95 /* Semaphore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Semaphore.swift; sourceTree = "<group>"; };
 		924B6B541D418284000CBAB7 /* IndicatorInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IndicatorInstrument.swift; sourceTree = "<group>"; };
 		924B6B571D4184BC000CBAB7 /* InternalInstrument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = InternalInstrument.swift; sourceTree = "<group>"; };
 		9254ECFC210106C900D96FA7 /* FireflyFlashExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FireflyFlashExport.swift; sourceTree = "<group>"; };
 		9255D6421D3D9EFC00655D79 /* DetourSource.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourSource.swift; sourceTree = "<group>"; };
 		9255D6451D3DBA3E00655D79 /* DetourSourceTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DetourSourceTests.swift; sourceTree = "<group>"; };
 		925C219E218A3466000347AA /* UsbPowerScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsbPowerScript.swift; sourceTree = "<group>"; };
-		9264A83E216E736D00D2943F /* fd_quiescent_test_nrf5.hex */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = fd_quiescent_test_nrf5.hex; path = "../../../firefly-ice-firmware/fixture/fd_quiescent_test_nrf5 THUMB Release/fd_quiescent_test_nrf5.hex"; sourceTree = "<group>"; };
-		9264A83F216E736D00D2943F /* fd_test_suite_apollo.elf */ = {isa = PBXFileReference; lastKnownFileType = file; name = fd_test_suite_apollo.elf; path = "../../../firefly-ice-firmware/fixture/fd_test_suite_apollo THUMB Debug/fd_test_suite_apollo.elf"; sourceTree = "<group>"; };
-		9264A840216E736D00D2943F /* fd_test_suite_nrf5.elf */ = {isa = PBXFileReference; lastKnownFileType = file; name = fd_test_suite_nrf5.elf; path = "../../../firefly-ice-firmware/fixture/fd_test_suite_nrf5 THUMB Debug/fd_test_suite_nrf5.elf"; sourceTree = "<group>"; };
-		9264A841216E736D00D2943F /* fd_quiescent_test_apollo.hex */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = fd_quiescent_test_apollo.hex; path = "../../../firefly-ice-firmware/fixture/fd_quiescent_test_apollo THUMB Release/fd_quiescent_test_apollo.hex"; sourceTree = "<group>"; };
+		9264A83E216E736D00D2943F /* fd_quiescent_test_nrf5.hex */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = fd_quiescent_test_nrf5.hex; sourceTree = "<group>"; };
+		9264A83F216E736D00D2943F /* fd_test_suite_apollo.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = fd_test_suite_apollo.elf; sourceTree = "<group>"; };
+		9264A840216E736D00D2943F /* fd_test_suite_nrf5.elf */ = {isa = PBXFileReference; lastKnownFileType = file; path = fd_test_suite_nrf5.elf; sourceTree = "<group>"; };
+		9264A841216E736D00D2943F /* fd_quiescent_test_apollo.hex */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = fd_quiescent_test_apollo.hex; sourceTree = "<group>"; };
 		926CE0901D71F7E2000E5A70 /* FileSystem.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileSystem.swift; sourceTree = "<group>"; };
 		9272D9531D36D29D00830CF5 /* FireflyInstruments.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FireflyInstruments.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		9272D9561D36D29D00830CF5 /* FireflyInstruments.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FireflyInstruments.h; sourceTree = "<group>"; };
@@ -227,6 +233,7 @@
 			isa = PBXGroup;
 			children = (
 				920BD7FC216E641400C23D13 /* FireflyInstrumentsViewController.swift */,
+				924818CE219F2053006FBC95 /* CurrentChart.swift */,
 			);
 			name = "User Interface";
 			sourceTree = "<group>";
@@ -333,6 +340,7 @@
 				9279BD3B216E5D5E00EEEC92 /* QuiescentScript.swift */,
 				9279BD2C216E5D5E00EEEC92 /* SerialWireDebugScript.swift */,
 				925C219E218A3466000347AA /* UsbPowerScript.swift */,
+				924818D3219F2334006FBC95 /* CurrentTimelineScript.swift */,
 			);
 			name = Scripts;
 			sourceTree = "<group>";
@@ -343,6 +351,7 @@
 				9279BD2E216E5D5E00EEEC92 /* Fixture.swift */,
 				9279BD2F216E5D5E00EEEC92 /* Heap.swift */,
 				9279BD34216E5D5E00EEEC92 /* Programmer.swift */,
+				924818D5219F29C3006FBC95 /* Semaphore.swift */,
 			);
 			name = Utilities;
 			sourceTree = "<group>";
@@ -694,6 +703,7 @@
 				924431411D3FB94400F03EAC /* USBHIDDevice.m in Sources */,
 				92F9E3651D37E9EA00F16833 /* Detour.swift in Sources */,
 				9279BD48216E5D5E00EEEC92 /* FixtureScript.swift in Sources */,
+				924818D0219F2053006FBC95 /* CurrentChart.swift in Sources */,
 				9286EEC61D42810F0078FA55 /* RelayInstrument.swift in Sources */,
 				9279BD4E216E5D5E00EEEC92 /* Script.swift in Sources */,
 				920E63C9216F922D002C2684 /* FireflyDesignSwdRpc.swift in Sources */,
@@ -707,10 +717,12 @@
 				9286EEF61D42B4470078FA55 /* VoltageInstrument.swift in Sources */,
 				925C219F218A3466000347AA /* UsbPowerScript.swift in Sources */,
 				927D13EA1D3EC61A00466EE8 /* InstrumentPortal.swift in Sources */,
+				924818D6219F29C3006FBC95 /* Semaphore.swift in Sources */,
 				92F9E3681D37F1DE00F16833 /* Binary.swift in Sources */,
 				92F9E36E1D38491600F16833 /* fd_ieee754.c in Sources */,
 				92A10B841D70B605006B708E /* StorageInstrument.swift in Sources */,
 				9279BD41216E5D5E00EEEC92 /* Heap.swift in Sources */,
+				924818D4219F2334006FBC95 /* CurrentTimelineScript.swift in Sources */,
 				924B6B581D4184BC000CBAB7 /* InternalInstrument.swift in Sources */,
 				926CE0911D71F7E2000E5A70 /* FileSystem.swift in Sources */,
 				920E63B8216EB005002C2684 /* FireflyDesignSpimFlash.swift in Sources */,
