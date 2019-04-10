@@ -82,5 +82,4 @@ open class FireflyInstrumentsViewController: NSViewController, Presenter {
         }
     }
     
-
 }
