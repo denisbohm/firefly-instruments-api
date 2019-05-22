@@ -256,7 +256,7 @@ public class Heap: CustomDebugStringConvertible {
     }
     
     public func write(address: UInt32, value: [UInt8]) {
-        write(address: address, value: Data(bytes: value))
+        write(address: address, value: Data(value))
     }
     
     public func write<B: BinaryConvertable>(address: UInt32, value: B) {

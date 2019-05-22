@@ -146,6 +146,8 @@ open class SerialWireDebugScript: FixtureScript, FireflyDesignSwdRpc {
                 if sectionAddressEnd > programAddressEnd {
                     programAddressEnd = sectionAddressEnd
                 }
+            @unknown default:
+                break
             }
         }
         let programLength = programAddressEnd - ramStart

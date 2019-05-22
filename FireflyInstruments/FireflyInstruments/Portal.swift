@@ -38,7 +38,7 @@ public protocol Portal {
 extension Portal {
 
     func send(_ type: UInt64, content: [UInt8]) {
-        send(type, content: Data(bytes: content))
+        send(type, content: Data(content))
     }
 
     func send(_ type: UInt64, content: UInt8...) {

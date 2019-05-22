@@ -54,7 +54,7 @@ open class StorageInstrument: InternalInstrument {
             arguments.write(data.subdata(in: offset ..< offset + length))
             portal.send(StorageInstrument.apiTypeWrite, content: arguments.data)
             try flush() // need to flush this portals write queue before doing an echo on the instrument manager write queue -denis
-            try instrumentManager.echo(data: Data(bytes: [0xbe, 0xef]))
+            try instrumentManager.echo(data: Data([0xbe, 0xef]))
             offset += length
         }
     }

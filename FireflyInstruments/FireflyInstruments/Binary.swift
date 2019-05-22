@@ -46,7 +46,7 @@ extension Bool: BinaryConvertable {
     }
     
     public static func toBinary(_ value: Bool) -> Data {
-        return Data(bytes: [value ? 1 : 0])
+        return Data([value ? 1 : 0])
     }
     
 }
@@ -375,7 +375,7 @@ open class Binary {
 
     open func write(_ value: String) {
         let bytes = Array(value.utf8) as [UInt8]
-        let data = Data(bytes: bytes)
+        let data = Data(bytes)
         writeVarUInt(UInt64(bytes.count))
         write(data)
     }
