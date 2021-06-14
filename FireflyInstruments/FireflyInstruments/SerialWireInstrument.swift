@@ -223,7 +223,7 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
                 } else {
                     request.writeVarUInt(0)
                 }
-            default:
+            @unknown default:
                 break
             }
         }

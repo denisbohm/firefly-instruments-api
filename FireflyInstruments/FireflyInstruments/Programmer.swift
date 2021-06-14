@@ -131,6 +131,8 @@ open class Programmer {
             }
             presenter.show(message: "\(name) firmware", pass: pass)
         } else {
+            // !!! with 31 pagesPerWrite it fails at 224KB - need to investigate -denis
+            flash.pagesPerWrite = 16
             try flash.writePages(address, data: data, erase: true)
             let verify = try flash.serialWireDebug!.readMemory(address, length: UInt32(data.count))
             programResult(presenter: presenter, name: name, data: data, verify: verify)

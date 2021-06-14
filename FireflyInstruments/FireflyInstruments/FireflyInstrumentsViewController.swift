@@ -38,6 +38,10 @@ open class FireflyInstrumentsViewController: NSViewController, Presenter {
         }
     }
     
+    public func hadFailures() -> Bool {
+        return failCount > 0
+    }
+    
     open func showOnMain(message: String, type: PresenterType) {
         var attributes: [NSAttributedString.Key: Any] = [:]
         switch type {
@@ -78,5 +82,4 @@ open class FireflyInstrumentsViewController: NSViewController, Presenter {
         }
     }
     
-
 }

@@ -18,6 +18,8 @@ public protocol Presenter {
     
     func show(message: String, type: PresenterType)
     func completed()
+    
+    func hadFailures() -> Bool
 
 }
 
