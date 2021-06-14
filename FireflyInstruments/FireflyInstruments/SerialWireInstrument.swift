@@ -223,6 +223,8 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
                 } else {
                     request.writeVarUInt(0)
                 }
+            default:
+                break
             }
         }
         portal.send(SerialWireInstrument.apiTypeTransfer, content: request.data)
@@ -266,6 +268,8 @@ open class SerialWireInstrument: NSObject, FDSerialWire, FDSerialWireDebugTransp
                 transfer.data = try binary.read(length: Int(length))
             case .writeMemory:
                 break
+            @unknown default:
+                fatalError()
             }
         }
     }

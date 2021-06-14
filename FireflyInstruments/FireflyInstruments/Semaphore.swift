@@ -11,8 +11,8 @@ import Cocoa
 open class Semaphore: NSObject {
     
     public enum LocalError: Error {
-        case timeout()
-        case cancelled()
+        case timeout
+        case cancelled
     }
     
     let condition = NSCondition()
@@ -50,11 +50,11 @@ open class Semaphore: NSObject {
                     break loop
                 }
                 if (deadline as NSDate).isLessThan(Date()) {
-                    error = LocalError.timeout()
+                    error = LocalError.timeout
                     break loop
                 }
                 if Thread.current.isCancelled {
-                    error = LocalError.cancelled()
+                    error = LocalError.cancelled
                     break loop
                 }
                 condition.lock()

@@ -37,7 +37,9 @@ open class CurrentTimelineScript: FixtureScript, Script, BatteryInstrumentConver
         try batteryInstrument.setEnabled(true)
         try batteryAdjustableRelayInstrument.set(true)
         batteryInstrument.convertDelegate = self
-        
+
+        try fixture.usbPowerRelayInstrument?.set(false)
+
         let sampleCount = 1000
         let fileSystem = FileSystem(storageInstrument: storageInstrument)
         try fileSystem.inspect()
@@ -50,7 +52,7 @@ open class CurrentTimelineScript: FixtureScript, Script, BatteryInstrumentConver
         // reserve the file content (don't really need to write to it)... -denis
         let entry = try fileSystem.write("battery.log", data: Data([UInt8](repeating: 0xff, count: bytes)))
         
-        let passes = 10
+        let passes = 10000
         for pass in 1 ... passes {
             presenter.show(message: "monitoring power: pass \(pass) of \(passes)...")
             try storageInstrument.erase(entry.address, length: entry.length)

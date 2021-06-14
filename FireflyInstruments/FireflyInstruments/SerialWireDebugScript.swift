@@ -24,15 +24,7 @@ open class SerialWireDebugScript: FixtureScript, FireflyDesignSwdRpc {
     }
     
     open func setupSerialWireDebug() throws {
-        guard let serialWireInstrument = serialWireInstrument else {
-            return
-        }
-        
-        presenter.show(message: "attaching to serial wire debug port of \(serialWireInstrumentIdentifier)...")
-        try serialWireInstrument.setEnabled(true)
-        
-        let serialWireDebug = FDSerialWireDebug()
-        serialWireDebug.serialWire = serialWireInstrument
+        let serialWireDebug = self.serialWireDebug!
         let serialWire = serialWireDebug.serialWire!
         
         if (doHardReset) {
@@ -60,12 +52,23 @@ open class SerialWireDebugScript: FixtureScript, FireflyDesignSwdRpc {
         
         try serialWireDebug.initializeAccessPort()
         
-        self.serialWireDebug = serialWireDebug
     }
     
     override open func setup() throws {
         try super.setup()
+        
         serialWireInstrument = fixture.getSerialWireInstrument(serialWireInstrumentIdentifier)
+        guard let serialWireInstrument = serialWireInstrument else {
+            return
+        }
+        //
+        presenter.show(message: "attaching to serial wire debug port of \(serialWireInstrumentIdentifier)...")
+        try serialWireInstrument.setEnabled(true)
+        //
+        let serialWireDebug = FDSerialWireDebug()
+        serialWireDebug.serialWire = serialWireInstrument
+        self.serialWireDebug = serialWireDebug
+
         try setupSerialWireDebug()
     }
     
@@ -146,6 +149,8 @@ open class SerialWireDebugScript: FixtureScript, FireflyDesignSwdRpc {
                 if sectionAddressEnd > programAddressEnd {
                     programAddressEnd = sectionAddressEnd
                 }
+                @unknown default:
+                    fatalError()
             }
         }
         let programLength = programAddressEnd - ramStart

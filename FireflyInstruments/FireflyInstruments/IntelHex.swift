@@ -111,7 +111,7 @@ open class IntelHex: NSObject {
             let to = from + record.data.count
             bytes.replaceSubrange(from ..< to, with: record.data)
         }
-        return (addressBounds: (min: min, max: max), data: Data(bytes: bytes))
+        return (addressBounds: (min: min, max: max), data: Data(bytes))
     }
 
 }

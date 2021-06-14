@@ -91,7 +91,7 @@ open class BatteryInstrument: InternalInstrument, PortalDelegate {
     }
 
     func receivedConvertCurrentContinuous(data: Data) throws {
-        let binary = Binary(data: data, byteOrder: .littleEndian)
+        let _ = Binary(data: data, byteOrder: .littleEndian)
         convertDelegate?.batteryInstrumentConvertContinuousComplete(self)
     }
 

@@ -13,7 +13,7 @@ open class BatteryPowerScript: FixtureScript, Script {
     }
     
     open func main() throws {
-//        self.batteryVoltage = 3.6
+        self.batteryVoltage = 3.9
         
         try setup()
         

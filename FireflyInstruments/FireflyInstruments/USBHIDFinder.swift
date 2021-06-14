@@ -34,7 +34,7 @@ open class USBHIDFinder : NSObject, USBHIDMonitorDelegate {
             condition.broadcast()
             condition.unlock()
         }
-        if usbDevices.index(of: usbDevice) == nil {
+        if usbDevices.firstIndex(of: usbDevice) == nil {
             usbDevices.append(usbDevice)
         }
     }
@@ -45,7 +45,7 @@ open class USBHIDFinder : NSObject, USBHIDMonitorDelegate {
             condition.broadcast()
             condition.unlock()
         }
-        if let index = usbDevices.index(of: usbDevice) {
+        if let index = usbDevices.firstIndex(of: usbDevice) {
             usbDevices.remove(at: index)
         }
     }
