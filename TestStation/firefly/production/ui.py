@@ -5,7 +5,7 @@ import threading
 import ctypes
 from .scripts import Fixture
 from .scripts import Script
-from .scripts import BlinkyScript
+from .scripts import SerialWireDebugScript
 
 
 class ThreadCancelException(Exception):
@@ -100,7 +100,8 @@ class TestStation:
 
         self.log('Running...')
         self.fixture = Fixture(self)
-        self.script = BlinkyScript(self, self.fixture)
+#        self.script = BlinkyScript(self, self.fixture)
+        self.script = SerialWireDebugScript(self, self.fixture)
         self.runner = Runner(self, self.fixture, self.script)
         self.runner.start()
 

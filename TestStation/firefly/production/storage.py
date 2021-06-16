@@ -126,7 +126,7 @@ class FileSystem:
 
     def inspect(self):
         self.scan()
-        self.repair()
+#        self.repair()
 
     def list(self):
         entries = []
