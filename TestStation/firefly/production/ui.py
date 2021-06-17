@@ -5,7 +5,6 @@ import threading
 import ctypes
 from .scripts import Fixture
 from .scripts import Script
-from .scripts import SerialWireDebugScript
 
 
 class ThreadCancelException(Exception):
@@ -49,7 +48,9 @@ class Runner(threading.Thread):
 
 class TestStation:
 
-    def __init__(self):
+    def __init__(self, create_script):
+        self.create_script = create_script
+
         self.window = None
         self.font = None
         self.startButton = None
@@ -100,8 +101,7 @@ class TestStation:
 
         self.log('Running...')
         self.fixture = Fixture(self)
-#        self.script = BlinkyScript(self, self.fixture)
-        self.script = SerialWireDebugScript(self, self.fixture)
+        self.script = self.create_script()
         self.runner = Runner(self, self.fixture, self.script)
         self.runner.start()
 

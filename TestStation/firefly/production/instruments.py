@@ -194,8 +194,38 @@ class SerialWireDebugTransfer:
         self.address = None
         self.data = None
 
+    @staticmethod
+    def write_register(register_id, data):
+        transfer = SerialWireDebugTransfer()
+        transfer.type = SerialWireDebugTransfer.typeWriteRegister
+        transfer.register_id = register_id
+        transfer.data = data
+        return transfer
 
-class SerialWireDebugInstrument(Instrument):
+    @staticmethod
+    def read_register(register_id):
+        transfer = SerialWireDebugTransfer()
+        transfer.type = SerialWireDebugTransfer.typeReadRegister
+        transfer.register_id = register_id
+        return transfer
+
+    @staticmethod
+    def write_memory(address, data):
+        transfer = SerialWireDebugTransfer()
+        transfer.type = SerialWireDebugTransfer.typeWriteMemory
+        transfer.address = address
+        transfer.data = data
+        return transfer
+
+    @staticmethod
+    def read_memory(address):
+        transfer = SerialWireDebugTransfer()
+        transfer.type = SerialWireDebugTransfer.typeReadMemory
+        transfer.address = address
+        return transfer
+
+
+class SerialWireInstrument(Instrument):
 
     apiTypeReset = 0
     apiTypeSetOutputs = 1
@@ -222,17 +252,17 @@ class SerialWireDebugInstrument(Instrument):
         super().__init__(manager, identifier)
 
     def reset(self):
-        self.invoke(SerialWireDebugInstrument.apiTypeReset)
+        self.invoke(SerialWireInstrument.apiTypeReset)
 
     def set_enabled(self, value):
         arguments = FDBinary()
         arguments.put_uint8(1 if value else 0)
-        self.invoke(SerialWireDebugInstrument.apiTypeSetEnabled, arguments)
+        self.invoke(SerialWireInstrument.apiTypeSetEnabled, arguments)
 
     def set_half_bit_delay(self, value):
         arguments = FDBinary()
         arguments.put_uint32(value)
-        self.invoke(SerialWireDebugInstrument.apiTypeSetHalfBitDelay, arguments)
+        self.invoke(SerialWireInstrument.apiTypeSetHalfBitDelay, arguments)
 
     def set(self, gpio, value):
         bits = 1 << gpio
@@ -240,13 +270,13 @@ class SerialWireDebugInstrument(Instrument):
         arguments = FDBinary()
         arguments.put_uint8(bits)
         arguments.put_uint8(values)
-        self.invoke(SerialWireDebugInstrument.apiTypeSetOutputs, arguments)
+        self.invoke(SerialWireInstrument.apiTypeSetOutputs, arguments)
 
     def get(self, gpio):
         bits = 1 << gpio
         arguments = FDBinary()
         arguments.put_uint8(bits)
-        results = self.call(SerialWireDebugInstrument.apiTypeGetInputs, arguments)
+        results = self.call(SerialWireInstrument.apiTypeGetInputs, arguments)
         value = results.get_varuint()
         return value != 0
 
@@ -254,47 +284,47 @@ class SerialWireDebugInstrument(Instrument):
         return self.get(0)
 
     def set_indicator(self, value):
-        self.set(SerialWireDebugInstrument.outputIndicator, value)
+        self.set(SerialWireInstrument.outputIndicator, value)
 
     def set_reset(self, value):
-        self.set(SerialWireDebugInstrument.outputReset, value)
+        self.set(SerialWireInstrument.outputReset, value)
 
     def turn_to_read(self):
-        self.set(SerialWireDebugInstrument.outputDirection, False)
+        self.set(SerialWireInstrument.outputDirection, False)
 
     def turn_to_write(self):
-        self.set(SerialWireDebugInstrument.outputDirection, True)
+        self.set(SerialWireInstrument.outputDirection, True)
 
     def shift_out_bits(self, byte, bit_count):
         assert bit_count > 0
         arguments = FDBinary()
         arguments.put_uint8(bit_count - 1)
         arguments.put_uint8(byte)
-        self.invoke(SerialWireDebugInstrument.apiTypeShiftOutBits, arguments)
+        self.invoke(SerialWireInstrument.apiTypeShiftOutBits, arguments)
 
     def shift_out_data(self, data):
         assert data.count > 0
         arguments = FDBinary()
         arguments.put_varuint(data.count - 1)
         arguments.put_bytes(data)
-        self.invoke(SerialWireDebugInstrument.apiTypeShiftOutData, arguments)
+        self.invoke(SerialWireInstrument.apiTypeShiftOutData, arguments)
 
     def shift_in_bits(self, bit_count):
         arguments = FDBinary()
         arguments.put_uint8(bit_count - 1)
-        self.invoke(SerialWireDebugInstrument.apiTypeShiftInBits, arguments)
+        self.invoke(SerialWireInstrument.apiTypeShiftInBits, arguments)
 
     def shift_in_data(self, byte_count):
         arguments = FDBinary()
         arguments.put_varuint(byte_count - 1)
-        self.invoke(SerialWireDebugInstrument.apiTypeShiftInData, arguments)
+        self.invoke(SerialWireInstrument.apiTypeShiftInData, arguments)
 
     def write_memory(self, address, data):
         arguments = FDBinary()
         arguments.put_varuint(address)
         arguments.put_varuint(data.count)
         arguments.put_bytes(data)
-        results = self.call(SerialWireDebugInstrument.apiTypeWriteMemory, arguments)
+        results = self.call(SerialWireInstrument.apiTypeWriteMemory, arguments)
         code = results.get_varuint()
         if code != 0:
             raise IOError(f"memory transfer issue: code={code}")
@@ -303,7 +333,7 @@ class SerialWireDebugInstrument(Instrument):
         arguments = FDBinary()
         arguments.put_varuint(address)
         arguments.put_varuint(length)
-        results = self.call(SerialWireDebugInstrument.apiTypeReadMemory, arguments)
+        results = self.call(SerialWireInstrument.apiTypeReadMemory, arguments)
         code = results.get_varuint()
         if code != 0:
             raise IOError(f"memory transfer issue: code={code}")
@@ -334,7 +364,7 @@ class SerialWireDebugInstrument(Instrument):
                 arguments.put_bytes(transfer.data)
             else:
                 break
-        results = self.call(SerialWireDebugInstrument.apiTypeTransfer, arguments)
+        results = self.call(SerialWireInstrument.apiTypeTransfer, arguments)
         code = results.get_varuint()
         if code != 0:
             raise IOError(f"memory transfer issue: code={code}")
@@ -374,7 +404,7 @@ class SerialWireDebugInstrument(Instrument):
         arguments.put_varuint(length)
         arguments.put_varuint(storage_identifier)
         arguments.put_varuint(storage_address)
-        results = self.call(SerialWireDebugInstrument.apiTypeWriteFromStorage, arguments)
+        results = self.call(SerialWireInstrument.apiTypeWriteFromStorage, arguments)
         code = results.get_varuint()
         if code != 0:
             raise IOError(f"memory transfer issue: code={code}")
@@ -385,7 +415,7 @@ class SerialWireDebugInstrument(Instrument):
         arguments.put_varuint(length)
         arguments.put_varuint(storage_identifier)
         arguments.put_varuint(storage_address)
-        results = self.call(SerialWireDebugInstrument.apiTypeCompareToStorage, arguments)
+        results = self.call(SerialWireInstrument.apiTypeCompareToStorage, arguments)
         code = results.get_varuint()
         if code != 0:
             raise IOError(f"memory transfer issue: code={code}")
@@ -459,7 +489,7 @@ class InstrumentManager:
             'Current': CurrentInstrument,
             'Battery': BatteryInstrument,
             'Storage': StorageInstrument,
-            'SerialWireDebug': SerialWireDebugInstrument
+            'SerialWireDebug': SerialWireInstrument
         }
 
     def open(self):

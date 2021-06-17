@@ -4,12 +4,12 @@ from .binary import FDBinary
 
 class Entry:
 
-    def __init__(self, name, sectorCount, length, date, hash, address):
+    def __init__(self, name, sector_count, length, date, digest, address):
         self.name = name
-        self.sectorCount = sectorCount
+        self.sector_count = sector_count
         self.length = length
         self.date = date
-        self.hash = hash
+        self.digest = digest
         self.address = address
 
 
@@ -27,7 +27,7 @@ class Sector:
 
 class FileSystem:
 
-    minimumSectorCount = 2 # increase to reduce fragmentation
+    minimumSectorCount = 2  # increase to reduce fragmentation
 
     size = 1 << 21
     sectorSize = 1 << 12
@@ -37,25 +37,25 @@ class FileSystem:
 
     magic = [0xf0, 0x66, 0x69, 0x72, 0x65, 0x66, 0x6c, 0x79]
 
-    sectorCount = size // sectorSize
+    sector_count = size // sectorSize
 
-    def __init__(self, storageInstrument):
-        self.storageInstrument = storageInstrument
+    def __init__(self, storage_instrument):
+        self.storage_instrument = storage_instrument
         self.sectors = []
 
     def format(self):
-        self.storageInstrument.erase(0, FileSystem.size)
+        self.storage_instrument.erase(0, FileSystem.size)
         for sector_index in range(len(self.sectors)):
             self.sectors[sector_index].status = Sector.status_available
 
     def erase_sector(self, sector):
-        sectorCount = 1
+        sector_count = 1
         if sector.status == Sector.status_metadata:
-            sectorCount = sector.entry.sectorCount
-        self.storageInstrument.erase(sector.address, self.size)
-        firstSectorIndex = sector.address // FileSystem.sectorSize
-        for sectorIndex in range(firstSectorIndex, firstSectorIndex + sectorCount):
-            self.sectors[sectorIndex].status = Sector.status_available
+            sector_count = sector.entry.sector_count
+        self.storage_instrument.erase(sector.address, self.size)
+        first_sector_index = sector.address // FileSystem.sectorSize
+        for sector_index in range(first_sector_index, first_sector_index + sector_count):
+            self.sectors[sector_index].status = Sector.status_available
 
     def erase(self, name):
         for sector in self.sectors:
@@ -65,64 +65,64 @@ class FileSystem:
 
     def repair(self):
         repaired = False
-        entryByName = {}
+        entry_by_name = {}
         for sector in self.sectors:
             if sector.status == Sector.status_metadata:
                 entry = sector.entry
-                hash = self.storageInstrument.hash(sector.address + FileSystem.sectorSize, entry.length)
-                if hash != entry.hash:
-                    print("FileSystem.repair: erasing entry with incorrect content hash: {entry.name}")
+                digest = self.storage_instrument.digest(sector.address + FileSystem.sectorSize, entry.length)
+                if digest != entry.digest:
+                    print(f"FileSystem.repair: erasing entry with incorrect content digest: {entry.name}")
                     self.erase_sector(sector)
                     repaired = True
-                elif entry.name in entryByName:
-                    existing = entryByName[entry.name]
-                    print("FileSystem.repair: erasing duplicate entry: {entry.name} {entry.address} {existing.address}")
+                elif entry.name in entry_by_name:
+                    existing = entry_by_name[entry.name]
+                    print(f"FileSystem.repair: erasing duplicate entry: {entry.name} {entry.address} {existing.address}")
                     self.erase_sector(sector)
                     repaired = True
                 else:
-                    entryByName[entry.name] = entry
+                    entry_by_name[entry.name] = entry
         return repaired
 
     def scan(self):
         self.sectors = []
         # read the first byte of each sector so we can quickly probe the status of each
-        markers = self.storageInstrument.read(0, FileSystem.sectorCount, 1, FileSystem.sectorSize)
-        sectorIndex = 0
-        while sectorIndex < FileSystem.sectorCount:
-            address = sectorIndex * FileSystem.sectorSize
-            marker = markers[sectorIndex]
+        markers = self.storage_instrument.read(0, FileSystem.sector_count, 1, FileSystem.sectorSize)
+        sector_index = 0
+        while sector_index < FileSystem.sector_count:
+            address = sector_index * FileSystem.sectorSize
+            marker = markers[sector_index]
             if marker == 0xf0:
                 # should be metadata
-                data = self.storageInstrument.read(address, FileSystem.pageSize)
+                data = self.storage_instrument.read(address, FileSystem.pageSize)
                 if self.magic == data[0:len(self.magic)]:
                     try:
                         binary = FDBinary(data)
                         magic = binary.get_bytes(len(self.magic))
-                        usedSectorCount = binary.get_uint32()
+                        sector_count = binary.get_uint32()
                         length = binary.get_uint32()
                         date = binary.get_uint32()
-                        hash = binary.get_bytes(FileSystem.hashSize)
+                        digest = binary.get_bytes(FileSystem.hashSize)
                         name = binary.get_string()
-                        entry = Entry(name, usedSectorCount, length, date, hash, address + FileSystem.sectorSize)
+                        entry = Entry(name, sector_count, length, date, digest, address + FileSystem.sectorSize)
                         status = Sector.status_metadata
                         sector = Sector(address, status, entry)
                         self.sectors.append(sector)
-                        sectorIndex += 1
+                        sector_index += 1
 
-                        for _ in range(usedSectorCount):
-                            address = sectorIndex * FileSystem.sectorSize
+                        for _ in range(sector_count):
+                            address = sector_index * FileSystem.sectorSize
                             self.sectors.append(Sector(address, Sector.status_content))
-                            sectorIndex += 1
+                            sector_index += 1
                         continue
                     except:
                         # entry appears to be corrupt, consider this sector available... -denis
-                        print("File System: corruption in sector {sectorIndex} entry?")
+                        print("File System: corruption in sector {sector_index} entry?")
                 # something corrupt found, consider this sector available... -denis
-                print("File System: corruption in sector {sectorIndex}?")
+                print("File System: corruption in sector {sector_index}?")
 
             # available
             self.sectors.append(Sector(address, Sector.status_available))
-            sectorIndex += 1
+            sector_index += 1
 
     def inspect(self):
         self.scan()
@@ -146,83 +146,83 @@ class FileSystem:
         entry = self.get(name)
         if entry is None:
             raise IOError(f"entry not found: {name}")
-        return self.storageInstrument.read(entry.address, entry.length)
+        return self.storage_instrument.read(entry.address, entry.length)
 
-    def write(self, name, data, date, sector, sectorCount):
+    def write(self, name, data, date, sector, sector_count):
         length = len(data)
-        hash = hashlib.sha1(data)
-        entry = Entry(name, sectorCount, length, date, hash, sector.address + FileSystem.sectorSize)
-        sectorIndex = sector.address // FileSystem.sectorSize
-        self.sectors[sectorIndex].status = Sector.status_metadata
-        self.sectors[sectorIndex].entry = entry
-        for _ in range(sectorCount):
-            sectorIndex += 1
-            self.sectors[sectorIndex].status = Sector.status_content
+        digest = hashlib.sha1(data)
+        entry = Entry(name, sector_count, length, date, digest, sector.address + FileSystem.sectorSize)
+        sector_index = sector.address // FileSystem.sectorSize
+        self.sectors[sector_index].status = Sector.status_metadata
+        self.sectors[sector_index].entry = entry
+        for _ in range(sector_count):
+            sector_index += 1
+            self.sectors[sector_index].status = Sector.status_content
 
-        self.storageInstrument.erase(sector.address, sectorCount * FileSystem.sectorSize)
+        self.storage_instrument.erase(sector.address, sector_count * FileSystem.sectorSize)
 
         binary = FDBinary()
         binary.put_bytes(self.magic)
-        binary.put_uint32(sectorCount)
+        binary.put_uint32(sector_count)
         binary.put_uint32(length)
         binary.put_uint32(date)
-        binary.put_bytes(hash)
+        binary.put_bytes(digest)
         binary.put_string(name)
         address = sector.address
-        self.storageInstrument.write(address, binary.data)
+        self.storage_instrument.write(address, binary.data)
 
         address += FileSystem.sectorSize
-        self.storageInstrument.write(address, data)
+        self.storage_instrument.write(address, data)
 
         return entry
 
-    def checkCandidate(self, name, data, date, availableSector, availableSectorCount, entrySectorCount):
-        if availableSector is not None:
-            if availableSectorCount >= entrySectorCount:
-                return self.write(name, data, date, availableSector, entrySectorCount)
+    def check_candidate(self, name, data, date, available_sector, available_sector_count, entry_sector_count):
+        if available_sector is not None:
+            if available_sector_count >= entry_sector_count:
+                return self.write(name, data, date, available_sector, entry_sector_count)
         return None
 
-    def sectorCountForContentLength(self, length):
+    def sector_count_for_content_length(self, length):
         return (length + (FileSystem.sectorSize - 1)) // FileSystem.sectorSize
 
-    def checkWrite(self, name, data, date):
-        entrySectorCount = max(1 + self.sectorCountForContentLength(len(data)), FileSystem.minimumSectorCount)
-        availableSector = None
-        availableSectorCount = 0
+    def check_write(self, name, data, date):
+        entry_sector_count = max(1 + self.sector_count_for_content_length(len(data)), FileSystem.minimumSectorCount)
+        available_sector = None
+        available_sector_count = 0
         for sector in self.sectors:
             if sector.status == Sector.status_available:
-                if availableSector is None:
-                    availableSector = sector
-                    availableSectorCount = 1
+                if available_sector is None:
+                    available_sector = sector
+                    available_sector_count = 1
                 else:
-                    availableSectorCount += 1
+                    available_sector_count += 1
             else:
-                entry = self.checkCandidate(name, data, date, availableSector, availableSectorCount, entrySectorCount)
+                entry = self.check_candidate(name, data, date, available_sector, available_sector_count, entry_sector_count)
                 if entry is not None:
                     return entry
-                availableSector = None
-                availableSectorCount = 0
-        entry = self.checkCandidate(name, data, date, availableSector, availableSectorCount, entrySectorCount)
+                available_sector = None
+                available_sector_count = 0
+        entry = self.check_candidate(name, data, date, available_sector, available_sector_count, entry_sector_count)
         if entry is not None:
             return entry
         return None
 
-    def getLeastRecentlyUsed(self):
-        leastRecentlyUsedSector = None
-        leastRecentlyUsedDate = None
+    def get_least_recently_used(self):
+        least_recently_used_sector = None
+        least_recently_used_date = None
         for sector in self.sectors:
             if sector.status == Sector.status_metadata:
-                if leastRecentlyUsedSector is None:
-                    leastRecentlyUsedSector = sector
-                    leastRecentlyUsedDate = sector.entry.date
+                if least_recently_used_sector is None:
+                    least_recently_used_sector = sector
+                    least_recently_used_date = sector.entry.date
                     continue
-                if sector.entry.date < leastRecentlyUsedDate:
-                    leastRecentlyUsedSector = sector
-                    leastRecentlyUsedDate = sector.entry.date
-        return leastRecentlyUsedSector
+                if sector.entry.date < least_recently_used_date:
+                    least_recently_used_sector = sector
+                    least_recently_used_date = sector.entry.date
+        return least_recently_used_sector
 
-    def eraseLeastRecentlyUsed(self):
-        sector = self.getLeastRecentlyUsed()
+    def erase_least_recently_used(self):
+        sector = self.get_least_recently_used()
         if sector is not None:
             self.erase_sector(sector)
             return True
@@ -231,27 +231,28 @@ class FileSystem:
     # Allocate a file system entry.
     # The entry is stored in flash before this returns.
     # This will free other (least recently used) entries to make space if needed.
-    def write(self, name, data, date):
+    def allocate(self, name, data, date):
         while True:
-            entry = self.checkWrite(name, data, date)
+            entry = self.check_write(name, data, date)
             if entry is not None:
                 return entry
-            if not self.eraseLeastRecentlyUsed():
+            if not self.erase_least_recently_used():
                 break
         raise IOError(f"not enough space (name: {name}, length: {len(data)}")
 
     # This function returns the preexisting entry if the file already exists and the hashes match.
-    # Otherwise, the preexisting entry will be removed and a new entry written (possibly removing other least recently used files to make room).
+    # Otherwise, the preexisting entry will be removed and a new entry written (possibly removing
+    # other least recently used files to make room).
     def ensure(self, name, data, date):
         entry = self.get(name)
         if entry is not None:
-            hash = hashlib.sha1(data)
-            if hash != entry.hash:
+            digest = hashlib.sha1(data)
+            if digest != entry.digest:
                 self.erase(name)
                 entry = None
         if entry is None:
-            entry = self.write(name, data, date)
-            verify = self.storageInstrument.hash(entry.address, entry.length)
-            if verify != entry.hash:
+            entry = self.allocate(name, data, date)
+            verify = self.storage_instrument.digest(entry.address, entry.length)
+            if verify != entry.digest:
                 raise IOError("corrupt write")
         return entry

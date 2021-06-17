@@ -1,5 +1,7 @@
 import time
+from .bundle import Bundle
 from .instruments import InstrumentManager
+from .instruments import SerialWireDebugTransfer
 from .storage import FileSystem
 from elftools.elf.elffile import ELFFile
 
@@ -12,6 +14,7 @@ class Fixture:
         self.indicator_instrument = None
         self.storage_instrument = None
         self.file_system = None
+        self.serial_wire_instrument = None
 
     def setup(self):
         self.manager = InstrumentManager()
@@ -91,14 +94,23 @@ class BlinkyScript(FixtureScript):
             time.sleep(0.5)
 
 
+class FirmwareRange:
+
+    def __init__(self, address, size):
+        self.address = address
+        self.size = size
+
+
 class Firmware:
 
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.address = None
         self.data = None
         self.heap = None
         self.stack = None
         self.functions = None
+        self.load_elf_from_resource(name)
 
     def load_symbols(self, elf):
         self.functions = {}
@@ -119,7 +131,7 @@ class Firmware:
         section = elf.get_section_by_name(name)
         address = section.header['sh_addr']
         size = section.header['sh_size']
-        return address, size
+        return FirmwareRange(address, size)
 
     def load_sections(self, elf):
         # merge .vectors, .init, .text
@@ -157,11 +169,303 @@ class Firmware:
             self.load_symbols(elf)
             self.load_sections(elf)
 
-class SerialWireDebugScript(FixtureScript):
+    def load_elf_from_resource(self, name):
+        bundle = Bundle.get_default_bundle()
+        path = bundle.path_for_resource(name)
+        self.load_elf(path)
 
-    def __init__(self, presenter, fixture):
+    def __str__(self):
+        string = f"code: 0x{self.address:08x} size: 0x{len(self.data):08x}"
+        string += f"\nstack: 0x{self.stack.address:08x} size: 0x{self.stack.size:08x}"
+        string += f"\nheap: 0x{self.heap.address:08x} size: 0x{self.heap.size:08x}"
+        for key, value in self.functions.items():
+            string += f"\n{key} @ 0x{value:08x}"
+        return string
+
+
+def bit(n):
+    return 1 << n
+
+
+class SWD:
+    # Debug Port (DP)
+
+    # Cortex M4
+    dpid_cm4 = 0x0ba01477
+    # Cortex M3
+    dpid_cm3 = 0x2ba01477
+    # Cortex M0
+    dpid_cm0dap1 = 0x0bb11477
+    # Cortex M0+
+    dpid_cm0dap2 = 0x0bb12477
+
+    dp_idcode = 0x00
+    dp_abort = 0x00
+    dp_ctrl = 0x04
+    dp_stat = 0x04
+    dp_select = 0x08
+    dp_rdbuff = 0x0c
+
+    dp_abort_orunerrclr = bit(4)
+    dp_abort_wderrclr = bit(3)
+    dp_abort_stkerrclr = bit(2)
+    dp_abort_stkcmpclr = bit(1)
+    dp_abort_dapabort = bit(0)
+
+    dp_ctrl_csyspwrupack = bit(31)
+    dp_ctrl_csyspwrupreq = bit(30)
+    dp_ctrl_cdbgpwrupack = bit(29)
+    dp_ctrl_cdbgpwrupreq = bit(28)
+    dp_ctrl_cdbgrstack = bit(27)
+    dp_ctrl_cdbgrstreq = bit(26)
+    dp_stat_wdataerr = bit(7)
+    dp_stat_readok = bit(6)
+    dp_stat_stickyerr = bit(5)
+    dp_stat_stickycmp = bit(4)
+    dp_stat_trnmode = bit(3) | bit(2)
+    dp_stat_stickyorun = bit(1)
+    dp_stat_orundetect = bit(0)
+
+    dp_select_apsel_apb_ap = 0
+    dp_select_apsel_nrf52_ctrl_ap = 1
+
+    # Advanced High - Performance Bus Access Port (AHB_AP or just AP)
+    ahb_ap_id_v1 = 0x24770011
+    ahb_ap_id_v2 = 0x04770021
+
+    ap_csw = 0x00
+    ap_tar = 0x04
+    ap_sbz = 0x08
+    ap_drw = 0x0c
+    ap_bd0 = 0x10
+    ap_bd1 = 0x14
+    ap_bd2 = 0x18
+    ap_bd3 = 0x1c
+    ap_dbgdrar = 0xf8
+    ap_idr = 0xfc
+
+    @staticmethod
+    def idr_code(id):
+        return (id >> 17) & 0x7ff
+
+    ap_csw_dbgswenable = bit(31)
+    ap_csw_master_debug = bit(29)
+    ap_csw_hprot = bit(25)
+    ap_csw_spiden = bit(23)
+    ap_csw_trin_prog = bit(7)
+    ap_csw_device_en = bit(6)
+    ap_csw_increment_packed = bit(5)
+    ap_csw_increment_single = bit(4)
+    ap_csw_32bit = bit(1)
+    ap_csw_16bit = bit(0)
+
+    memory_cpuid = 0xe000ed00
+    memory_dfsr = 0xe000ed30
+    memory_dhcsr = 0xe000edf0
+    memory_dcrsr = 0xe000edf4
+    memory_dcrdr = 0xe000edf8
+    memory_demcr = 0xe000edfc
+
+    dhcsr_dbgkey = 0xa05f0000
+    dhcsr_stat_reset_st = bit(25)
+    dhcsr_stat_retire_st = bit(24)
+    dhcsr_stat_lockup = bit(19)
+    dhcsr_stat_sleep = bit(18)
+    dhcsr_stat_halt = bit(17)
+    dhcsr_stat_regrdy = bit(16)
+    dhcsr_ctrl_snapstall = bit(5)
+    dhcsr_ctrl_maskints = bit(3)
+    dhcsr_ctrl_step = bit(2)
+    dhcsr_ctrl_halt = bit(1)
+    dhcsr_ctrl_debugen = bit(0)
+
+
+class CortexM:
+
+    register_r0 = 0
+    register_r1 = 1
+    register_r2 = 2
+    register_r3 = 3
+    register_r4 = 4
+    register_r5 = 5
+    register_r6 = 6
+    register_r7 = 7
+    register_r8 = 8
+    register_r9 = 9
+    register_r10 = 10
+    register_r11 = 11
+    register_r12 = 12
+    register_ip = 12
+    register_r13 = 13
+    register_sp = 13
+    register_r14 = 14
+    register_lr = 14
+    register_r15 = 15
+    register_pc = 15
+    register_xpsr = 16
+    register_msp = 17
+    register_psp = 18
+
+    register_s0 = 0x40
+    register_s1 = 0x41
+    register_s2 = 0x42
+    register_s3 = 0x43
+    register_s4 = 0x44
+    register_s5 = 0x45
+    register_s6 = 0x46
+    register_s7 = 0x47
+    register_s8 = 0x48
+    register_s9 = 0x49
+    register_s10 = 0x4a
+    register_s11 = 0x4b
+    register_s12 = 0x4c
+    register_s13 = 0x4d
+    register_s14 = 0x4e
+    register_s15 = 0x4f
+    register_s16 = 0x50
+    register_s17 = 0x51
+    register_s18 = 0x52
+    register_s19 = 0x53
+    register_s20 = 0x54
+    register_s21 = 0x55
+    register_s22 = 0x56
+    register_s23 = 0x57
+    register_s24 = 0x58
+    register_s25 = 0x59
+    register_s26 = 0x5a
+    register_s27 = 0x5b
+    register_s28 = 0x5c
+    register_s29 = 0x5d
+    register_s30 = 0x5e
+    register_s31 = 0x5f
+
+
+class SWDRPC:
+
+    def __init__(self, serial_wire_instrument, firmware):
+        self.serial_wire_instrument = serial_wire_instrument
+        self.firmware = firmware
+
+    def setup(self):
+        self.serial_wire_instrument.write_memory(self.firmware.address, self.firmware.data)
+
+    def run(self, name, r0=0, r1=0, r2=0, r3=0, timeout=1.0):
+        dhcsr_halt = SWD.dhcsr_dbgkey | SWD.dhcsr_ctrl_debugen | SWD.dhcsr_ctrl_halt
+        dhcsr_run = SWD.dhcsr_dbgkey | SWD.dhcsr_ctrl_debugen
+        function_location = self.firmware.functions[name]
+        pc = function_location | 0x00000001
+        stack = self.firmware.stack
+        sp = stack.address + stack.size
+        break_location = self.firmware.functions['halt']
+        lr = break_location | 0x00000001
+        transfers = [
+            SerialWireDebugTransfer.write_memory(SWD.memory_dhcsr, dhcsr_halt),
+            SerialWireDebugTransfer.write_register(CortexM.register_r0, r0),
+            SerialWireDebugTransfer.write_register(CortexM.register_r1, r1),
+            SerialWireDebugTransfer.write_register(CortexM.register_r2, r2),
+            SerialWireDebugTransfer.write_register(CortexM.register_r3, r3),
+            SerialWireDebugTransfer.write_register(CortexM.register_sp, sp),
+            SerialWireDebugTransfer.write_register(CortexM.register_pc, pc),
+            SerialWireDebugTransfer.write_register(CortexM.register_lr, lr),
+            SerialWireDebugTransfer.write_memory(SWD.memory_dhcsr, dhcsr_run),
+        ]
+        self.serial_wire_instrument.transfer(transfers)
+
+        start = time.time()
+        halted = False
+        while True:
+            transfer = SerialWireDebugTransfer.read_memory(SWD.memory_dhcsr)
+            self.serial_wire_instrument.transfer(transfer)
+            dhcsr = transfer.data
+            halted = (dhcsr & SWD.dhcsr_stat_halt) != 0
+            if halted:
+                break
+            delta = time.time() - start
+            if delta > timeout:
+                break
+        if not halted:
+            raise IOError("SWD RPC timeout")
+        transfer = SerialWireDebugTransfer.read_register(CortexM.register_r0)
+        self.serial_wire_instrument.transfer(transfer)
+        return transfer.data
+
+
+class Flasher:
+
+    def __init__(self, serial_wire_instrument, mcu, file_system, name):
+        self.serial_wire_instrument = serial_wire_instrument
+        self.mcu = mcu
+        self.rpc = None
+        self.file_system = file_system
+        self.name = name
+        self.entry = None
+        self.firmware = None
+
+    def setup_firmware(self):
+        self.firmware = Firmware(f"firmware/{self.name}")
+        self.entry = self.file_system.ensure(self.name, self.firmware.data, time.time())
+
+    def setup_rpc(self):
+        flasher_firmware = Firmware(f"flasher/FireflyFlash{self.mcu}.elf")
+        self.rpc = SWDRPC(self.serial_wire_instrument, flasher_firmware)
+        self.rpc.setup()
+
+    def setup(self):
+        self.setup_firmware()
+        self.setup_rpc()
+
+    def erase_all(self):
+        result = self.rpc.run('erase_all')
+        if result != 0:
+            raise IOError(f"Flasher erase_all failed ({result})")
+
+    def erase_area(self, area):
+        result = self.rpc.run('erase_area', area)
+        if result != 0:
+            raise IOError(f"Flasher erase_area({area}) failed ({result})")
+
+    def erase(self, address, size):
+        result = self.rpc.run('erase_page', address, size)
+        if result != 0:
+            raise IOError(f"Flasher erase_page(0x{address:08x}, 0x{size:08x}) failed ({result})")
+
+    def write(self, address, data, size):
+        result = self.rpc.run('write', address, data, size)
+        if result != 0:
+            raise IOError(f"Flasher write(0x{address:08x}), 0x{data:08x}, 0x{size:08x}) failed ({result})")
+
+    def program(self):
+        self.erase_all()
+
+        assert (self.rpc.firmware.heap.address & 0x7) == 0
+        assert (self.rpc.firmware.heap.size & 0x7) == 0
+        heap = self.rpc.firmware.heap.address
+        max_count = self.rpc.firmware.heap.size
+        storage_identifier = self.entry.storage_instrument.identifier
+        address = self.firmware.address
+        data = self.firmware.data
+        subaddress = address
+        while True:
+            offset = subaddress - address
+            count = min(len(data) - offset, max_count)
+            if count == 0:
+                break
+            storage_address = self.entry.address + offset
+            self.rpc.serial_wire_instrument.write_from_storage(heap, count, storage_identifier, storage_address)
+            # subdata = data[offset:offset + count]
+            # self.rpc.serial_wire_instrument.write_memory(heap, subdata)
+            self.write(subaddress, heap, count)
+            subaddress += count
+
+
+class ProgramScript(FixtureScript):
+
+    def __init__(self, presenter, fixture, serial_wire_instrument, mcu, file_system, name):
         super().__init__(presenter, fixture)
-        self.functions = {}
+        self.serial_wire_instrument = serial_wire_instrument
+        self.mcu = mcu
+        self.file_system = self.file_system
+        self.name = name
 
     def setup(self):
         super().setup()
@@ -169,15 +473,9 @@ class SerialWireDebugScript(FixtureScript):
     def main(self):
         super().main()
 
-        firmware = Firmware()
-        firmware.load_elf("/Users/denis/sandbox/denisbohm/firefly-ice-firmware/FireflyFlashSTM32F4 THUMB Debug/FireflyFlashSTM32F4.elf")
-        self.log(f"code: 0x{firmware.address:08x} size: 0x{len(firmware.data):08x}")
-        self.log(f"stack: 0x{firmware.stack[0]:08x} size: 0x{firmware.stack[1]:08x}")
-        self.log(f"heap: 0x{firmware.heap[0]:08x} size: 0x{firmware.heap[1]:08x}")
-        for key, value in firmware.functions.items():
-            self.log(f"{key} @ 0x{value:08x}")
+        flasher = Flasher(self.serial_wire_instrument, self.mcu, self.file_system, self.name)
+        flasher.setup()
+        self.log(str(flasher.rpc.firmware))
+        flasher.program()
 
         self.status = Script.status_pass
-
-    def run(self, function, r0=0, r1=0, r2=0, r3=0, timeout=1.0):
-        pass
