@@ -243,6 +243,9 @@ class SerialWireInstrument(Instrument):
     apiTypeCompareToStorage = 13
     apiTypeTransfer = 14
     apiTypeSetHalfBitDelay = 15
+    apiTypeSetTargetId = 16
+    apiTypeSetAccessPortId = 17
+    apiTypeConnect = 18
 
     outputIndicator = 0
     outputReset = 1
@@ -419,6 +422,24 @@ class SerialWireInstrument(Instrument):
         code = results.get_varuint()
         if code != 0:
             raise IOError(f"memory transfer issue: code={code}")
+
+    def set_target_id(self, value):
+        arguments = FDBinary()
+        arguments.put_uint32(value)
+        self.invoke(SerialWireInstrument.apiTypeSetTargetId, arguments)
+
+    def set_access_port_id(self, value):
+        arguments = FDBinary()
+        arguments.put_uint32(value)
+        self.invoke(SerialWireInstrument.apiTypeSetAccessPortId, arguments)
+
+    def connect(self):
+        results = self.call(SerialWireInstrument.apiTypeConnect)
+        code = results.get_varuint()
+        if code != 0:
+            raise IOError(f"connect issue: code={code}")
+        dpid = results.get_uint32()
+        return dpid
 
 
 class Detour:

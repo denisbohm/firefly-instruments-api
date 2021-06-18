@@ -1,6 +1,7 @@
 import time
 from .bundle import Bundle
 from .instruments import InstrumentManager
+from .instruments import SerialWireInstrument
 from .instruments import SerialWireDebugTransfer
 from .storage import FileSystem
 from elftools.elf.elffile import ELFFile
@@ -346,7 +347,13 @@ class SWDRPC:
         self.serial_wire_instrument = serial_wire_instrument
         self.firmware = firmware
 
-    def setup(self):
+    def setup(self, access_port_id):
+        self.serial_wire_instrument.set_access_port_id(access_port_id)
+        self.serial_wire_instrument.set(SerialWireInstrument.outputReset, True)
+        time.sleep(0.1)
+        self.serial_wire_instrument.set(SerialWireInstrument.outputReset, False)
+        time.sleep(0.1)
+        self.serial_wire_instrument.connect()
         self.serial_wire_instrument.write_memory(self.firmware.address, self.firmware.data)
 
     def run(self, name, r0=0, r1=0, r2=0, r3=0, timeout=1.0):
@@ -392,9 +399,10 @@ class SWDRPC:
 
 class Flasher:
 
-    def __init__(self, serial_wire_instrument, mcu, file_system, name):
+    def __init__(self, serial_wire_instrument, mcu, access_port_id, file_system, name):
         self.serial_wire_instrument = serial_wire_instrument
         self.mcu = mcu
+        self.access_port_id = access_port_id
         self.rpc = None
         self.file_system = file_system
         self.name = name
@@ -408,7 +416,7 @@ class Flasher:
     def setup_rpc(self):
         flasher_firmware = Firmware(f"flasher/FireflyFlash{self.mcu}.elf")
         self.rpc = SWDRPC(self.serial_wire_instrument, flasher_firmware)
-        self.rpc.setup()
+        self.rpc.setup(self.access_port_id)
 
     def setup(self):
         self.setup_firmware()
@@ -458,13 +466,35 @@ class Flasher:
             subaddress += count
 
 
+class NRF5340:
+
+    access_port_id_application_ahb_ap = 0
+    access_port_id_network_ahb_ap = 1
+    access_port_id_application_ctrl_ap = 2
+    access_port_id_network_ctrl_ap = 3
+
+    ctrl_ap_reset = 0x000
+    ctrl_ap_eraseall = 0x004
+    ctrl_ap_eraseallstatus = 0x008
+    ctrl_ap_approtect_disable = 0x010
+    ctrl_ap_secureapprotect_disable = 0x014
+    ctrl_ap_eraseprotect_status = 0x018
+    ctrl_ap_eraseprotect_disable = 0x01c
+    ctrl_ap_mailbox_txdata = 0x020
+    ctrl_ap_mailbox_txstatus = 0x024
+    ctrl_ap_mailbox_rxdata = 0x028
+    ctrl_ap_mailbox_rxstatus = 0x02c
+    ctrl_ap_idr = 0x0fc
+
+
 class ProgramScript(FixtureScript):
 
-    def __init__(self, presenter, fixture, serial_wire_instrument, mcu, file_system, name):
+    def __init__(self, presenter, fixture, serial_wire_instrument, mcu, access_port_id, file_system, name):
         super().__init__(presenter, fixture)
         self.serial_wire_instrument = serial_wire_instrument
         self.mcu = mcu
-        self.file_system = self.file_system
+        self.access_port_id = access_port_id
+        self.file_system = file_system
         self.name = name
 
     def setup(self):
@@ -473,7 +503,7 @@ class ProgramScript(FixtureScript):
     def main(self):
         super().main()
 
-        flasher = Flasher(self.serial_wire_instrument, self.mcu, self.file_system, self.name)
+        flasher = Flasher(self.serial_wire_instrument, self.mcu, self.access_port_id, self.file_system, self.name)
         flasher.setup()
         self.log(str(flasher.rpc.firmware))
         flasher.program()
