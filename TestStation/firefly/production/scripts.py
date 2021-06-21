@@ -427,11 +427,6 @@ class Flasher:
         if result != 0:
             raise IOError(f"Flasher erase_all failed ({result})")
 
-    def erase_area(self, area):
-        result = self.rpc.run('erase_area', area)
-        if result != 0:
-            raise IOError(f"Flasher erase_area({area}) failed ({result})")
-
     def erase(self, address, size):
         result = self.rpc.run('erase_page', address, size)
         if result != 0:
