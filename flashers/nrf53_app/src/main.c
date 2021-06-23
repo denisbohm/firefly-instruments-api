@@ -68,4 +68,5 @@ uint32_t write(uint32_t address, uint8_t *data, uint32_t size) {
 }
 
 int main(void) {
+    return 0;
 }

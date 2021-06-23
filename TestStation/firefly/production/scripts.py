@@ -188,7 +188,7 @@ def bit(n):
     return 1 << n
 
 
-class SWD:
+class SerialWireDebug:
     # Debug Port (DP)
 
     # Cortex M4
@@ -280,6 +280,18 @@ class SWD:
     dhcsr_ctrl_halt = bit(1)
     dhcsr_ctrl_debugen = bit(0)
 
+    def __init__(self, serial_wire_instrument, access_port_id):
+        self.serial_wire_instrument = serial_wire_instrument
+        self.access_port_id = access_port_id
+
+    def connect(self):
+        self.serial_wire_instrument.set_access_port_id(self.access_port_id)
+        self.serial_wire_instrument.set(SerialWireInstrument.outputReset, True)
+        time.sleep(0.1)
+        self.serial_wire_instrument.set(SerialWireInstrument.outputReset, False)
+        time.sleep(0.1)
+        self.serial_wire_instrument.connect()
+
 
 class CortexM:
 
@@ -341,24 +353,31 @@ class CortexM:
     register_s31 = 0x5f
 
 
-class SWDRPC:
+def retry(function, timeout, error):
+    start = time.time()
+    while True:
+        if function():
+            break
+        delta = time.time() - start
+        if delta > timeout:
+            raise IOError(error)
+
+
+class SerialWireDebugRemoteProcedureCall:
 
     def __init__(self, serial_wire_instrument, firmware):
         self.serial_wire_instrument = serial_wire_instrument
         self.firmware = firmware
 
-    def setup(self, access_port_id):
-        self.serial_wire_instrument.set_access_port_id(access_port_id)
-        self.serial_wire_instrument.set(SerialWireInstrument.outputReset, True)
-        time.sleep(0.1)
-        self.serial_wire_instrument.set(SerialWireInstrument.outputReset, False)
-        time.sleep(0.1)
-        self.serial_wire_instrument.connect()
+    def setup(self):
         self.serial_wire_instrument.write_memory(self.firmware.address, self.firmware.data)
 
+    def read_dhcsr(self):
+        return self.serial_wire_instrument.read_memory_uint32(SerialWireDebug.memory_dhcsr)
+
     def run(self, name, r0=0, r1=0, r2=0, r3=0, timeout=1.0):
-        dhcsr_halt = SWD.dhcsr_dbgkey | SWD.dhcsr_ctrl_debugen | SWD.dhcsr_ctrl_halt
-        dhcsr_run = SWD.dhcsr_dbgkey | SWD.dhcsr_ctrl_debugen
+        dhcsr_halt = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen | SerialWireDebug.dhcsr_ctrl_halt
+        dhcsr_run = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen
         function_location = self.firmware.functions[name]
         pc = function_location | 0x00000001
         stack = self.firmware.stack
@@ -366,7 +385,7 @@ class SWDRPC:
         break_location = self.firmware.functions['halt']
         lr = break_location | 0x00000001
         transfers = [
-            SerialWireDebugTransfer.write_memory(SWD.memory_dhcsr, dhcsr_halt),
+            SerialWireDebugTransfer.write_memory(SerialWireDebug.memory_dhcsr, dhcsr_halt),
             SerialWireDebugTransfer.write_register(CortexM.register_r0, r0),
             SerialWireDebugTransfer.write_register(CortexM.register_r1, r1),
             SerialWireDebugTransfer.write_register(CortexM.register_r2, r2),
@@ -374,49 +393,41 @@ class SWDRPC:
             SerialWireDebugTransfer.write_register(CortexM.register_sp, sp),
             SerialWireDebugTransfer.write_register(CortexM.register_pc, pc),
             SerialWireDebugTransfer.write_register(CortexM.register_lr, lr),
-            SerialWireDebugTransfer.write_memory(SWD.memory_dhcsr, dhcsr_run),
+            SerialWireDebugTransfer.write_memory(SerialWireDebug.memory_dhcsr, dhcsr_run),
         ]
         self.serial_wire_instrument.transfer(transfers)
-
-        start = time.time()
-        halted = False
-        while True:
-            transfer = SerialWireDebugTransfer.read_memory(SWD.memory_dhcsr)
-            self.serial_wire_instrument.transfer(transfer)
-            dhcsr = transfer.data
-            halted = (dhcsr & SWD.dhcsr_stat_halt) != 0
-            if halted:
-                break
-            delta = time.time() - start
-            if delta > timeout:
-                break
-        if not halted:
-            raise IOError("SWD RPC timeout")
-        transfer = SerialWireDebugTransfer.read_register(CortexM.register_r0)
-        self.serial_wire_instrument.transfer(transfer)
-        return transfer.data
+        retry(
+            lambda: (self.read_dhcsr() & SerialWireDebug.dhcsr_stat_halt) != 0,
+            timeout, "SerialWireDebug RPC timeout")
+        return self.serial_wire_instrument.read_register(CortexM.register_r0)
 
 
 class Flasher:
 
-    def __init__(self, serial_wire_instrument, mcu, access_port_id, file_system, name):
+    def __init__(self, serial_wire_instrument, mcu, name, file_system=None):
         self.serial_wire_instrument = serial_wire_instrument
         self.mcu = mcu
-        self.access_port_id = access_port_id
-        self.rpc = None
-        self.file_system = file_system
         self.name = name
-        self.entry = None
+        self.file_system = file_system
+
+        self.rpc = None
         self.firmware = None
+        self.entry = None
+
+        if file_system is not None:
+            self.transfer_to_ram = self.transfer_to_ram_via_storage
+        else:
+            self.transfer_to_ram = self.transfer_to_ram_via_swd
 
     def setup_firmware(self):
-        self.firmware = Firmware(f"firmware/{self.name}")
-        self.entry = self.file_system.ensure(self.name, self.firmware.data, time.time())
+        self.firmware = Firmware(f"firmware/{self.name}.elf")
+        if self.file_system is not None:
+            self.entry = self.file_system.ensure(self.name, self.firmware.data, time.time())
 
     def setup_rpc(self):
-        flasher_firmware = Firmware(f"flasher/FireflyFlash{self.mcu}.elf")
-        self.rpc = SWDRPC(self.serial_wire_instrument, flasher_firmware)
-        self.rpc.setup(self.access_port_id)
+        flasher_firmware = Firmware(f"flasher/{self.mcu}.elf")
+        self.rpc = SerialWireDebugRemoteProcedureCall(self.serial_wire_instrument, flasher_firmware)
+        self.rpc.setup()
 
     def setup(self):
         self.setup_firmware()
@@ -437,14 +448,20 @@ class Flasher:
         if result != 0:
             raise IOError(f"Flasher write(0x{address:08x}), 0x{data:08x}, 0x{size:08x}) failed ({result})")
 
-    def program(self):
-        self.erase_all()
+    def transfer_to_ram_via_storage(self, address, offset, count):
+        storage_identifier = self.entry.storage_instrument.identifier
+        storage_address = self.entry.address + offset
+        self.rpc.serial_wire_instrument.write_from_storage(address, count, storage_identifier, storage_address)
 
+    def transfer_to_ram_via_swd(self, address, offset, count):
+        subdata = self.firmware.data[offset:offset + count]
+        self.rpc.serial_wire_instrument.write_memory(address, subdata)
+
+    def program(self):
         assert (self.rpc.firmware.heap.address & 0x7) == 0
         assert (self.rpc.firmware.heap.size & 0x7) == 0
         heap = self.rpc.firmware.heap.address
         max_count = self.rpc.firmware.heap.size
-        storage_identifier = self.entry.storage_instrument.identifier
         address = self.firmware.address
         data = self.firmware.data
         subaddress = address
@@ -453,15 +470,12 @@ class Flasher:
             count = min(len(data) - offset, max_count)
             if count == 0:
                 break
-            storage_address = self.entry.address + offset
-            self.rpc.serial_wire_instrument.write_from_storage(heap, count, storage_identifier, storage_address)
-            # subdata = data[offset:offset + count]
-            # self.rpc.serial_wire_instrument.write_memory(heap, subdata)
+            self.transfer_to_ram(heap, offset, count)
             self.write(subaddress, heap, count)
             subaddress += count
 
 
-class NRF5340:
+class NRF53:
 
     access_port_id_application_ahb_ap = 0
     access_port_id_network_ahb_ap = 1
@@ -481,24 +495,36 @@ class NRF5340:
     ctrl_ap_mailbox_rxstatus = 0x02c
     ctrl_ap_idr = 0x0fc
 
+    def __init__(self, serial_wire_instrument):
+        self.serial_wire_instrument = serial_wire_instrument
+
+    def read_erase_all_status(self):
+        return self.serial_wire_instrument.read_port(SerialWireDebugTransfer.portAccess, NRF53.ctrl_ap_eraseallstatus)
+
+    def erase_all(self):
+        self.serial_wire_instrument.write_port(SerialWireDebugTransfer.portAccess, NRF53.ctrl_ap_eraseall, 1)
+        retry(lambda: self.read_erase_all_status() == 0, 1.0, "nRF5340 ctrl ap erase all timeout")
+
 
 class ProgramScript(FixtureScript):
 
-    def __init__(self, presenter, fixture, serial_wire_instrument, mcu, access_port_id, file_system, name):
+    def __init__(self, presenter, fixture, serial_wire_instrument, mcu, name, file_system=None, access_port_id=0):
         super().__init__(presenter, fixture)
         self.serial_wire_instrument = serial_wire_instrument
         self.mcu = mcu
-        self.access_port_id = access_port_id
-        self.file_system = file_system
         self.name = name
+        self.file_system = file_system
+        self.access_port_id = access_port_id
 
     def setup(self):
         super().setup()
+        swd = SerialWireDebug(self.serial_wire_instrument, self.access_port_id)
+        swd.connect()
 
     def main(self):
         super().main()
 
-        flasher = Flasher(self.serial_wire_instrument, self.mcu, self.access_port_id, self.file_system, self.name)
+        flasher = Flasher(self.serial_wire_instrument, self.mcu, self.name, self.file_system)
         flasher.setup()
         self.log(str(flasher.rpc.firmware))
         flasher.program()
