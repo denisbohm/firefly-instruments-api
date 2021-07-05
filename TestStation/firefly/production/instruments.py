@@ -116,6 +116,38 @@ class VoltageInstrument(Instrument):
         return voltage
 
 
+class GpioInstrument(Instrument):
+
+    apiTypeReset = 0
+    apiTypeSetBit = 1
+    apiTypeGetBit = 2
+    apiTypeSetModeBit = 3
+
+    mode_input = 0
+    mode_output = 1
+
+    def __init__(self, manager, identifier):
+        super().__init__(manager, identifier)
+
+    def reset(self):
+        self.invoke(VoltageInstrument.apiTypeReset)
+
+    def set_bit(self, value):
+        arguments = FDBinary()
+        arguments.put_uint8(1 if value else 0)
+        self.invoke(GpioInstrument.apiTypeSetBit, arguments)
+
+    def get_bit(self):
+        results = self.call(GpioInstrument.apiTypeGetBit)
+        bit = results.get_uint8() != 0
+        return bit
+
+    def set_mode_bit(self, mode):
+        arguments = FDBinary()
+        arguments.put_uint8(mode)
+        self.invoke(GpioInstrument.apiTypeSetModeBit, arguments)
+
+
 class StorageInstrument(Instrument):
 
     apiTypeReset = 0
