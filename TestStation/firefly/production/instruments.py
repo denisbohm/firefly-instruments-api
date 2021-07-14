@@ -613,7 +613,7 @@ class InstrumentManager:
             'Current': CurrentInstrument,
             'Battery': BatteryInstrument,
             'Storage': StorageInstrument,
-            'SerialWireDebug': SerialWireInstrument
+            'SerialWire': SerialWireInstrument
         }
 
     def open(self):
@@ -675,4 +675,6 @@ class InstrumentManager:
             self.instrumentsByIdentifier[identifier] = instrument
 
     def get_instrument(self, identifier):
+        if identifier not in self.instrumentsByIdentifier:
+            raise IOError(f'instrument {identifier} not found')
         return self.instrumentsByIdentifier[identifier]
