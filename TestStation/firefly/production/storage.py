@@ -32,7 +32,11 @@ class FileSystem:
     size = 1 << 21
     sectorSize = 1 << 12
 
-    pageSize = 1 << 8
+# for flash chips we use 256 byte page size
+#    pageSize = 1 << 8
+# for SD Card we use 512 byte page size (block size)
+    pageSize = 1 << 9
+
     hashSize = 20
 
     magic = [0xf0, 0x66, 0x69, 0x72, 0x65, 0x66, 0x6c, 0x79]
@@ -52,7 +56,7 @@ class FileSystem:
         sector_count = 1
         if sector.status == Sector.status_metadata:
             sector_count = sector.entry.sector_count
-        self.storage_instrument.erase(sector.address, self.size)
+        self.storage_instrument.erase(sector.address, sector_count * FileSystem.sectorSize)
         first_sector_index = sector.address // FileSystem.sectorSize
         for sector_index in range(first_sector_index, first_sector_index + sector_count):
             self.sectors[sector_index].status = Sector.status_available

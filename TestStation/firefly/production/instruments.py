@@ -1,3 +1,4 @@
+from enum import Enum
 from .usb import MacOsHidDevice
 from .binary import FDBinary
 
@@ -116,36 +117,121 @@ class VoltageInstrument(Instrument):
         return voltage
 
 
-class GpioInstrument(Instrument):
+class InputOutputInstrument(Instrument):
 
     apiTypeReset = 0
-    apiTypeSetBit = 1
-    apiTypeGetBit = 2
-    apiTypeSetModeBit = 3
+    apiTypeGetCapabilities = 1
+    apiTypeGetConfiguration = 2
+    apiTypeSetConfiguration = 3
+    apiTypeGetDigitalInput = 4
+    apiTypeSetDigitalOutput = 5
+    apiTypeGetAnalogInput = 6
+    apiTypeSetAnalogOutput = 7
+    apiTypeGetAuxiliaryConfiguration = 8
+    apiTypeSetAuxiliaryConfiguration = 9
+    apiTypeGetAuxiliaryInput = 10
+    apiTypeSetAuxiliaryOutput = 11
 
-    mode_input = 0
-    mode_output = 1
+    class Domain(Enum):
+        digital: int = 0
+        analog: int = 1
+
+    class Direction(Enum):
+        input: int = 0
+        output: int = 1
+
+    class Drive(Enum):
+        push_pull: int = 0
+        open_drain: int = 1
+
+    class Pull(Enum):
+        none: int = 0
+        up: int = 1
+        down: int = 2
 
     def __init__(self, manager, identifier):
         super().__init__(manager, identifier)
 
     def reset(self):
-        self.invoke(VoltageInstrument.apiTypeReset)
+        self.invoke(InputOutputInstrument.apiTypeReset)
 
-    def set_bit(self, value):
+    def get_capabilities(self):
+        results = self.call(InputOutputInstrument.apiTypeGetCapabilities)
+        capabilities = set()
+        capability_bits = results.get_uint32()
+        if capability_bits & 0x00000001:
+            capabilities.add("analog input")
+        if capability_bits & 0x00000002:
+            capabilities.add("analog output")
+        if capability_bits & 0x00000004:
+            capabilities.add("auxiliary")
+        return capabilities
+
+    def get_configuration(self):
+        results = self.call(InputOutputInstrument.apiTypeGetConfiguration)
+        domain = self.Domain(results.get_uint8())
+        direction = self.Direction(results.get_uint8())
+        drive = self.Drive(results.get_uint8())
+        pull = self.Pull(results.get_uint8())
+        return domain, direction, drive, pull
+
+    def set_configuration(
+            self, domain=Domain.digital, direction=Direction.input, drive=Drive.push_pull, pull=Pull.none
+    ):
         arguments = FDBinary()
-        arguments.put_uint8(1 if value else 0)
-        self.invoke(GpioInstrument.apiTypeSetBit, arguments)
+        arguments.put_uint8(domain)
+        arguments.put_uint8(direction)
+        arguments.put_uint8(drive)
+        arguments.put_uint8(pull)
+        self.invoke(InputOutputInstrument.apiTypeSetConfiguration, arguments)
 
-    def get_bit(self):
-        results = self.call(GpioInstrument.apiTypeGetBit)
+    def get_digital_input(self):
+        results = self.call(InputOutputInstrument.apiTypeGetDigitalInput)
         bit = results.get_uint8() != 0
         return bit
 
-    def set_mode_bit(self, mode):
+    def set_digital_output(self, value):
         arguments = FDBinary()
-        arguments.put_uint8(mode)
-        self.invoke(GpioInstrument.apiTypeSetModeBit, arguments)
+        arguments.put_uint8(1 if value else 0)
+        self.invoke(InputOutputInstrument.apiTypeSetDigitalOutput, arguments)
+
+    def get_analog_input(self):
+        results = self.call(InputOutputInstrument.apiTypeGetAnalogInput)
+        value = results.get_float32()
+        return value
+
+    def set_analog_output(self, value):
+        arguments = FDBinary()
+        arguments.put_float32(value)
+        self.invoke(InputOutputInstrument.apiTypeSetAnalogOutput, arguments)
+
+    def get_auxiliary_configuration(self):
+        results = self.call(InputOutputInstrument.apiTypeGetAuxiliaryConfiguration)
+        domain = self.Domain(results.get_uint8())
+        direction = self.Direction(results.get_uint8())
+        drive = self.Drive(results.get_uint8())
+        pull = self.Pull(results.get_uint8())
+        return domain, direction, drive, pull
+
+    def set_auxiliary_configuration(
+            self, domain=Domain.digital, direction=Direction.input, drive=Drive.push_pull, pull=Pull.none
+    ):
+        arguments = FDBinary()
+        arguments.put_uint8(domain)
+        arguments.put_uint8(direction)
+        arguments.put_uint8(drive)
+        arguments.put_uint8(pull)
+        self.invoke(InputOutputInstrument.apiTypeSetAuxiliaryConfiguration, arguments)
+
+    def get_auxiliary_input(self):
+        results = self.call(InputOutputInstrument.apiTypeGetAuxiliaryInput)
+        bit = results.get_uint8() != 0
+        return bit
+
+    def set_auxiliary_output(self, value):
+        arguments = FDBinary()
+        arguments.put_uint8(1 if value else 0)
+        self.invoke(InputOutputInstrument.apiTypeSetAuxiliaryOutput, arguments)
 
 
 class StorageInstrument(Instrument):
