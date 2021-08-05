@@ -1,5 +1,6 @@
 import time
 from .bundle import Bundle
+from .instruments import GpioInstrument
 from .instruments import InstrumentManager
 from .instruments import SerialWireInstrument
 from .instruments import SerialWireDebugTransfer
@@ -13,22 +14,28 @@ class Fixture:
         self.presenter = presenter
         self.manager = None
         self.indicator_instrument = None
+        self.serial_wire_instruments = []
         self.storage_instrument = None
         self.file_system = None
-        self.serial_wire_instrument = None
+        self.gpio_instruments = []
 
     def setup(self):
         self.manager = InstrumentManager()
         self.manager.open()
         self.manager.discover_instruments()
 
-        self.indicator_instrument = self.manager.get_instrument(4)
-        self.indicator_instrument.set(1.0, 0.0, 0.0)
+        self.indicator_instrument = self.manager.get_instrument(1)
+        self.indicator_instrument.set(0.0, 0.0, 1.0)
 
-        self.storage_instrument = self.manager.get_instrument(16)
+        self.serial_wire_instruments.append(self.manager.get_instrument(2))
+        self.serial_wire_instruments.append(self.manager.get_instrument(3))
+
+        self.storage_instrument = self.manager.get_instrument(4)
         self.file_system = FileSystem(self.storage_instrument)
         self.presenter.log('Inspecting file system...')
-        self.file_system.inspect()
+
+        for identifier in range(81, 81 + 28):
+            self.gpio_instruments.append(self.manager.get_instrument(identifier))
 
 
 class Script:
@@ -286,11 +293,13 @@ class SerialWireDebug:
 
     def connect(self):
         self.serial_wire_instrument.set_access_port_id(self.access_port_id)
+        self.serial_wire_instrument.set_enabled(True)
+        time.sleep(0.1)
         self.serial_wire_instrument.set(SerialWireInstrument.outputReset, True)
         time.sleep(0.1)
         self.serial_wire_instrument.set(SerialWireInstrument.outputReset, False)
         time.sleep(0.1)
-        self.serial_wire_instrument.connect()
+        return self.serial_wire_instrument.connect()
 
 
 class CortexM:
@@ -508,23 +517,40 @@ class NRF53:
 
 class ProgramScript(FixtureScript):
 
-    def __init__(self, presenter, fixture, serial_wire_instrument, mcu, name, file_system=None, access_port_id=0):
+    def __init__(self, presenter, fixture, mcu, name, serial_wire_instrument_number=0, access_port_id=0):
         super().__init__(presenter, fixture)
-        self.serial_wire_instrument = serial_wire_instrument
         self.mcu = mcu
         self.name = name
-        self.file_system = file_system
+        self.serial_wire_instrument_number = serial_wire_instrument_number
         self.access_port_id = access_port_id
 
     def setup(self):
         super().setup()
-        swd = SerialWireDebug(self.serial_wire_instrument, self.access_port_id)
-        swd.connect()
+
+        storage_instrument = self.fixture.storage_instrument
+        address = 0
+        data = bytes([0xf0])
+        storage_instrument.write(address, data)
+        verify = storage_instrument.read(address, len(data))
+        self.log(f"storage: {data} {verify}")
+
+        gpio = self.fixture.gpio_instruments[0]
+        capabilities = gpio.get_capabilities()
+        self.log(f"capabilities: {capabilities}")
+        gpio.set_configuration(domain=GpioInstrument.Domain.analog, direction=GpioInstrument.Direction.input)
+        voltage = gpio.get_analog_input()
+        self.log(f"voltage: {voltage}")
+
+        serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
+        swd = SerialWireDebug(serial_wire_instrument, self.access_port_id)
+        dpid = swd.connect()
+        self.log(f"dpid: 0x{dpid:08x}")
 
     def main(self):
         super().main()
 
-        flasher = Flasher(self.serial_wire_instrument, self.mcu, self.name, self.file_system)
+        serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
+        flasher = Flasher(serial_wire_instrument, self.mcu, self.name, self.fixture.file_system)
         flasher.setup()
         self.log(str(flasher.rpc.firmware))
         flasher.program()

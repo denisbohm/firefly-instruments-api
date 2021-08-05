@@ -117,7 +117,7 @@ class VoltageInstrument(Instrument):
         return voltage
 
 
-class InputOutputInstrument(Instrument):
+class GpioInstrument(Instrument):
 
     apiTypeReset = 0
     apiTypeGetCapabilities = 1
@@ -153,10 +153,10 @@ class InputOutputInstrument(Instrument):
         super().__init__(manager, identifier)
 
     def reset(self):
-        self.invoke(InputOutputInstrument.apiTypeReset)
+        self.invoke(GpioInstrument.apiTypeReset)
 
     def get_capabilities(self):
-        results = self.call(InputOutputInstrument.apiTypeGetCapabilities)
+        results = self.call(GpioInstrument.apiTypeGetCapabilities)
         capabilities = set()
         capability_bits = results.get_uint32()
         if capability_bits & 0x00000001:
@@ -168,7 +168,7 @@ class InputOutputInstrument(Instrument):
         return capabilities
 
     def get_configuration(self):
-        results = self.call(InputOutputInstrument.apiTypeGetConfiguration)
+        results = self.call(GpioInstrument.apiTypeGetConfiguration)
         domain = self.Domain(results.get_uint8())
         direction = self.Direction(results.get_uint8())
         drive = self.Drive(results.get_uint8())
@@ -179,34 +179,34 @@ class InputOutputInstrument(Instrument):
             self, domain=Domain.digital, direction=Direction.input, drive=Drive.push_pull, pull=Pull.none
     ):
         arguments = FDBinary()
-        arguments.put_uint8(domain)
-        arguments.put_uint8(direction)
-        arguments.put_uint8(drive)
-        arguments.put_uint8(pull)
-        self.invoke(InputOutputInstrument.apiTypeSetConfiguration, arguments)
+        arguments.put_uint8(domain.value)
+        arguments.put_uint8(direction.value)
+        arguments.put_uint8(drive.value)
+        arguments.put_uint8(pull.value)
+        self.invoke(GpioInstrument.apiTypeSetConfiguration, arguments)
 
     def get_digital_input(self):
-        results = self.call(InputOutputInstrument.apiTypeGetDigitalInput)
+        results = self.call(GpioInstrument.apiTypeGetDigitalInput)
         bit = results.get_uint8() != 0
         return bit
 
     def set_digital_output(self, value):
         arguments = FDBinary()
         arguments.put_uint8(1 if value else 0)
-        self.invoke(InputOutputInstrument.apiTypeSetDigitalOutput, arguments)
+        self.invoke(GpioInstrument.apiTypeSetDigitalOutput, arguments)
 
     def get_analog_input(self):
-        results = self.call(InputOutputInstrument.apiTypeGetAnalogInput)
+        results = self.call(GpioInstrument.apiTypeGetAnalogInput)
         value = results.get_float32()
         return value
 
     def set_analog_output(self, value):
         arguments = FDBinary()
         arguments.put_float32(value)
-        self.invoke(InputOutputInstrument.apiTypeSetAnalogOutput, arguments)
+        self.invoke(GpioInstrument.apiTypeSetAnalogOutput, arguments)
 
     def get_auxiliary_configuration(self):
-        results = self.call(InputOutputInstrument.apiTypeGetAuxiliaryConfiguration)
+        results = self.call(GpioInstrument.apiTypeGetAuxiliaryConfiguration)
         domain = self.Domain(results.get_uint8())
         direction = self.Direction(results.get_uint8())
         drive = self.Drive(results.get_uint8())
@@ -221,17 +221,17 @@ class InputOutputInstrument(Instrument):
         arguments.put_uint8(direction)
         arguments.put_uint8(drive)
         arguments.put_uint8(pull)
-        self.invoke(InputOutputInstrument.apiTypeSetAuxiliaryConfiguration, arguments)
+        self.invoke(GpioInstrument.apiTypeSetAuxiliaryConfiguration, arguments)
 
     def get_auxiliary_input(self):
-        results = self.call(InputOutputInstrument.apiTypeGetAuxiliaryInput)
+        results = self.call(GpioInstrument.apiTypeGetAuxiliaryInput)
         bit = results.get_uint8() != 0
         return bit
 
     def set_auxiliary_output(self, value):
         arguments = FDBinary()
         arguments.put_uint8(1 if value else 0)
-        self.invoke(InputOutputInstrument.apiTypeSetAuxiliaryOutput, arguments)
+        self.invoke(GpioInstrument.apiTypeSetAuxiliaryOutput, arguments)
 
 
 class StorageInstrument(Instrument):
@@ -259,7 +259,7 @@ class StorageInstrument(Instrument):
     def write(self, address, data):
         offset = 0
         while offset < len(data):
-            length = min(data.count - offset, StorageInstrument.maxTransferLength)
+            length = min(len(data) - offset, StorageInstrument.maxTransferLength)
             arguments = FDBinary()
             arguments.put_varuint(address + offset)
             arguments.put_varuint(length)
@@ -699,7 +699,8 @@ class InstrumentManager:
             'Current': CurrentInstrument,
             'Battery': BatteryInstrument,
             'Storage': StorageInstrument,
-            'SerialWire': SerialWireInstrument
+            'SerialWire': SerialWireInstrument,
+            'Gpio': GpioInstrument
         }
 
     def open(self):
@@ -730,14 +731,13 @@ class InstrumentManager:
         detour = Detour()
         while detour.state != Detour.state_success:
             data = self.device.Read()
-            print(data)
             detour.event(data)
         binary = FDBinary(detour.buffer)
         identifier = binary.get_varuint()
         api = binary.get_varuint()
         count = binary.get_varuint()
         content = binary.get_bytes(count)
-        print(f"done identifier={identifier}, api={api}, count={count}, content={content}")
+#        print(f"done identifier={identifier}, api={api}, count={count}, content={content}")
         return identifier, type, content
 
     def call(self, identifier, api, content=None):
@@ -747,13 +747,16 @@ class InstrumentManager:
         assert type == return_type
         return return_content
 
+    def echo(self, data):
+        return self.call(self.identifier, InstrumentManager.apiTypeEcho, data)
+
     def discover_instruments(self):
         results = FDBinary(self.call(self.identifier, InstrumentManager.apiTypeDiscoverInstruments))
         count = results.get_varuint()
         for _ in range(count):
             category = results.get_string()
             identifier = results.get_varuint()
-            print(f"category={category}, identifier={identifier}")
+#            print(f"category={category}, identifier={identifier}")
             if category not in self.instrumentClassByCategory:
                 continue
             instrument_class = self.instrumentClassByCategory[category]

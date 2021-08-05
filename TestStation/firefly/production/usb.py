@@ -426,6 +426,8 @@ class MacOsHidDevice(HidDevice):
 
     def Write(self, packet, report_id=0):
         """See base class."""
+        hex = ''.join(' ' + format(x, '02x') for x in packet)
+        print(f"Write:{hex}")
         packet_len = len(packet)
 #        packet_len = self.internal_max_out_report_len
         out_report_buffer = (ctypes.c_uint8 * packet_len)()
@@ -443,14 +445,14 @@ class MacOsHidDevice(HidDevice):
 
     def Read(self):
         """See base class."""
-
         result = None
         while result is None:
             try:
                 result = self.read_queue.get(timeout=60)
             except queue.Empty:
                 continue
-
+        hex = ''.join(' ' + format(x, '02x') for x in result)
+        print(f"Read:{hex}")
         return result
 
     def __del__(self):

@@ -85,7 +85,7 @@ class FDBinary:
     def get_uint64(self):
         if not self.get_check(8):
             return 0
-        buffer = self.data[self.get_index:self.get_index + 8]
+        buffer = bytes(self.data[self.get_index:self.get_index + 8])
         result = struct.unpack('<Q', buffer)
         self.get_index += 8
         return result
@@ -93,7 +93,7 @@ class FDBinary:
     def get_float16(self):
         if not self.get_check(2):
             return 0
-        buffer = self.data[self.get_index:self.get_index + 2]
+        buffer = bytes(self.data[self.get_index:self.get_index + 2])
         result = struct.unpack('<e', buffer)
         self.get_index += 2
         return result
@@ -101,7 +101,7 @@ class FDBinary:
     def get_float32(self):
         if not self.get_check(4):
             return 0
-        buffer = self.data[self.get_index:self.get_index + 4]
+        buffer = bytes(self.data[self.get_index:self.get_index + 4])
         result = struct.unpack('<f', buffer)
         self.get_index += 4
         return result
@@ -109,7 +109,7 @@ class FDBinary:
     def get_float64(self):
         if not self.get_check(8):
             return 0
-        buffer = self.data[self.get_index:self.get_index + 8]
+        buffer = bytes(self.data[self.get_index:self.get_index + 8])
         result = struct.unpack('<d', buffer)
         self.get_index += 8
         return result
