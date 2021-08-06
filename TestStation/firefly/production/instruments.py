@@ -852,7 +852,7 @@ class InstrumentManager:
         for _ in range(count):
             category = results.get_string()
             identifier = results.get_varuint()
-#            print(f"category={category}, identifier={identifier}")
+            print(f"category={category}, identifier={identifier}")
             if category not in self.instrumentClassByCategory:
                 continue
             instrument_class = self.instrumentClassByCategory[category]

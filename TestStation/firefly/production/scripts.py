@@ -19,6 +19,8 @@ class Fixture:
         self.storage_instrument = None
         self.file_system = None
         self.gpio_instruments = []
+        self.battery_instrument = None
+        self.relay_battery_to_dut = None
 
     def setup(self):
         self.manager = InstrumentManager()
@@ -27,6 +29,19 @@ class Fixture:
 
         self.indicator_instrument = self.manager.get_instrument(1)
         self.indicator_instrument.set(0.0, 0.0, 1.0)
+
+        #FDI_RELAY_ATE_USB_5V_EN,
+        #FDI_RELAY_ATE_USB_D_EN,
+        #FDI_RELAY_ATE_BATTERY_SENSE,
+        #FDI_RELAY_ATE_FILL_EN,
+        #FDI_RELAY_ATE_DRAIN_EN,
+        #FDI_RELAY_ATE_BAT_CAP_EN,
+        #FDI_RELAY_ATE_BAT_ADJ_EN,
+        # self.relay_instrument = self.manager.get_instrument(41 - 47)
+        # self.voltage_instrument = self.manager.get_instrument(48)
+        # self.current_instrument = self.manager.get_instrument(49)
+        self.battery_instrument = self.manager.get_instrument(50)
+        self.relay_battery_to_dut = self.manager.get_instrument(47)
 
         self.serial_wire_instruments.append(self.manager.get_instrument(2))
         self.serial_wire_instruments.append(self.manager.get_instrument(3))
@@ -528,6 +543,12 @@ class ProgramScript(FixtureScript):
     def setup(self):
         super().setup()
 
+        battery_instrument = self.fixture.battery_instrument
+        battery_instrument.set_voltage(3.8)
+        battery_instrument.set_enabled(True)
+        relay_battery_to_dut = self.fixture.relay_battery_to_dut
+        relay_battery_to_dut.set(True)
+
         storage_instrument = self.fixture.storage_instrument
         storage_instrument.file_mkfs()
         name = "test.bin"
@@ -541,9 +562,6 @@ class ProgramScript(FixtureScript):
         storage_instrument.file_write(name, offset, data)
         verify = storage_instrument.file_read(name, offset, len(data))
         self.log(f"file: {data} {verify} @ 0x{address:08x}")
-
-        address = 0
-        storage_instrument.write(address, data)
         verify = storage_instrument.read(address, len(data))
         self.log(f"storage: {data} {verify}")
 
