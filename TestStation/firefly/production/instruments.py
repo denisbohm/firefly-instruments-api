@@ -241,8 +241,32 @@ class StorageInstrument(Instrument):
     apiTypeWrite = 2
     apiTypeRead = 3
     apiTypeHash = 4
+    apiTypeFileMkfs = 5
+    apiTypeFileList = 6
+    apiTypeFileOpen = 7
+    apiTypeFileUnlink = 8
+    apiTypeFileAddress = 9
+    apiTypeFileExpand = 10
+    apiTypeFileWrite = 11
+    apiTypeFileRead = 12
 
     maxTransferLength = 4096
+
+    FA_READ = 0x01
+    FA_WRITE = 0x02
+    FA_OPEN_EXISTING = 0x00
+    FA_CREATE_NEW = 0x04
+    FA_CREATE_ALWAYS = 0x08
+    FA_OPEN_ALWAYS = 0x10
+    FA_OPEN_APPEND = 0x30
+
+    class Info:
+
+        def __init__(self, name, size, date, time):
+            self.name = name
+            self.size = size
+            self.date = date
+            self.time = time
 
     def __init__(self, manager, identifier):
         super().__init__(manager, identifier)
@@ -297,6 +321,78 @@ class StorageInstrument(Instrument):
         results = self.call(StorageInstrument.apiTypeHash, arguments)
         result = results.get_bytes(20)
         return result
+
+    def file_mkfs(self):
+        results = self.call(StorageInstrument.apiTypeFileMkfs)
+        result = results.get_uint8() != 0
+        return result
+
+    def file_list(self):
+        results = self.call(StorageInstrument.apiTypeFileList)
+        count = results.get_varuint()
+        list = []
+        for _ in range(count):
+            name = results.get_string()
+            size = results.get_uint32()
+            date = results.get_uint32()
+            time = results.get_uint32()
+            list.append(StorageInstrument.Info(name, size, date, time))
+        return list
+
+    def file_open(self, name, mode):
+        arguments = FDBinary()
+        arguments.put_string(name)
+        arguments.put_varuint(mode)
+        results = self.call(StorageInstrument.apiTypeFileOpen, arguments)
+        result = results.get_uint8() != 0
+        return result
+
+    def file_unlink(self, name):
+        arguments = FDBinary()
+        arguments.put_string(name)
+        results = self.call(StorageInstrument.apiTypeFileUnlink, arguments)
+        result = results.get_uint8() != 0
+        return result
+
+    def file_address(self, name):
+        arguments = FDBinary()
+        arguments.put_string(name)
+        results = self.call(StorageInstrument.apiTypeFileAddress, arguments)
+        result = results.get_uint8() != 0
+        address = results.get_uint32()
+        return address
+
+    def file_expand(self, name, size):
+        arguments = FDBinary()
+        arguments.put_string(name)
+        arguments.put_uint32(size)
+        results = self.call(StorageInstrument.apiTypeFileExpand, arguments)
+        result = results.get_uint8() != 0
+        return result
+
+    def file_write(self, name, offset, data):
+        arguments = FDBinary()
+        arguments.put_string(name)
+        arguments.put_uint32(offset)
+        arguments.put_uint32(len(data))
+        arguments.put_bytes(data)
+        results = self.call(StorageInstrument.apiTypeFileWrite, arguments)
+        result = results.get_uint8() != 0
+        return result
+
+    def file_read(self, name, offset, size):
+        arguments = FDBinary()
+        arguments.put_string(name)
+        arguments.put_uint32(offset)
+        arguments.put_uint32(size)
+        results = self.call(StorageInstrument.apiTypeFileRead, arguments)
+        result = results.get_uint8() != 0
+        if result:
+            actual_size = results.get_uint32()
+            data = results.get_bytes(actual_size)
+        else:
+            data = []
+        return data
 
 
 class SerialWireDebugTransfer:

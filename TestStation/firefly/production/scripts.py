@@ -4,6 +4,7 @@ from .instruments import GpioInstrument
 from .instruments import InstrumentManager
 from .instruments import SerialWireInstrument
 from .instruments import SerialWireDebugTransfer
+from .instruments import StorageInstrument
 from .storage import FileSystem
 from elftools.elf.elffile import ELFFile
 
@@ -528,8 +529,20 @@ class ProgramScript(FixtureScript):
         super().setup()
 
         storage_instrument = self.fixture.storage_instrument
-        address = 0
+        storage_instrument.file_mkfs()
+        name = "test.bin"
+        storage_instrument.file_open(name, StorageInstrument.FA_CREATE_NEW)
+        for info in storage_instrument.file_list():
+            self.log(f"info: {info.name} {info.size}")
+        storage_instrument.file_expand(name, 4096)
+        address = storage_instrument.file_address(name)
         data = bytes([0xf0])
+        offset = 0
+        storage_instrument.file_write(name, offset, data)
+        verify = storage_instrument.file_read(name, offset, len(data))
+        self.log(f"file: {data} {verify} @ 0x{address:08x}")
+
+        address = 0
         storage_instrument.write(address, data)
         verify = storage_instrument.read(address, len(data))
         self.log(f"storage: {data} {verify}")
