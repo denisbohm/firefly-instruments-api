@@ -20,7 +20,16 @@ class Fixture:
         self.file_system = None
         self.gpio_instruments = []
         self.battery_instrument = None
+        self.relay_sense = None
         self.relay_battery_to_dut = None
+        self.relay_supercap_to_dut = None
+        self.relay_fill_supercap = None
+        self.relay_drain_supercap = None
+        self.relay_vusb_to_dut = None
+        self.relay_dusb_to_dut = None
+        self.voltage_battery_instrument = None
+        self.voltage_supercap_instrument = None
+        self.current_usb_instrument = None
 
     def setup(self):
         self.manager = InstrumentManager()
@@ -30,18 +39,17 @@ class Fixture:
         self.indicator_instrument = self.manager.get_instrument(1)
         self.indicator_instrument.set(0.0, 0.0, 1.0)
 
-        #FDI_RELAY_ATE_USB_5V_EN,
-        #FDI_RELAY_ATE_USB_D_EN,
-        #FDI_RELAY_ATE_BATTERY_SENSE,
-        #FDI_RELAY_ATE_FILL_EN,
-        #FDI_RELAY_ATE_DRAIN_EN,
-        #FDI_RELAY_ATE_BAT_CAP_EN,
-        #FDI_RELAY_ATE_BAT_ADJ_EN,
-        # self.relay_instrument = self.manager.get_instrument(41 - 47)
-        # self.voltage_instrument = self.manager.get_instrument(48)
-        # self.current_instrument = self.manager.get_instrument(49)
-        self.battery_instrument = self.manager.get_instrument(50)
+        self.relay_vusb_to_dut = self.manager.get_instrument(41)
+        self.relay_dusb_to_dut = self.manager.get_instrument(42)
+        self.relay_sense = self.manager.get_instrument(43)
+        self.relay_fill_supercap = self.manager.get_instrument(44)
+        self.relay_drain_supercap = self.manager.get_instrument(45)
+        self.relay_supercap_to_dut = self.manager.get_instrument(46)
         self.relay_battery_to_dut = self.manager.get_instrument(47)
+        self.voltage_battery_instrument = self.manager.get_instrument(48)
+        self.voltage_supercap_instrument = self.manager.get_instrument(49)
+        self.current_usb_instrument = self.manager.get_instrument(50)
+        self.battery_instrument = self.manager.get_instrument(51)
 
         self.serial_wire_instruments.append(self.manager.get_instrument(2))
         self.serial_wire_instruments.append(self.manager.get_instrument(3))
@@ -542,6 +550,9 @@ class ProgramScript(FixtureScript):
 
     def setup(self):
         super().setup()
+
+        relay_vusb_to_dut = self.fixture.relay_vusb_to_dut
+        relay_vusb_to_dut.set(True)
 
         battery_instrument = self.fixture.battery_instrument
         battery_instrument.set_voltage(3.8)
