@@ -1,10 +1,8 @@
 import time
 from .bundle import Bundle
-from .instruments import GpioInstrument
 from .instruments import InstrumentManager
 from .instruments import SerialWireInstrument
 from .instruments import SerialWireDebugTransfer
-from .instruments import StorageInstrument
 from .storage import FileSystem
 from elftools.elf.elffile import ELFFile
 
@@ -15,10 +13,12 @@ class Fixture:
         self.presenter = presenter
         self.manager = None
         self.indicator_instrument = None
+        self.voltage_serial_wire_instruments = []
         self.serial_wire_instruments = []
         self.storage_instrument = None
         self.file_system = None
         self.gpio_instruments = []
+        self.gpio_instrument_by_name = {}
         self.battery_instrument = None
         self.relay_sense = None
         self.relay_battery_to_dut = None
@@ -53,13 +53,50 @@ class Fixture:
 
         self.serial_wire_instruments.append(self.manager.get_instrument(2))
         self.serial_wire_instruments.append(self.manager.get_instrument(3))
+        self.voltage_serial_wire_instruments.append(self.manager.get_instrument(5))
+        self.voltage_serial_wire_instruments.append(self.manager.get_instrument(6))
 
         self.storage_instrument = self.manager.get_instrument(4)
         self.file_system = FileSystem(self.storage_instrument)
         self.presenter.log('Inspecting file system...')
 
+        gpio_names = [
+            "IOA0",
+            "IOA1",
+            "IOA2",
+            "IOA3",
+            "IOA4",
+            "IOA5",
+            "IOA6",
+            "IOA7",
+            "DIO0",
+            "DIO1",
+            "DIO2",
+            "DIO3",
+            "DIO4",
+            "DIO5",
+            "DIO6",
+            "DIO7",
+            "DIO8",
+            "DIO9",
+            "DIO10",
+            "DIO11",
+            "DIO12",
+            "DIO13",
+            "DIO14",
+            "DIO15",
+            "IOR0",
+            "IOR1",
+            "IOR2",
+            "IOR3",
+        ]
+        index = 0
         for identifier in range(81, 81 + 28):
-            self.gpio_instruments.append(self.manager.get_instrument(identifier))
+            instrument = self.manager.get_instrument(identifier)
+            self.gpio_instruments.append(instrument)
+            name = gpio_names[index]
+            self.gpio_instrument_by_name[name] = instrument
+            index += 1
 
 
 class Script:
@@ -71,7 +108,7 @@ class Script:
 
     def __init__(self, presenter):
         self.presenter = presenter
-        self.status = Script.status_fail
+        self.status = Script.status_pass
 
     def setup(self):
         pass
@@ -510,6 +547,8 @@ class Flasher:
 
 class NRF53:
 
+    dpid = 0x6BA02477
+
     access_port_id_application_ahb_ap = 0
     access_port_id_network_ahb_ap = 1
     access_port_id_application_ctrl_ap = 2
@@ -554,6 +593,50 @@ class ProgramScript(FixtureScript):
         relay_vusb_to_dut = self.fixture.relay_vusb_to_dut
         relay_vusb_to_dut.set(True)
 
+        serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
+        serial_wire_instrument.set_enabled(True)
+        time.sleep(0.2)
+        voltage_serial_wire_instrument = self.fixture.voltage_serial_wire_instruments[self.serial_wire_instrument_number]
+        serial_wire_voltage = voltage_serial_wire_instrument.convert()
+        self.log(f"system voltage: {serial_wire_voltage:.2f}V")
+
+        swd = SerialWireDebug(serial_wire_instrument, self.access_port_id)
+        dpid = swd.connect()
+        # DPID 0x6BA02477
+        self.log(f"dpid: 0x{dpid:08x}")
+        revision = (dpid >> 28) & 0xf
+        partno = (dpid >> 20) & 0xff
+        res0 = (dpid >> 17) & 0x7
+        min = (dpid >> 16) & 0x1
+        version = (dpid >> 12) & 0xf
+        designer = (dpid >> 1) & 0x7ff
+        ra0 = (dpid >> 0) & 0x1
+        self.log(f"revision {revision}, partno {partno}, min {min}, version {version}, designer {designer:03x}")
+
+        # power up debug interface
+        # SWDWriteDP 1 0x50000000
+
+        # read ap id registers
+        # SWDWriteDP 2 0x020000F0
+        # SWDReadAP 3
+        # idr = SWDReadAP 3
+        # AHB-AP 0x84770001
+        # CTRL-AP 0x12880000
+
+        # erase all
+        # SWDWriteDP 2 0x02000000 (0x03000000 for network core)
+        # SWDWriteAP 1 1
+        #
+        # SWDReadAP 2
+        # status = SWDReadAP 2
+        # when status == 0x00000001 busy, status == 0x00000000 done
+
+        # should be able to program part now (until next reset)
+
+        '''
+        r0 = serial_wire_instrument.read_register(0)
+        self.log(f"r0: 0x{r0:08x}")
+
         battery_instrument = self.fixture.battery_instrument
         battery_instrument.set_voltage(3.8)
         battery_instrument.set_enabled(True)
@@ -582,19 +665,17 @@ class ProgramScript(FixtureScript):
         gpio.set_configuration(domain=GpioInstrument.Domain.analog, direction=GpioInstrument.Direction.input)
         voltage = gpio.get_analog_input()
         self.log(f"voltage: {voltage}")
-
-        serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
-        swd = SerialWireDebug(serial_wire_instrument, self.access_port_id)
-        dpid = swd.connect()
-        self.log(f"dpid: 0x{dpid:08x}")
+        '''
 
     def main(self):
         super().main()
 
+        '''
         serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
         flasher = Flasher(serial_wire_instrument, self.mcu, self.name, self.fixture.file_system)
         flasher.setup()
         self.log(str(flasher.rpc.firmware))
         flasher.program()
+        '''
 
         self.status = Script.status_pass

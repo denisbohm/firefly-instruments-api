@@ -585,7 +585,7 @@ class SerialWireInstrument(Instrument):
     def transfer(self, transfers):
         response_count = 0
         arguments = FDBinary()
-        arguments.put_varuint(transfers.count)
+        arguments.put_varuint(len(transfers))
         for transfer in transfers:
             arguments.put_varuint(transfer.type)
             if transfer.type == SerialWireDebugTransfer.typeReadPort:
