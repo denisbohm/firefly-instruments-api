@@ -403,6 +403,10 @@ class SerialWireDebugTransfer:
     typeWriteMemory = 3
     typeReadPort = 4
     typeWritePort = 5
+    typeSelectAndReadAccessPort = 6
+    typeSelectAndWriteAccessPort = 7
+    typeReadData = 8
+    typeWriteData = 9
 
     portDebug = 0
     portAccess = 1
@@ -412,6 +416,7 @@ class SerialWireDebugTransfer:
         self.port = None
         self.register = None
         self.address = None
+        self.length = None
         self.data = None
 
     @staticmethod
@@ -428,6 +433,21 @@ class SerialWireDebugTransfer:
         transfer = SerialWireDebugTransfer()
         transfer.type = SerialWireDebugTransfer.typeReadPort
         transfer.port = port
+        transfer.register = register
+        return transfer
+
+    @staticmethod
+    def select_and_write_access_port(register, data):
+        transfer = SerialWireDebugTransfer()
+        transfer.type = SerialWireDebugTransfer.typeSelectAndWriteAccessPort
+        transfer.register = register
+        transfer.data = data
+        return transfer
+
+    @staticmethod
+    def select_and_read_access_port(register):
+        transfer = SerialWireDebugTransfer()
+        transfer.type = SerialWireDebugTransfer.typeSelectAndReadAccessPort
         transfer.register = register
         return transfer
 
@@ -459,6 +479,22 @@ class SerialWireDebugTransfer:
         transfer = SerialWireDebugTransfer()
         transfer.type = SerialWireDebugTransfer.typeReadMemory
         transfer.address = address
+        return transfer
+
+    @staticmethod
+    def write_data(address, data):
+        transfer = SerialWireDebugTransfer()
+        transfer.type = SerialWireDebugTransfer.typeWriteData
+        transfer.address = address
+        transfer.data = data
+        return transfer
+
+    @staticmethod
+    def read_data(address, length):
+        transfer = SerialWireDebugTransfer()
+        transfer.type = SerialWireDebugTransfer.typeReadData
+        transfer.address = address
+        transfer.length = length
         return transfer
 
 
@@ -595,18 +631,30 @@ class SerialWireInstrument(Instrument):
             elif transfer.type == SerialWireDebugTransfer.typeWritePort:
                 arguments.put_uint8(transfer.port)
                 arguments.put_uint8(transfer.register)
-                arguments.put_uint32(transfer.value)
+                arguments.put_uint32(transfer.data)
+            elif transfer.type == SerialWireDebugTransfer.typeSelectAndReadAccessPort:
+                response_count += 1
+                arguments.put_uint8(transfer.register)
+            elif transfer.type == SerialWireDebugTransfer.typeSelectAndWriteAccessPort:
+                arguments.put_uint8(transfer.register)
+                arguments.put_uint32(transfer.data)
             elif transfer.type == SerialWireDebugTransfer.typeReadRegister:
                 response_count += 1
                 arguments.put_varuint(transfer.register)
             elif transfer.type == SerialWireDebugTransfer.typeWriteRegister:
                 arguments.put_varuint(transfer.register)
-                arguments.put_uint32(transfer.value)
+                arguments.put_uint32(transfer.data)
             elif transfer.type == SerialWireDebugTransfer.typeReadMemory:
                 response_count += 1
                 arguments.put_uint32(transfer.address)
-                arguments.put_varuint(transfer.length)
             elif transfer.type == SerialWireDebugTransfer.typeWriteMemory:
+                arguments.put_uint32(transfer.address)
+                arguments.put_uint32(transfer.data)
+            elif transfer.type == SerialWireDebugTransfer.typeReadData:
+                response_count += 1
+                arguments.put_uint32(transfer.address)
+                arguments.put_varuint(transfer.length)
+            elif transfer.type == SerialWireDebugTransfer.typeWriteData:
                 arguments.put_uint32(transfer.address)
                 arguments.put_varuint(len(transfer.data))
                 arguments.put_bytes(transfer.data)
@@ -630,8 +678,18 @@ class SerialWireInstrument(Instrument):
                 register = results.get_uint8()
                 if register != transfer.register:
                     raise IOError('transfer mismatch')
-                transfer.value = results.get_uint32()
+                transfer.data = results.get_uint32()
             elif transfer.type == SerialWireDebugTransfer.typeWritePort:
+                break
+            if transfer.type == SerialWireDebugTransfer.typeSelectAndReadAccessPort:
+                transfer_type = results.get_varuint()
+                if transfer_type != transfer.type:
+                    raise IOError('transfer mismatch')
+                register = results.get_uint8()
+                if register != transfer.register:
+                    raise IOError('transfer mismatch')
+                transfer.data = results.get_uint32()
+            elif transfer.type == SerialWireDebugTransfer.typeSelectAndWriteAccessPort:
                 break
             if transfer.type == SerialWireDebugTransfer.typeReadRegister:
                 transfer_type = results.get_varuint()
@@ -640,7 +698,7 @@ class SerialWireInstrument(Instrument):
                 register = results.get_varuint()
                 if register != transfer.register:
                     raise IOError('transfer mismatch')
-                transfer.value = results.get_uint32()
+                transfer.data = results.get_uint32()
             elif transfer.type == SerialWireDebugTransfer.typeWriteRegister:
                 break
             elif transfer.type == SerialWireDebugTransfer.typeReadMemory:
@@ -650,11 +708,18 @@ class SerialWireInstrument(Instrument):
                 address = results.get_uint32()
                 if address != transfer.address:
                     raise IOError('transfer mismatch')
-                length = results.get_varuint()
-                if length != transfer.length:
-                    raise IOError('transfer mismatch')
-                transfer.data = results.get_bytes(length)
+                transfer.data = results.get_uint32()
             elif transfer.type == SerialWireDebugTransfer.typeWriteMemory:
+                break
+            elif transfer.type == SerialWireDebugTransfer.typeReadData:
+                transfer_type = results.get_varuint()
+                if transfer_type != transfer.type:
+                    raise IOError('transfer mismatch')
+                address = results.get_uint32()
+                if address != transfer.address:
+                    raise IOError('transfer mismatch')
+                transfer.data = results.get_uint32()
+            elif transfer.type == SerialWireDebugTransfer.typeWriteData:
                 break
             else:
                 break
@@ -668,6 +733,15 @@ class SerialWireInstrument(Instrument):
         transfer = SerialWireDebugTransfer.write_port(port, register, data)
         self.transfer([transfer])
 
+    def select_and_read_access_port(self, register):
+        transfer = SerialWireDebugTransfer.select_and_read_access_port(register)
+        self.transfer([transfer])
+        return transfer.data
+
+    def select_and_write_access_port(self, register, data):
+        transfer = SerialWireDebugTransfer.select_and_write_access_port(register, data)
+        self.transfer([transfer])
+
     def read_memory_uint32(self, address):
         transfer = SerialWireDebugTransfer.read_memory(address)
         self.transfer([transfer])
@@ -675,6 +749,15 @@ class SerialWireInstrument(Instrument):
 
     def write_memory_uint32(self, address, data):
         transfer = SerialWireDebugTransfer.write_memory(address, data)
+        self.transfer([transfer])
+
+    def read_data(self, address, length):
+        transfer = SerialWireDebugTransfer.read_data(address, length)
+        self.transfer([transfer])
+        return transfer.data
+
+    def write_data(self, address, data):
+        transfer = SerialWireDebugTransfer.write_data(address, data)
         self.transfer([transfer])
 
     def read_register(self, register):
@@ -833,7 +916,6 @@ class InstrumentManager:
         api = binary.get_varuint()
         count = binary.get_varuint()
         content = binary.get_bytes(count)
-#        print(f"done identifier={identifier}, api={api}, count={count}, content={content}")
         return identifier, type, content
 
     def call(self, identifier, api, content=None):

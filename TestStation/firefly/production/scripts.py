@@ -295,8 +295,7 @@ class SerialWireDebug:
     dp_stat_stickyorun = bit(1)
     dp_stat_orundetect = bit(0)
 
-    dp_select_apsel_apb_ap = 0
-    dp_select_apsel_nrf52_ctrl_ap = 1
+    dp_select_apsel_ahb = 0
 
     # Advanced High - Performance Bus Access Port (AHB_AP or just AP)
     ahb_ap_id_v1 = 0x24770011
@@ -317,19 +316,19 @@ class SerialWireDebug:
     def idr_code(id):
         return (id >> 17) & 0x7ff
 
-    ap_csw_dbgswenable = bit(31)
-    ap_csw_master_debug = bit(29)
-    ap_csw_hprot = bit(25)
-    ap_csw_spiden = bit(23)
-    ap_csw_trin_prog = bit(7)
-    ap_csw_device_en = bit(6)
-    ap_csw_increment_packed = bit(5)
-    ap_csw_increment_single = bit(4)
-    ap_csw_32bit = bit(1)
-    ap_csw_16bit = bit(0)
+    ap_csw_dbgswenable    = 0x80000000
+    ap_csw_prot           = 0x23000000
+    ap_csw_spiden         = 0x00800000
+    ap_csw_tr_in_prog     = 0x00000080
+    ap_csw_dbg_status     = 0x00000040
+    ap_csw_addrinc_single = 0x00000010
+    ap_csw_addrinc_off    = 0x00000000
+    ap_csw_size_32bit     = 0x00000002
+    ap_csw_size_16bit     = 0x00000001
+    ap_csw_size_8bit      = 0x00000000
 
     memory_cpuid = 0xe000ed00
-    memory_dfsr = 0xe000ed30
+    memory_dfsr  = 0xe000ed30
     memory_dhcsr = 0xe000edf0
     memory_dcrsr = 0xe000edf4
     memory_dcrdr = 0xe000edf8
@@ -361,6 +360,23 @@ class SerialWireDebug:
         self.serial_wire_instrument.set(SerialWireInstrument.outputReset, False)
         time.sleep(0.1)
         return self.serial_wire_instrument.connect()
+
+    def is_halted(self):
+        dhcsr = self.serial_wire_instrument.read_memory_uint32(SerialWireDebug.memory_dhcsr)
+        return (dhcsr & SerialWireDebug.dhcsr_stat_halt) != 0
+
+    def write_dhcsr(self, value):
+        value |= SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen
+        self.serial_wire_instrument.write_memory_uint32(SerialWireDebug.memory_dhcsr, value)
+
+    def halt(self):
+        self.write_dhcsr(SerialWireDebug.dhcsr_ctrl_halt)
+
+    def step(self):
+        self.write_dhcsr(SerialWireDebug.dhcsr_ctrl_step)
+
+    def run(self):
+        self.write_dhcsr(0)
 
 
 class CortexM:
@@ -504,19 +520,19 @@ class Flasher:
         self.setup_rpc()
 
     def erase_all(self):
-        result = self.rpc.run('erase_all')
+        result = self.rpc.run('fd_flasher_erase_all')
         if result != 0:
-            raise IOError(f"Flasher erase_all failed ({result})")
+            raise IOError(f"flasher erase_all failed ({result})")
 
     def erase(self, address, size):
-        result = self.rpc.run('erase_page', address, size)
+        result = self.rpc.run('fd_flasher_erase_page', address, size)
         if result != 0:
-            raise IOError(f"Flasher erase_page(0x{address:08x}, 0x{size:08x}) failed ({result})")
+            raise IOError(f"flasher erase_page(0x{address:08x}, 0x{size:08x}) failed ({result})")
 
     def write(self, address, data, size):
-        result = self.rpc.run('write', address, data, size)
+        result = self.rpc.run('fd_flasher_write', address, data, size)
         if result != 0:
-            raise IOError(f"Flasher write(0x{address:08x}), 0x{data:08x}, 0x{size:08x}) failed ({result})")
+            raise IOError(f"flasher write(0x{address:08x}), 0x{data:08x}, 0x{size:08x}) failed ({result})")
 
     def transfer_to_ram_via_storage(self, address, offset, count):
         storage_identifier = self.entry.storage_instrument.identifier
@@ -547,12 +563,14 @@ class Flasher:
 
 class NRF53:
 
+    mcu_app = "nrf53_app"
+
     dpid = 0x6BA02477
 
-    access_port_id_application_ahb_ap = 0
-    access_port_id_network_ahb_ap = 1
-    access_port_id_application_ctrl_ap = 2
-    access_port_id_network_ctrl_ap = 3
+    dp_select_apsel_ahb_app = 0
+    dp_select_apsel_ahb_net = 1
+    dp_select_apsel_ctrl_app = 2
+    dp_select_apsel_ctrl_net = 3
 
     ctrl_ap_reset = 0x000
     ctrl_ap_eraseall = 0x004
@@ -567,15 +585,36 @@ class NRF53:
     ctrl_ap_mailbox_rxstatus = 0x02c
     ctrl_ap_idr = 0x0fc
 
+    ap_idr_ahb = 0x84770001
+    ap_idr_ctrl = 0x12880000
+
     def __init__(self, serial_wire_instrument):
         self.serial_wire_instrument = serial_wire_instrument
 
+    def select_ahb(self, ahb):
+        self.serial_wire_instrument.set_access_port_id(ahb)
+        idr = self.serial_wire_instrument.select_and_read_access_port(SerialWireDebug.ap_idr)
+        if idr != NRF53.ap_idr_ahb:
+            raise IOError("unexpected ahb idr value")
+
+    def select_ctrl(self, ctrl):
+        self.serial_wire_instrument.set_access_port_id(ctrl)
+        idr = self.serial_wire_instrument.select_and_read_access_port(SerialWireDebug.ap_idr)
+        if idr != NRF53.ap_idr_ctrl:
+            raise IOError("unexpected ctrl idr value")
+
     def read_erase_all_status(self):
-        return self.serial_wire_instrument.read_port(SerialWireDebugTransfer.portAccess, NRF53.ctrl_ap_eraseallstatus)
+        return self.serial_wire_instrument.select_and_read_access_port(NRF53.ctrl_ap_eraseallstatus)
 
     def erase_all(self):
-        self.serial_wire_instrument.write_port(SerialWireDebugTransfer.portAccess, NRF53.ctrl_ap_eraseall, 1)
+        self.serial_wire_instrument.select_and_write_access_port(NRF53.ctrl_ap_eraseall, 0x00000001)
         retry(lambda: self.read_erase_all_status() == 0, 1.0, "nRF5340 ctrl ap erase all timeout")
+
+    def recover(self):
+        self.select_ctrl(NRF53.dp_select_apsel_ctrl_app)
+        self.erase_all()
+        self.select_ctrl(NRF53.dp_select_apsel_ctrl_net)
+        self.erase_all()
 
 
 class ProgramScript(FixtureScript):
@@ -590,6 +629,7 @@ class ProgramScript(FixtureScript):
     def setup(self):
         super().setup()
 
+        '''
         relay_vusb_to_dut = self.fixture.relay_vusb_to_dut
         relay_vusb_to_dut.set(True)
 
@@ -613,27 +653,6 @@ class ProgramScript(FixtureScript):
         ra0 = (dpid >> 0) & 0x1
         self.log(f"revision {revision}, partno {partno}, min {min}, version {version}, designer {designer:03x}")
 
-        # power up debug interface
-        # SWDWriteDP 1 0x50000000
-
-        # read ap id registers
-        # SWDWriteDP 2 0x020000F0
-        # SWDReadAP 3
-        # idr = SWDReadAP 3
-        # AHB-AP 0x84770001
-        # CTRL-AP 0x12880000
-
-        # erase all
-        # SWDWriteDP 2 0x02000000 (0x03000000 for network core)
-        # SWDWriteAP 1 1
-        #
-        # SWDReadAP 2
-        # status = SWDReadAP 2
-        # when status == 0x00000001 busy, status == 0x00000000 done
-
-        # should be able to program part now (until next reset)
-
-        '''
         r0 = serial_wire_instrument.read_register(0)
         self.log(f"r0: 0x{r0:08x}")
 
@@ -670,12 +689,10 @@ class ProgramScript(FixtureScript):
     def main(self):
         super().main()
 
-        '''
         serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
         flasher = Flasher(serial_wire_instrument, self.mcu, self.name, self.fixture.file_system)
         flasher.setup()
         self.log(str(flasher.rpc.firmware))
         flasher.program()
-        '''
 
         self.status = Script.status_pass
