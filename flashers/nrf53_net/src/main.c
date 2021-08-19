@@ -1,6 +1,6 @@
 #include "fd_flasher.h"
 
-#include <nrf5340_application.h>
+#include <nrf5340_network.h>
 
 #define page_size 0x1000
 
