@@ -2,6 +2,12 @@
 
 #include <nrf5340_application.h>
 
+__attribute__((used))
+void fd_flasher_halt(void) {
+    __asm("BKPT   #0");
+    while (1);
+}
+
 #define page_size 0x1000
 
 __attribute__((used))
@@ -64,5 +70,15 @@ uint32_t fd_flasher_write(uint32_t address, uint8_t *data, uint32_t size) {
 }
 
 int main(void) {
-    return 0;
+    const void *used[] = {
+        fd_flasher_halt,
+        fd_flasher_erase_all,
+        fd_flasher_erase,
+        fd_flasher_write
+    };
+    int total = 0;
+    for (int i = 0; i < sizeof(used) / sizeof(used[0]); ++i) {
+        total += (int)used[i];
+    }
+    return total;
 }

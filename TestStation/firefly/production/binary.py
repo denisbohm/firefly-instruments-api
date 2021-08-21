@@ -197,7 +197,7 @@ class FDBinary:
         while remainder != 0:
             if remainder <= 0x7f:
                 break
-            byte = remainder | 0x80
+            byte = (remainder & 0x7f) | 0x80
             self.put_uint8(byte)
             remainder = remainder >> 7
         byte = remainder

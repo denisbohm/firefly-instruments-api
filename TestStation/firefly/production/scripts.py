@@ -5,6 +5,7 @@ from .instruments import SerialWireInstrument
 from .instruments import SerialWireDebugTransfer
 from .storage import FileSystem
 from elftools.elf.elffile import ELFFile
+from elftools.elf.constants import SH_FLAGS
 
 
 class Fixture:
@@ -191,9 +192,11 @@ class Firmware:
                 if die.is_null():
                     continue
                 if die.tag == 'DW_TAG_subprogram':
-                    name = die.attributes['DW_AT_name'].value.decode('latin-1')
-                    address = die.attributes['DW_AT_low_pc'].value
-                    self.functions[name] = address
+                    if 'DW_AT_name' in die.attributes:
+                        name = die.attributes['DW_AT_name'].value.decode('latin-1')
+                        if 'DW_AT_low_pc' in die.attributes:
+                            address = die.attributes['DW_AT_low_pc'].value
+                            self.functions[name] = address
 
     @staticmethod
     def get_section_range(elf, name):
@@ -203,8 +206,20 @@ class Firmware:
         return FirmwareRange(address, size)
 
     def load_sections(self, elf):
-        # merge .vectors, .init, .text
-        data_section_names = ['.vectors', '.init', '.text']
+        data_section_names = []
+        for section in elf.iter_sections():
+            header = section.header
+            if (header.sh_flags & SH_FLAGS.SHF_ALLOC) == 0:
+                continue
+            if header.sh_type == 'SHT_PROGBITS':
+                print(f"copy {section.name} address: 0x{header.sh_addr:08x} size: 0x{header.sh_size:08x}")
+                data_section_names.append(section.name)
+            elif header.sh_type == 'SHT_NOBITS':
+                print(f"zero {section.name} address: 0x{header.sh_addr:08x} size: 0x{header.sh_size:08x}")
+            else:
+                continue
+
+        # merge SHT_PROGBITS sections
         firmware_address = None
         firmware_end = None
         for name in data_section_names:
@@ -229,8 +244,8 @@ class Firmware:
             firmware_data[start:end] = data
         self.address = firmware_address
         self.data = firmware_data
-        self.heap = self.get_section_range(elf, '.heap')
-        self.stack = self.get_section_range(elf, '.stack')
+        self.heap = self.get_section_range(elf, '.bss.block.heap')
+        self.stack = self.get_section_range(elf, '.bss.block.stack')
 
     def load_elf(self, name):
         with open(name, 'rb') as file:
@@ -459,16 +474,39 @@ class SerialWireDebugRemoteProcedureCall:
         self.serial_wire_instrument.write_memory(self.firmware.address, self.firmware.data)
 
     def read_dhcsr(self):
-        return self.serial_wire_instrument.read_memory_uint32(SerialWireDebug.memory_dhcsr)
+        dhcsr = self.serial_wire_instrument.read_memory_uint32(SerialWireDebug.memory_dhcsr)
+        print(f"dhcsr 0x{dhcsr:08x}")
+        return dhcsr
+
+    def get_dump(self):
+        dhcsr = self.serial_wire_instrument.read_memory_uint32(SerialWireDebug.memory_dhcsr)
+        detail = f"\n @dhcsr = 0x{dhcsr:08x}"
+        dhcsr_halt = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen | SerialWireDebug.dhcsr_ctrl_halt
+        self.serial_wire_instrument.write_memory_uint32(SerialWireDebug.memory_dhcsr, dhcsr_halt)
+        transfers = [
+            SerialWireDebugTransfer.read_register(CortexM.register_r0),
+            SerialWireDebugTransfer.read_register(CortexM.register_r1),
+            SerialWireDebugTransfer.read_register(CortexM.register_r2),
+            SerialWireDebugTransfer.read_register(CortexM.register_r3),
+            SerialWireDebugTransfer.read_register(CortexM.register_sp),
+            SerialWireDebugTransfer.read_register(CortexM.register_lr),
+            SerialWireDebugTransfer.read_register(CortexM.register_pc),
+        ]
+        self.serial_wire_instrument.transfer(transfers)
+        for transfer in transfers:
+            if transfer.type == SerialWireDebugTransfer.typeReadRegister:
+                detail += f"\n r{transfer.register} = 0x{transfer.data:08x}"
+            elif transfer.type == SerialWireDebugTransfer.typeReadMemory:
+                detail += f"\n @0x{transfer.address:08x} = 0x{transfer.data:08x}"
+        return detail
 
     def run(self, name, r0=0, r1=0, r2=0, r3=0, timeout=1.0):
         dhcsr_halt = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen | SerialWireDebug.dhcsr_ctrl_halt
         dhcsr_run = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen
-        function_location = self.firmware.functions[name]
-        pc = function_location | 0x00000001
+        pc = self.firmware.functions[name]
         stack = self.firmware.stack
         sp = stack.address + stack.size
-        break_location = self.firmware.functions['halt']
+        break_location = self.firmware.functions['fd_flasher_halt']
         lr = break_location | 0x00000001
         transfers = [
             SerialWireDebugTransfer.write_memory(SerialWireDebug.memory_dhcsr, dhcsr_halt),
@@ -477,14 +515,21 @@ class SerialWireDebugRemoteProcedureCall:
             SerialWireDebugTransfer.write_register(CortexM.register_r2, r2),
             SerialWireDebugTransfer.write_register(CortexM.register_r3, r3),
             SerialWireDebugTransfer.write_register(CortexM.register_sp, sp),
-            SerialWireDebugTransfer.write_register(CortexM.register_pc, pc),
             SerialWireDebugTransfer.write_register(CortexM.register_lr, lr),
+            SerialWireDebugTransfer.write_register(CortexM.register_pc, pc),
+        ]
+        self.serial_wire_instrument.transfer(transfers)
+        print("dump:" + self.get_dump())
+        transfers = [
             SerialWireDebugTransfer.write_memory(SerialWireDebug.memory_dhcsr, dhcsr_run),
         ]
         self.serial_wire_instrument.transfer(transfers)
-        retry(
-            lambda: (self.read_dhcsr() & SerialWireDebug.dhcsr_stat_halt) != 0,
-            timeout, "SerialWireDebug RPC timeout")
+        try:
+            retry(
+                lambda: (self.read_dhcsr() & SerialWireDebug.dhcsr_stat_halt) != 0,
+                timeout, "SerialWireDebug RPC timeout")
+        except Exception as exception:
+            raise IOError(str(exception) + self.get_dump())
         return self.serial_wire_instrument.read_register(CortexM.register_r0)
 
 
@@ -516,8 +561,8 @@ class Flasher:
         self.rpc.setup()
 
     def setup(self):
-        self.setup_firmware()
         self.setup_rpc()
+        self.setup_firmware()
 
     def erase_all(self):
         result = self.rpc.run('fd_flasher_erase_all')

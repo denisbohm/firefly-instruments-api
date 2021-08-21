@@ -595,17 +595,29 @@ class SerialWireInstrument(Instrument):
         arguments.put_varuint(byte_count - 1)
         self.invoke(SerialWireInstrument.apiTypeShiftInData, arguments)
 
-    def write_memory(self, address, data):
+    def write_memory_raw(self, address, data):
         arguments = FDBinary()
         arguments.put_varuint(address)
-        arguments.put_varuint(data.count)
+        arguments.put_varuint(len(data))
         arguments.put_bytes(data)
         results = self.call(SerialWireInstrument.apiTypeWriteMemory, arguments)
         code = results.get_varuint()
         if code != 0:
             raise IOError(f"memory transfer issue: code={code}")
 
-    def read_memory(self, address, length):
+    def write_memory(self, address, data):
+        max_count = 32
+        subaddress = address
+        while True:
+            offset = subaddress - address
+            count = min(len(data) - offset, max_count)
+            if count == 0:
+                break
+            subdata = data[offset:offset + count]
+            self.write_memory_raw(subaddress, subdata)
+            subaddress += count
+
+    def read_memory_raw(self, address, length):
         arguments = FDBinary()
         arguments.put_varuint(address)
         arguments.put_varuint(length)
@@ -617,6 +629,20 @@ class SerialWireInstrument(Instrument):
         if len(result) != length:
             raise IOError(f"memory transfer issue: code={code}")
         return result
+
+    def read_memory(self, address, length):
+        max_count = 32
+        data = []
+        subaddress = address
+        while True:
+            offset = subaddress - address
+            count = min(length - offset, max_count)
+            if count == 0:
+                break
+            subdata = self.read_memory_raw(subaddress, count)
+            data.extend(subdata)
+            subaddress += count
+        return data
 
     def transfer(self, transfers):
         response_count = 0
@@ -757,7 +783,7 @@ class SerialWireInstrument(Instrument):
         return transfer.data
 
     def write_data(self, address, data):
-        transfer = SerialWireDebugTransfer.write_data(address, data)
+        transfer = SerialWireDebugTransfer.write_memory(address, data)
         self.transfer([transfer])
 
     def read_register(self, register):
@@ -904,6 +930,8 @@ class InstrumentManager:
             sublength = 63 if remaining >= 63 else remaining
             subdata = [sequence_number] + data[offset:offset + sublength] + [0] * (63 - sublength)
             self.device.Write(subdata, report_id=0x81)
+            sequence_number += 1
+            offset += sublength
             remaining -= sublength
 
     def read(self):
@@ -934,7 +962,7 @@ class InstrumentManager:
         for _ in range(count):
             category = results.get_string()
             identifier = results.get_varuint()
-            print(f"category={category}, identifier={identifier}")
+#            print(f"category={category}, identifier={identifier}")
             if category not in self.instrumentClassByCategory:
                 continue
             instrument_class = self.instrumentClassByCategory[category]

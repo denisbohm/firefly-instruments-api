@@ -3,6 +3,9 @@ import tkinter.scrolledtext as scrolledtext
 from tkmacosx import Button
 import threading
 import ctypes
+import os
+import sys
+import traceback
 from .scripts import Fixture
 from .scripts import Script
 
@@ -42,7 +45,11 @@ class Runner(threading.Thread):
             self.script.status = Script.status_cancelled
         except Exception as exception:
             self.script.status = Script.status_cancelled
-            self.presenter.log(f"Unexpected Error: {repr(exception)}", "fail")
+            exception_type, exception_value, exception_traceback = sys.exc_info()
+            detail = f"{exception_type.__name__}: {exception_value}\nStack Trace:"
+            for frame in traceback.extract_tb(exception_traceback):
+                detail += f"\n at {frame.name} in {os.path.basename(frame.filename)} line {frame.lineno}: {frame.line}"
+            self.presenter.log(detail, "fail")
         self.presenter.completed()
 
 

@@ -448,7 +448,7 @@ class MacOsHidDevice(HidDevice):
         result = None
         while result is None:
             try:
-                result = self.read_queue.get(timeout=60)
+                result = self.read_queue.get(timeout=5)
             except queue.Empty:
                 continue
         hex = ''.join(' ' + format(x, '02x') for x in result)
