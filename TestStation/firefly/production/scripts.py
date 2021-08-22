@@ -1,4 +1,5 @@
 import time
+from collections import namedtuple
 from .bundle import Bundle
 from .instruments import InstrumentManager
 from .instruments import SerialWireInstrument
@@ -349,18 +350,45 @@ class SerialWireDebug:
     memory_dcrdr = 0xe000edf8
     memory_demcr = 0xe000edfc
 
+    Field = namedtuple('Field', ['mask', 'name'])
+
     dhcsr_dbgkey = 0xa05f0000
+    dhcsr_stat_restart_st = bit(26)
     dhcsr_stat_reset_st = bit(25)
     dhcsr_stat_retire_st = bit(24)
+    dhcsr_stat_fpd = bit(23)
+    dhcsr_stat_suide = bit(22)
+    dhcsr_stat_nsuide = bit(21)
+    dhcsr_stat_sde = bit(20)
     dhcsr_stat_lockup = bit(19)
     dhcsr_stat_sleep = bit(18)
     dhcsr_stat_halt = bit(17)
     dhcsr_stat_regrdy = bit(16)
+    dhcsr_ctrl_pmov = bit(6)
     dhcsr_ctrl_snapstall = bit(5)
     dhcsr_ctrl_maskints = bit(3)
     dhcsr_ctrl_step = bit(2)
     dhcsr_ctrl_halt = bit(1)
     dhcsr_ctrl_debugen = bit(0)
+    dhcsr_fields = [
+        Field(dhcsr_stat_restart_st, "s_restart_st"),
+        Field(dhcsr_stat_reset_st, "s_reset_st"),
+        Field(dhcsr_stat_retire_st, "s_retire_st"),
+        Field(dhcsr_stat_fpd, "s_fpd"),
+        Field(dhcsr_stat_suide, "s_suide"),
+        Field(dhcsr_stat_nsuide, "s_nsuide"),
+        Field(dhcsr_stat_sde, "s_sde"),
+        Field(dhcsr_stat_lockup, "s_lockup"),
+        Field(dhcsr_stat_sleep, "s_sleep"),
+        Field(dhcsr_stat_halt, "s_halt"),
+        Field(dhcsr_stat_regrdy, "s_regrdy"),
+        Field(dhcsr_ctrl_pmov, "c_pmov"),
+        Field(dhcsr_ctrl_snapstall, "c_snapstall"),
+        Field(dhcsr_ctrl_maskints, "c_maskints"),
+        Field(dhcsr_ctrl_step, "c_step"),
+        Field(dhcsr_ctrl_halt, "c_halt"),
+        Field(dhcsr_ctrl_debugen, "c_debugen"),
+    ]
 
     def __init__(self, serial_wire_instrument, access_port_id):
         self.serial_wire_instrument = serial_wire_instrument
@@ -481,6 +509,9 @@ class SerialWireDebugRemoteProcedureCall:
     def get_dump(self):
         dhcsr = self.serial_wire_instrument.read_memory_uint32(SerialWireDebug.memory_dhcsr)
         detail = f"\n @dhcsr = 0x{dhcsr:08x}"
+        for field in SerialWireDebug.dhcsr_fields:
+            if (dhcsr & field.mask) != 0:
+                detail += " " + field.name
         dhcsr_halt = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen | SerialWireDebug.dhcsr_ctrl_halt
         self.serial_wire_instrument.write_memory_uint32(SerialWireDebug.memory_dhcsr, dhcsr_halt)
         transfers = [
@@ -604,6 +635,13 @@ class Flasher:
             self.transfer_to_ram(heap, offset, count)
             self.write(subaddress, heap, count)
             subaddress += count
+
+    def verify(self):
+        address = self.firmware.address
+        count = len(self.firmware.data)
+        data = self.rpc.serial_wire_instrument.read_memory(address, count)
+        if data != self.firmware.data:
+            raise IOError("firmware verification failed")
 
 
 class NRF53:

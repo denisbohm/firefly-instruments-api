@@ -12,12 +12,12 @@ void fd_flasher_halt(void) {
 
 __attribute__((used))
 uint32_t fd_flasher_erase_all(void) {
-    while (!NRF_NVMC_NS->READY) {
+    while (!NRF_NVMC_S->READY) {
     }
 
-    NRF_NVMC_NS->CONFIG = 2; // EEN
-    NRF_NVMC_NS->ERASEALL = 1;
-    NRF_NVMC_NS->CONFIG = 0;
+    NRF_NVMC_S->CONFIG = 2; // EEN
+    NRF_NVMC_S->ERASEALL = 1;
+    NRF_NVMC_S->CONFIG = 0;
 
     return fd_flasher_status_success;
 }
@@ -31,17 +31,17 @@ uint32_t fd_flasher_erase(uint32_t address, uint32_t size) {
         return fd_flasher_status_invalid_parameter;
     }
 
-    NRF_NVMC_NS->CONFIG = 4; // PEEN
+    NRF_NVMC_S->CONFIG = 4; // PEEN
     uint32_t *erase_address = (uint32_t *)address;
     uint32_t erase_size = size;
     while (erase_size != 0) {
-        while (!NRF_NVMC_NS->READY) {
+        while (!NRF_NVMC_S->READY) {
         }
         *erase_address = 0xffffffff;
         erase_address += page_size;
         erase_size -= page_size;
     }
-    NRF_NVMC_NS->CONFIG = 0;
+    NRF_NVMC_S->CONFIG = 0;
 
     return fd_flasher_status_success;
 }
@@ -55,16 +55,16 @@ uint32_t fd_flasher_write(uint32_t address, uint8_t *data, uint32_t size) {
         return fd_flasher_status_invalid_parameter;
     }
         
-    NRF_NVMC_NS->CONFIG = 1; // WEN
+    NRF_NVMC_S->CONFIG = 1; // WEN
     uint32_t *write_address = (uint32_t *)address;
     uint32_t *write_data = (uint32_t *)data;
     uint32_t erase_size = size;
     while (erase_size-- != 0) {
-        while (!NRF_NVMC_NS->READY) {
+        while (!NRF_NVMC_S->READY) {
         }
         *write_address++ = *write_data++;
     }
-    NRF_NVMC_NS->CONFIG = 0;
+    NRF_NVMC_S->CONFIG = 0;
 
     return fd_flasher_status_success;
 }

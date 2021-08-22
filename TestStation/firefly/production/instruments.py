@@ -1,4 +1,6 @@
 from enum import Enum
+from typing import Set
+from typing import Tuple
 from .usb import MacOsHidDevice
 from .binary import FDBinary
 
@@ -132,6 +134,11 @@ class GpioInstrument(Instrument):
     apiTypeGetAuxiliaryInput = 10
     apiTypeSetAuxiliaryOutput = 11
 
+    class Capability(Enum):
+        analog_input: int = 0
+        analog_output: int = 1
+        auxiliary: int = 2
+
     class Domain(Enum):
         digital: int = 0
         analog: int = 1
@@ -155,19 +162,19 @@ class GpioInstrument(Instrument):
     def reset(self):
         self.invoke(GpioInstrument.apiTypeReset)
 
-    def get_capabilities(self):
+    def get_capabilities(self) -> Set[Capability]:
         results = self.call(GpioInstrument.apiTypeGetCapabilities)
         capabilities = set()
         capability_bits = results.get_uint32()
         if capability_bits & 0x00000001:
-            capabilities.add("analog input")
+            capabilities.add(GpioInstrument.Capability.analog_input)
         if capability_bits & 0x00000002:
-            capabilities.add("analog output")
+            capabilities.add(GpioInstrument.Capability.analog_output)
         if capability_bits & 0x00000004:
-            capabilities.add("auxiliary")
+            capabilities.add(GpioInstrument.Capability.auxiliary)
         return capabilities
 
-    def get_configuration(self):
+    def get_configuration(self) -> Tuple[Domain, Direction, Drive, Pull]:
         results = self.call(GpioInstrument.apiTypeGetConfiguration)
         domain = self.Domain(results.get_uint8())
         direction = self.Direction(results.get_uint8())
@@ -176,7 +183,7 @@ class GpioInstrument(Instrument):
         return domain, direction, drive, pull
 
     def set_configuration(
-            self, domain=Domain.digital, direction=Direction.input, drive=Drive.push_pull, pull=Pull.none
+        self, domain=Domain.digital, direction=Direction.input, drive=Drive.push_pull, pull=Pull.none
     ):
         arguments = FDBinary()
         arguments.put_uint8(domain.value)
@@ -185,27 +192,27 @@ class GpioInstrument(Instrument):
         arguments.put_uint8(pull.value)
         self.invoke(GpioInstrument.apiTypeSetConfiguration, arguments)
 
-    def get_digital_input(self):
+    def get_digital_input(self) -> bool:
         results = self.call(GpioInstrument.apiTypeGetDigitalInput)
         bit = results.get_uint8() != 0
         return bit
 
-    def set_digital_output(self, value):
+    def set_digital_output(self, value: bool):
         arguments = FDBinary()
         arguments.put_uint8(1 if value else 0)
         self.invoke(GpioInstrument.apiTypeSetDigitalOutput, arguments)
 
-    def get_analog_input(self):
+    def get_analog_input(self) -> float:
         results = self.call(GpioInstrument.apiTypeGetAnalogInput)
         value = results.get_float32()
         return value
 
-    def set_analog_output(self, value):
+    def set_analog_output(self, value: float):
         arguments = FDBinary()
         arguments.put_float32(value)
         self.invoke(GpioInstrument.apiTypeSetAnalogOutput, arguments)
 
-    def get_auxiliary_configuration(self):
+    def get_auxiliary_configuration(self) -> Tuple[Domain, Direction, Drive, Pull]:
         results = self.call(GpioInstrument.apiTypeGetAuxiliaryConfiguration)
         domain = self.Domain(results.get_uint8())
         direction = self.Direction(results.get_uint8())
@@ -214,7 +221,7 @@ class GpioInstrument(Instrument):
         return domain, direction, drive, pull
 
     def set_auxiliary_configuration(
-            self, domain=Domain.digital, direction=Direction.input, drive=Drive.push_pull, pull=Pull.none
+        self, domain=Domain.digital, direction=Direction.input, drive=Drive.push_pull, pull=Pull.none
     ):
         arguments = FDBinary()
         arguments.put_uint8(domain)
@@ -223,12 +230,12 @@ class GpioInstrument(Instrument):
         arguments.put_uint8(pull)
         self.invoke(GpioInstrument.apiTypeSetAuxiliaryConfiguration, arguments)
 
-    def get_auxiliary_input(self):
+    def get_auxiliary_input(self) -> bool:
         results = self.call(GpioInstrument.apiTypeGetAuxiliaryInput)
         bit = results.get_uint8() != 0
         return bit
 
-    def set_auxiliary_output(self, value):
+    def set_auxiliary_output(self, value: bool):
         arguments = FDBinary()
         arguments.put_uint8(1 if value else 0)
         self.invoke(GpioInstrument.apiTypeSetAuxiliaryOutput, arguments)
