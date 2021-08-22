@@ -1,0 +1,166 @@
+<!DOCTYPE CrossStudio_Project_File>
+<solution Name="flasher_nrf53" target="8" version="2">
+  <project Name="nrf53_app">
+    <configuration
+      CMSIS_CORE="Yes"
+      LIBRARY_IO_TYPE="RTT"
+      Name="Common"
+      Placement="RAM"
+      Target="nRF5340_xxAA_Application"
+      arm_architecture="v8M"
+      arm_compiler_variant="SEGGER"
+      arm_core_type="Cortex-M33"
+      arm_endian="Little"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv5-SP-D16"
+      arm_linker_heap_size="16384"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="16384"
+      arm_linker_variant="SEGGER"
+      arm_rtl_variant="SEGGER"
+      arm_simulator_memory_simulation_parameter="ROM1;0x00000000;0x00100000;ROM2;0x10000000;0x08000000;RAM1;0x20000000;0x00040000;RAM2;0x20040000;0x00040000;"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_device_name="nRF5340_xxAA_Application"
+      arm_target_interface_type="SWD"
+      arm_v8M_has_cmse="Yes"
+      arm_v8M_has_dsp="Yes"
+      c_preprocessor_definitions="ARM_MATH_CM33;NRF5340_XXAA;NRF_APPLICATION;__nRF_FAMILY;RAM_PLACEMENT=1"
+      c_user_include_directories="$(ProjectDir)/nRF/Device/Include;$(ProjectDir)/nRF/Device/Include"
+      debug_register_definition_file="$(ProjectDir)/nrf5340_application.svd"
+      debug_stack_pointer_start="__stack_end__"
+      debug_start_from_entry_point_symbol="No"
+      debug_target_connection="J-Link"
+      gcc_entry_point="Reset_Handler"
+      link_linker_script_file="$(ProjectDir)/ses_nrf5340_xxaa_application.icf"
+      linker_memory_map_file="$(ProjectDir)/nRF5340_xxAA_Application_MemoryMap.xml"
+      linker_section_placement_file="$(ProjectDir)/ram_placement.xml"
+      macros="NRFHeaderFile=$(PackagesDir)/nRF/Device/Include/nrf.h;DeviceHeaderFile=$(PackagesDir)/nRF/Device/Include/nrf5340_application.h;DeviceSystemFile=$(PackagesDir)/nRF/Device/Source/system_nrf5340_application.c;DeviceVectorsFile=$(PackagesDir)/nRF/Device/Startup/ses_startup_nrf5340_application.s;DeviceLinkerScript=$(PackagesDir)/nRF/Device/Linker/ses_nrf5340_xxaa_application.icf;DeviceMemoryMap=$(PackagesDir)/nRF/Device/MemoryMap/nRF5340_xxAA_Application_MemoryMap.xml;DeviceLibraryIdentifier=M33lf;DeviceFamily=nRF;Target=nRF5340_xxAA_Application;Placement=RAM"
+      package_dependencies="CMSIS-CORE_V5"
+      project_directory=""
+      project_type="Executable"
+      target_reset_script="Reset();"
+      target_script_file="$(ProjectDir)/nRF_Target.js"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <folder Name="Device Files">
+      <file file_name="nRF/Device/Include/nrf.h" />
+      <file file_name="nRF/Device/Include/nrf5340_application.h" />
+      <file file_name="nRF/Device/Source/system_nrf5340_application.c">
+        <configuration
+          Name="Common"
+          default_code_section=".init"
+          default_const_section=".init_rodata" />
+        <configuration Name="Debug" build_exclude_from_build="No" />
+      </file>
+    </folder>
+    <folder Name="Script Files">
+      <file file_name="nRF/Scripts/nRF_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+      <file file_name="nRF/Device/Linker/ses_nrf5340_xxaa_application.icf">
+        <configuration Name="Common" file_type="Linker Script" />
+      </file>
+      <file file_name="nRF/Device/MemoryMap/nRF5340_xxAA_Application_MemoryMap.xml">
+        <configuration Name="Common" file_type="Memory Map" />
+      </file>
+    </folder>
+    <folder Name="System Files">
+      <file file_name="SEGGER_THUMB_Startup.s" />
+      <file file_name="nRF/Device/Startup/ses_startup_nrf_common.s" />
+      <file file_name="nRF/Device/Startup/ses_startup_nrf5340_application.s">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+    </folder>
+    <folder Name="Source Files">
+      <file file_name="src/nrf53_app.c" />
+    </folder>
+    <configuration Name="Debug" c_user_include_directories="src;../include" />
+  </project>
+  <configuration
+    Name="Debug"
+    c_preprocessor_definitions="DEBUG"
+    gcc_debugging_level="Level 3"
+    gcc_optimization_level="None" />
+  <configuration
+    Name="Release"
+    c_preprocessor_definitions="NDEBUG"
+    gcc_debugging_level="Level 2"
+    gcc_omit_frame_pointer="Yes"
+    gcc_optimization_level="Level 2 balanced" />
+  <project Name="nrf53_app_test">
+    <configuration
+      CMSIS_CORE="Yes"
+      LIBRARY_IO_TYPE="RTT"
+      Name="Common"
+      Placement="Flash"
+      Target="nRF5340_xxAA_Application"
+      arm_architecture="v8M"
+      arm_compiler_variant="SEGGER"
+      arm_core_type="Cortex-M33"
+      arm_endian="Little"
+      arm_fp_abi="Hard"
+      arm_fpu_type="FPv5-SP-D16"
+      arm_linker_heap_size="16384"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="16384"
+      arm_linker_variant="SEGGER"
+      arm_rtl_variant="SEGGER"
+      arm_simulator_memory_simulation_parameter="ROM1;0x00000000;0x00100000;ROM2;0x10000000;0x08000000;RAM1;0x20000000;0x00040000;RAM2;0x20040000;0x00040000;"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_device_name="nRF5340_xxAA_Application"
+      arm_target_interface_type="SWD"
+      arm_v8M_has_cmse="Yes"
+      arm_v8M_has_dsp="Yes"
+      c_preprocessor_definitions="ARM_MATH_CM33;NRF5340_XXAA;NRF_APPLICATION;__nRF_FAMILY;FLASH_PLACEMENT=1"
+      c_user_include_directories="$(ProjectDir)/nRF/Device/Include;$(ProjectDir)/nRF/Device/Include"
+      debug_register_definition_file="$(ProjectDir)/nrf5340_application.svd"
+      debug_stack_pointer_start="__stack_end__"
+      debug_start_from_entry_point_symbol="No"
+      debug_target_connection="J-Link"
+      gcc_entry_point="Reset_Handler"
+      link_linker_script_file="$(ProjectDir)/ses_nrf5340_xxaa_application.icf"
+      linker_memory_map_file="$(ProjectDir)/nRF5340_xxAA_Application_MemoryMap.xml"
+      linker_section_placement_file="$(ProjectDir)/flash_placement.xml"
+      macros="NRFHeaderFile=$(PackagesDir)/nRF/Device/Include/nrf.h;DeviceHeaderFile=$(PackagesDir)/nRF/Device/Include/nrf5340_application.h;DeviceSystemFile=$(PackagesDir)/nRF/Device/Source/system_nrf5340_application.c;DeviceVectorsFile=$(PackagesDir)/nRF/Device/Startup/ses_startup_nrf5340_application.s;DeviceLinkerScript=$(PackagesDir)/nRF/Device/Linker/ses_nrf5340_xxaa_application.icf;DeviceMemoryMap=$(PackagesDir)/nRF/Device/MemoryMap/nRF5340_xxAA_Application_MemoryMap.xml;DeviceLibraryIdentifier=M33lf;DeviceFamily=nRF;Target=nRF5340_xxAA_Application;Placement=Flash"
+      package_dependencies="CMSIS-CORE_V5"
+      project_directory=""
+      project_type="Executable"
+      target_reset_script="Reset();"
+      target_script_file="$(ProjectDir)/nRF_Target.js"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <folder Name="Device Files">
+      <file file_name="nRF/Device/Include/nrf.h" />
+      <file file_name="nRF/Device/Include/nrf5340_application.h" />
+      <file file_name="nRF/Device/Source/system_nrf5340_application.c">
+        <configuration
+          Name="Common"
+          default_code_section=".init"
+          default_const_section=".init_rodata" />
+      </file>
+    </folder>
+    <folder Name="Script Files">
+      <file file_name="nRF/Scripts/nRF_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+      <file file_name="nRF/Device/Linker/ses_nrf5340_xxaa_application.icf">
+        <configuration Name="Common" file_type="Linker Script" />
+      </file>
+      <file file_name="nRF/Device/MemoryMap/nRF5340_xxAA_Application_MemoryMap.xml">
+        <configuration Name="Common" file_type="Memory Map" />
+      </file>
+    </folder>
+    <folder Name="Source Files">
+      <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
+      <file file_name="src/nrf53_app_test.c" />
+    </folder>
+    <folder Name="System Files">
+      <file file_name="SEGGER_THUMB_Startup.s" />
+      <file file_name="nRF/Device/Startup/ses_startup_nrf_common.s" />
+      <file file_name="nRF/Device/Startup/ses_startup_nrf5340_application.s">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+    </folder>
+    <configuration
+      Name="Debug"
+      link_linker_script_file="$(ProjectDir)/nRF/Device/Linker/ses_nrf5340_xxaa_application.icf" />
+  </project>
+</solution>
