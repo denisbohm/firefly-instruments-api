@@ -56,12 +56,10 @@
       <file file_name="nRF/Scripts/nRF_Target.js">
         <configuration Name="Common" file_type="Reset Script" />
       </file>
-      <file file_name="nRF/Device/Linker/ses_nrf5340_xxaa_application.icf">
-        <configuration Name="Common" file_type="Linker Script" />
-      </file>
       <file file_name="nRF/Device/MemoryMap/nRF5340_xxAA_Application_MemoryMap.xml">
         <configuration Name="Common" file_type="Memory Map" />
       </file>
+      <file file_name="ses_nrf5340_xxaa_application.icf" />
     </folder>
     <folder Name="System Files">
       <file file_name="SEGGER_THUMB_Startup.s" />
@@ -71,7 +69,7 @@
       </file>
     </folder>
     <folder Name="Source Files">
-      <file file_name="src/nrf53_app.c" />
+      <file file_name="src/fd_flasher_nrf53.c" />
     </folder>
     <configuration Name="Debug" c_user_include_directories="src;../include" />
   </project>
@@ -150,7 +148,7 @@
     </folder>
     <folder Name="Source Files">
       <configuration Name="Common" filter="c;cpp;cxx;cc;h;s;asm;inc" />
-      <file file_name="src/nrf53_app_test.c" />
+      <file file_name="src/fd_flasher_test_nrf53.c" />
     </folder>
     <folder Name="System Files">
       <file file_name="SEGGER_THUMB_Startup.s" />
@@ -162,5 +160,150 @@
     <configuration
       Name="Debug"
       link_linker_script_file="$(ProjectDir)/nRF/Device/Linker/ses_nrf5340_xxaa_application.icf" />
+  </project>
+  <project Name="nrf53_net">
+    <configuration
+      CMSIS_CORE="Yes"
+      LIBRARY_IO_TYPE="RTT"
+      Name="Common"
+      Placement="RAM"
+      Target="nRF5340_xxAA_Network"
+      arm_architecture="v8M"
+      arm_compiler_variant="SEGGER"
+      arm_core_type="Cortex-M33"
+      arm_endian="Little"
+      arm_fp_abi="Soft"
+      arm_fpu_type="None"
+      arm_linker_heap_size="4096"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_linker_variant="SEGGER"
+      arm_rtl_variant="SEGGER"
+      arm_simulator_memory_simulation_parameter="ROM1;0x01000000;0x00040000;ROM2;0x10000000;0x08000000;RAM1;0x21000000;0x00010000;RAM2;0x20000000;0x00040000;RAM3;0x20040000;0x00040000;"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_device_name="nRF5340_xxAA_Network"
+      arm_target_interface_type="SWD"
+      arm_v8M_has_cmse="No"
+      arm_v8M_has_dsp="No"
+      c_preprocessor_definitions="ARM_MATH_CM33;NRF5340_XXAA;NRF_NETWORK;__nRF_FAMILY;RAM_PLACEMENT=1"
+      c_user_include_directories="$(ProjectDir)/nRF/Device/Include;$(ProjectDir)/nRF/Device/Include"
+      debug_register_definition_file="$(ProjectDir)/nrf5340_network.svd"
+      debug_stack_pointer_start="__stack_end__"
+      debug_start_from_entry_point_symbol="No"
+      debug_target_connection="J-Link"
+      gcc_entry_point="Reset_Handler"
+      link_linker_script_file="$(ProjectDir)/ses_nrf5340_xxaa_network.icf"
+      linker_memory_map_file="$(ProjectDir)/nRF5340_xxAA_Network_MemoryMap.xml"
+      linker_section_placement_file="$(ProjectDir)/ram_placement.xml"
+      macros="NRFHeaderFile=$(PackagesDir)/nRF/Device/Include/nrf.h;DeviceHeaderFile=$(PackagesDir)/nRF/Device/Include/nrf5340_network.h;DeviceSystemFile=$(PackagesDir)/nRF/Device/Source/system_nrf5340_network.c;DeviceVectorsFile=$(PackagesDir)/nRF/Device/Startup/ses_startup_nrf5340_network.s;DeviceLinkerScript=$(PackagesDir)/nRF/Device/Linker/ses_nrf5340_xxaa_network.icf;DeviceMemoryMap=$(PackagesDir)/nRF/Device/MemoryMap/nRF5340_xxAA_Network_MemoryMap.xml;DeviceLibraryIdentifier=M33l;DeviceFamily=nRF;Target=nRF5340_xxAA_Network;Placement=RAM"
+      package_dependencies="CMSIS-CORE_V5"
+      project_directory=""
+      project_type="Executable"
+      target_reset_script="Reset();"
+      target_script_file="$(ProjectDir)/nRF_Target.js"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <folder Name="Device Files">
+      <file file_name="nRF/Device/Include/nrf.h" />
+      <file file_name="nRF/Device/Include/nrf5340_network.h" />
+      <file file_name="nRF/Device/Source/system_nrf5340_network.c">
+        <configuration
+          Name="Common"
+          default_code_section=".init"
+          default_const_section=".init_rodata" />
+      </file>
+    </folder>
+    <folder Name="Script Files">
+      <file file_name="nRF/Scripts/nRF_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+      <file file_name="nRF/Device/MemoryMap/nRF5340_xxAA_Network_MemoryMap.xml">
+        <configuration Name="Common" file_type="Memory Map" />
+      </file>
+      <file file_name="ses_nrf5340_xxaa_network.icf" />
+    </folder>
+    <folder Name="System Files">
+      <file file_name="SEGGER_THUMB_Startup.s" />
+      <file file_name="nRF/Device/Startup/ses_startup_nrf_common.s" />
+      <file file_name="nRF/Device/Startup/ses_startup_nrf5340_network.s">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+    </folder>
+    <folder Name="Source Files">
+      <file file_name="src/fd_flasher_nrf53.c" />
+    </folder>
+    <configuration Name="Debug" c_user_include_directories="src;../include" />
+  </project>
+  <project Name="nrf53_net_test">
+    <configuration
+      CMSIS_CORE="Yes"
+      LIBRARY_IO_TYPE="RTT"
+      Name="Common"
+      Placement="Flash"
+      Target="nRF5340_xxAA_Network"
+      arm_architecture="v8M"
+      arm_compiler_variant="SEGGER"
+      arm_core_type="Cortex-M33"
+      arm_endian="Little"
+      arm_fp_abi="Soft"
+      arm_fpu_type="None"
+      arm_linker_heap_size="4096"
+      arm_linker_process_stack_size="0"
+      arm_linker_stack_size="4096"
+      arm_linker_variant="SEGGER"
+      arm_rtl_variant="SEGGER"
+      arm_simulator_memory_simulation_parameter="ROM1;0x01000000;0x00040000;ROM2;0x10000000;0x08000000;RAM1;0x21000000;0x00010000;RAM2;0x20000000;0x00040000;RAM3;0x20040000;0x00040000;"
+      arm_target_debug_interface_type="ADIv5"
+      arm_target_device_name="nRF5340_xxAA_Network"
+      arm_target_interface_type="SWD"
+      arm_v8M_has_cmse="No"
+      arm_v8M_has_dsp="No"
+      c_preprocessor_definitions="ARM_MATH_CM33;NRF5340_XXAA;NRF_NETWORK;__nRF_FAMILY;FLASH_PLACEMENT=1"
+      c_user_include_directories="$(ProjectDir)/nRF/Device/Include;$(ProjectDir)/nRF/Device/Include"
+      debug_register_definition_file="$(ProjectDir)/nrf5340_network.svd"
+      debug_stack_pointer_start="__stack_end__"
+      debug_start_from_entry_point_symbol="No"
+      debug_target_connection="J-Link"
+      gcc_entry_point="Reset_Handler"
+      link_linker_script_file="$(ProjectDir)/ses_nrf5340_xxaa_network.icf"
+      linker_memory_map_file="$(ProjectDir)/nRF5340_xxAA_Network_MemoryMap.xml"
+      linker_section_placement_file="$(ProjectDir)/flash_placement.xml"
+      macros="NRFHeaderFile=$(PackagesDir)/nRF/Device/Include/nrf.h;DeviceHeaderFile=$(PackagesDir)/nRF/Device/Include/nrf5340_network.h;DeviceSystemFile=$(PackagesDir)/nRF/Device/Source/system_nrf5340_network.c;DeviceVectorsFile=$(PackagesDir)/nRF/Device/Startup/ses_startup_nrf5340_network.s;DeviceLinkerScript=$(PackagesDir)/nRF/Device/Linker/ses_nrf5340_xxaa_network.icf;DeviceMemoryMap=$(PackagesDir)/nRF/Device/MemoryMap/nRF5340_xxAA_Network_MemoryMap.xml;DeviceLibraryIdentifier=M33l;DeviceFamily=nRF;Target=nRF5340_xxAA_Network;Placement=Flash"
+      package_dependencies="CMSIS-CORE_V5"
+      project_directory=""
+      project_type="Executable"
+      target_reset_script="Reset();"
+      target_script_file="$(ProjectDir)/nRF_Target.js"
+      target_trace_initialize_script="EnableTrace(&quot;$(TraceInterfaceType)&quot;)" />
+    <folder Name="Device Files">
+      <file file_name="nRF/Device/Include/nrf.h" />
+      <file file_name="nRF/Device/Include/nrf5340_network.h" />
+      <file file_name="nRF/Device/Source/system_nrf5340_network.c">
+        <configuration
+          Name="Common"
+          default_code_section=".init"
+          default_const_section=".init_rodata" />
+      </file>
+    </folder>
+    <folder Name="Script Files">
+      <file file_name="nRF/Scripts/nRF_Target.js">
+        <configuration Name="Common" file_type="Reset Script" />
+      </file>
+      <file file_name="nRF/Device/Linker/ses_nrf5340_xxaa_network.icf">
+        <configuration Name="Common" file_type="Linker Script" />
+      </file>
+      <file file_name="nRF/Device/MemoryMap/nRF5340_xxAA_Network_MemoryMap.xml">
+        <configuration Name="Common" file_type="Memory Map" />
+      </file>
+    </folder>
+    <folder Name="System Files">
+      <file file_name="SEGGER_THUMB_Startup.s" />
+      <file file_name="nRF/Device/Startup/ses_startup_nrf_common.s" />
+      <file file_name="nRF/Device/Startup/ses_startup_nrf5340_network.s">
+        <configuration Name="Common" file_type="Assembly" />
+      </file>
+    </folder>
+    <folder Name="Source Files">
+      <file file_name="src/fd_flasher_test_nrf53.c" />
+    </folder>
   </project>
 </solution>
