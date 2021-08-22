@@ -213,10 +213,11 @@ class Firmware:
             if (header.sh_flags & SH_FLAGS.SHF_ALLOC) == 0:
                 continue
             if header.sh_type == 'SHT_PROGBITS':
-                print(f"copy {section.name} address: 0x{header.sh_addr:08x} size: 0x{header.sh_size:08x}")
+                # print(f"copy {section.name} address: 0x{header.sh_addr:08x} size: 0x{header.sh_size:08x}")
                 data_section_names.append(section.name)
             elif header.sh_type == 'SHT_NOBITS':
-                print(f"zero {section.name} address: 0x{header.sh_addr:08x} size: 0x{header.sh_size:08x}")
+                # print(f"zero {section.name} address: 0x{header.sh_addr:08x} size: 0x{header.sh_size:08x}")
+                continue
             else:
                 continue
 
@@ -503,7 +504,6 @@ class SerialWireDebugRemoteProcedureCall:
 
     def read_dhcsr(self):
         dhcsr = self.serial_wire_instrument.read_memory_uint32(SerialWireDebug.memory_dhcsr)
-        print(f"dhcsr 0x{dhcsr:08x}")
         return dhcsr
 
     def get_dump(self):
@@ -548,10 +548,6 @@ class SerialWireDebugRemoteProcedureCall:
             SerialWireDebugTransfer.write_register(CortexM.register_sp, sp),
             SerialWireDebugTransfer.write_register(CortexM.register_lr, lr),
             SerialWireDebugTransfer.write_register(CortexM.register_pc, pc),
-        ]
-        self.serial_wire_instrument.transfer(transfers)
-        print("dump:" + self.get_dump())
-        transfers = [
             SerialWireDebugTransfer.write_memory(SerialWireDebug.memory_dhcsr, dhcsr_run),
         ]
         self.serial_wire_instrument.transfer(transfers)
@@ -566,7 +562,8 @@ class SerialWireDebugRemoteProcedureCall:
 
 class Flasher:
 
-    def __init__(self, serial_wire_instrument, mcu, name, file_system=None):
+    def __init__(self, presenter, serial_wire_instrument, mcu, name, file_system=None):
+        self.presenter = presenter
         self.serial_wire_instrument = serial_wire_instrument
         self.mcu = mcu
         self.name = name
@@ -773,7 +770,7 @@ class ProgramScript(FixtureScript):
         super().main()
 
         serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
-        flasher = Flasher(serial_wire_instrument, self.mcu, self.name, self.fixture.file_system)
+        flasher = Flasher(self.presenter, serial_wire_instrument, self.mcu, self.name, self.fixture.file_system)
         flasher.setup()
         self.log(str(flasher.rpc.firmware))
         flasher.program()

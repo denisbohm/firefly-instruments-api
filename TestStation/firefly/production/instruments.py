@@ -1,4 +1,5 @@
 from enum import Enum
+import time
 from typing import Set
 from typing import Tuple
 from .usb import MacOsHidDevice
@@ -613,7 +614,7 @@ class SerialWireInstrument(Instrument):
             raise IOError(f"memory transfer issue: code={code}")
 
     def write_memory(self, address, data):
-        max_count = 32
+        max_count = 1024
         subaddress = address
         while True:
             offset = subaddress - address
@@ -638,7 +639,7 @@ class SerialWireInstrument(Instrument):
         return result
 
     def read_memory(self, address, length):
-        max_count = 32
+        max_count = 1024
         data = []
         subaddress = address
         while True:
