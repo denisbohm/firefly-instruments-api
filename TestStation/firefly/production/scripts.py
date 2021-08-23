@@ -396,14 +396,13 @@ class SerialWireDebug:
     def __init__(self, serial_wire_instrument):
         self.serial_wire_instrument = serial_wire_instrument
 
-    def connect(self):
+    def enable_and_reset(self):
         self.serial_wire_instrument.set_enabled(True)
         time.sleep(0.1)
         self.serial_wire_instrument.set(SerialWireInstrument.outputReset, True)
         time.sleep(0.1)
         self.serial_wire_instrument.set(SerialWireInstrument.outputReset, False)
         time.sleep(0.1)
-        return self.serial_wire_instrument.connect()
 
     def is_halted(self):
         dhcsr = self.serial_wire_instrument.read_memory_uint32(SerialWireDebug.memory_dhcsr)
