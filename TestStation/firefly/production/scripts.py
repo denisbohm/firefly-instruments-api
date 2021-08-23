@@ -1,9 +1,11 @@
 import time
+import hashlib
 from collections import namedtuple
 from .bundle import Bundle
 from .instruments import InstrumentManager
 from .instruments import SerialWireInstrument
 from .instruments import SerialWireDebugTransfer
+from .instruments import StorageInstrument
 from .storage import FileSystem
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
@@ -391,12 +393,10 @@ class SerialWireDebug:
         Field(dhcsr_ctrl_debugen, "c_debugen"),
     ]
 
-    def __init__(self, serial_wire_instrument, access_port_id):
+    def __init__(self, serial_wire_instrument):
         self.serial_wire_instrument = serial_wire_instrument
-        self.access_port_id = access_port_id
 
     def connect(self):
-        self.serial_wire_instrument.set_access_port_id(self.access_port_id)
         self.serial_wire_instrument.set_enabled(True)
         time.sleep(0.1)
         self.serial_wire_instrument.set(SerialWireInstrument.outputReset, True)
@@ -562,26 +562,44 @@ class SerialWireDebugRemoteProcedureCall:
 
 class Flasher:
 
-    def __init__(self, presenter, serial_wire_instrument, mcu, name, file_system=None):
+    def __init__(self, presenter, serial_wire_instrument, mcu, name, storage_instrument=None, filename=None):
         self.presenter = presenter
         self.serial_wire_instrument = serial_wire_instrument
         self.mcu = mcu
         self.name = name
-        self.file_system = file_system
+        self.storage_instrument = storage_instrument
+        self.filename = filename
 
         self.rpc = None
         self.firmware = None
-        self.entry = None
+        self.file_address = None
 
-        if file_system is not None:
+        if self.storage_instrument is not None:
             self.transfer_to_ram = self.transfer_to_ram_via_storage
         else:
             self.transfer_to_ram = self.transfer_to_ram_via_swd
 
     def setup_firmware(self):
         self.firmware = Firmware(f"firmware/{self.name}.elf")
-        if self.file_system is not None:
-            self.entry = self.file_system.ensure(self.name, self.firmware.data, time.time())
+        if self.storage_instrument is None:
+            return
+
+        storage_instrument = self.storage_instrument
+        for info in storage_instrument.file_list():
+            if info.name == self.filename:
+                address = storage_instrument.file_address(self.filename)
+                storage_hash = bytes(storage_instrument.hash(address, info.size))
+                firmware_hash = hashlib.sha1(bytes(self.firmware.data)).digest()
+                if storage_hash == firmware_hash:
+                    self.file_address = address
+                    return
+                else:
+                    break
+
+        storage_instrument.file_open(self.filename, StorageInstrument.FA_CREATE_ALWAYS)
+        storage_instrument.file_expand(self.filename, len(self.firmware.data))
+        self.file_address = storage_instrument.file_address(self.filename)
+        storage_instrument.file_write(self.filename, 0, self.firmware.data)
 
     def setup_rpc(self):
         flasher_firmware = Firmware(f"flasher/{self.mcu}.elf")
@@ -608,15 +626,15 @@ class Flasher:
             raise IOError(f"flasher write(0x{address:08x}), 0x{data:08x}, 0x{size:08x}) failed ({result})")
 
     def transfer_to_ram_via_storage(self, address, offset, count):
-        storage_identifier = self.entry.storage_instrument.identifier
-        storage_address = self.entry.address + offset
+        storage_identifier = self.storage_instrument.identifier
+        storage_address = self.file_address + offset
         self.rpc.serial_wire_instrument.write_from_storage(address, count, storage_identifier, storage_address)
 
     def transfer_to_ram_via_swd(self, address, offset, count):
         subdata = self.firmware.data[offset:offset + count]
         self.rpc.serial_wire_instrument.write_memory(address, subdata)
 
-    def program(self):
+    def flash(self):
         assert (self.rpc.firmware.heap.address & 0x7) == 0
         assert (self.rpc.firmware.heap.size & 0x7) == 0
         heap = self.rpc.firmware.heap.address
@@ -636,14 +654,27 @@ class Flasher:
     def verify(self):
         address = self.firmware.address
         count = len(self.firmware.data)
-        data = self.rpc.serial_wire_instrument.read_memory(address, count)
-        if data != self.firmware.data:
-            raise IOError("firmware verification failed")
+        if self.storage_instrument is not None:
+            code = self.rpc.serial_wire_instrument.compare_to_storage(
+                address, count, self.storage_instrument.identifier, self.file_address
+            )
+            if code != 0:
+                raise IOError("firmware verification failed")
+        else:
+            data = self.rpc.serial_wire_instrument.read_memory(address, count)
+            if data != self.firmware.data:
+                raise IOError("firmware verification failed")
+
+    def program(self):
+        self.setup()
+        self.flash()
+        self.verify()
 
 
 class NRF53:
 
     mcu_app = "nrf53_app"
+    mcu_net = "nrf53_net"
 
     dpid = 0x6BA02477
 
@@ -668,6 +699,8 @@ class NRF53:
     ap_idr_ahb = 0x84770001
     ap_idr_ctrl = 0x12880000
 
+    reset_network_forceoff = 0x50005614
+
     def __init__(self, serial_wire_instrument):
         self.serial_wire_instrument = serial_wire_instrument
 
@@ -690,11 +723,34 @@ class NRF53:
         self.serial_wire_instrument.select_and_write_access_port(NRF53.ctrl_ap_eraseall, 0x00000001)
         retry(lambda: self.read_erase_all_status() == 0, 1.0, "nRF5340 ctrl ap erase all timeout")
 
+    def initialize_ahb(self, ahb):
+        self.select_ahb(ahb)
+        self.serial_wire_instrument.select_and_write_access_port(
+            SerialWireDebug.ap_csw,
+            SerialWireDebug.ap_csw_prot |
+            SerialWireDebug.ap_csw_addrinc_single |
+            SerialWireDebug.ap_csw_size_32bit
+        )
+        halt = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen | SerialWireDebug.dhcsr_ctrl_halt
+        self.serial_wire_instrument.write_memory_uint32(SerialWireDebug.memory_dhcsr, halt)
+
+    def release_network_forceoff(self):
+        reset_network_forceoff = self.serial_wire_instrument.read_memory_uint32(NRF53.reset_network_forceoff)
+        if reset_network_forceoff != 0:
+            self.serial_wire_instrument.write_memory_uint32(NRF53.reset_network_forceoff, 0)
+            reset_network_forceoff = self.serial_wire_instrument.read_memory_uint32(NRF53.reset_network_forceoff)
+            if reset_network_forceoff != 0:
+                raise IOError("Cannot release RESET.NETWORK.FORCEOFF")
+
     def recover(self):
         self.select_ctrl(NRF53.dp_select_apsel_ctrl_app)
         self.erase_all()
         self.select_ctrl(NRF53.dp_select_apsel_ctrl_net)
         self.erase_all()
+
+        # See nRF5340 Production Programming nAN42 -denis
+        self.initialize_ahb(NRF53.dp_select_apsel_ahb_app)
+        self.release_network_forceoff()
 
 
 class ProgramScript(FixtureScript):

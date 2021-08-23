@@ -322,6 +322,20 @@ class StorageInstrument(Instrument):
             offset += transfer_length
         return data
 
+    def read_lots(self, address, length):
+        data = []
+        remaining = length
+        subaddress = address
+        while True:
+            count = min(remaining, StorageInstrument.maxTransferLength)
+            if count == 0:
+                break
+            subdata = self.read(subaddress, count)
+            data.extend(subdata)
+            subaddress += count
+            remaining -= count
+        return data
+
     def hash(self, address, length):
         arguments = FDBinary()
         arguments.put_varuint(address)
@@ -378,7 +392,7 @@ class StorageInstrument(Instrument):
         result = results.get_uint8() != 0
         return result
 
-    def file_write(self, name, offset, data):
+    def file_write_raw(self, name, offset, data):
         arguments = FDBinary()
         arguments.put_string(name)
         arguments.put_uint32(offset)
@@ -388,7 +402,19 @@ class StorageInstrument(Instrument):
         result = results.get_uint8() != 0
         return result
 
-    def file_read(self, name, offset, size):
+    def file_write(self, name, offset, data):
+        remaining = len(data)
+        suboffset = offset
+        while True:
+            count = min(remaining, StorageInstrument.maxTransferLength)
+            if count == 0:
+                break
+            subdata = data[suboffset:suboffset + count]
+            self.file_write_raw(name, suboffset, subdata)
+            suboffset += count
+            remaining -= count
+
+    def file_read_raw(self, name, offset, size):
         arguments = FDBinary()
         arguments.put_string(name)
         arguments.put_uint32(offset)
@@ -400,6 +426,20 @@ class StorageInstrument(Instrument):
             data = results.get_bytes(actual_size)
         else:
             data = []
+        return data
+
+    def file_read(self, name, offset, size):
+        data = []
+        remaining = size
+        suboffset = offset
+        while True:
+            count = min(remaining, StorageInstrument.maxTransferLength)
+            if count == 0:
+                break
+            subdata = self.file_read_raw(name, suboffset, count)
+            data.extend(subdata)
+            suboffset += count
+            remaining -= count
         return data
 
 
@@ -822,8 +862,7 @@ class SerialWireInstrument(Instrument):
         arguments.put_varuint(storage_address)
         results = self.call(SerialWireInstrument.apiTypeCompareToStorage, arguments)
         code = results.get_varuint()
-        if code != 0:
-            raise IOError(f"memory transfer issue: code={code}")
+        return code
 
     def set_target_id(self, value):
         arguments = FDBinary()
