@@ -305,5 +305,8 @@
     <folder Name="Source Files">
       <file file_name="src/fd_flasher_test_nrf53.c" />
     </folder>
+    <configuration
+      Name="Debug"
+      link_linker_script_file="$(ProjectDir)/nRF/Device/Linker/ses_nrf5340_xxaa_network.icf" />
   </project>
 </solution>
