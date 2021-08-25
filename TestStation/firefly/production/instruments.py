@@ -225,10 +225,10 @@ class GpioInstrument(Instrument):
         self, domain=Domain.digital, direction=Direction.input, drive=Drive.push_pull, pull=Pull.none
     ):
         arguments = FDBinary()
-        arguments.put_uint8(domain)
-        arguments.put_uint8(direction)
-        arguments.put_uint8(drive)
-        arguments.put_uint8(pull)
+        arguments.put_uint8(domain.value)
+        arguments.put_uint8(direction.value)
+        arguments.put_uint8(drive.value)
+        arguments.put_uint8(pull.value)
         self.invoke(GpioInstrument.apiTypeSetAuxiliaryConfiguration, arguments)
 
     def get_auxiliary_input(self) -> bool:

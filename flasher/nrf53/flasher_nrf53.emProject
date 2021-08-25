@@ -159,6 +159,7 @@
     </folder>
     <configuration
       Name="Debug"
+      c_preprocessor_definitions="ENABLE_APPROTECT_USER_HANDLING;ENABLE_SECURE_APPROTECT_USER_HANDLING;CONFIG_NFCT_PINS_AS_GPIOS"
       link_linker_script_file="$(ProjectDir)/nRF/Device/Linker/ses_nrf5340_xxaa_application.icf" />
   </project>
   <project Name="nrf53_net">

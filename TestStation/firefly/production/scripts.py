@@ -20,7 +20,6 @@ class Fixture:
         self.voltage_serial_wire_instruments = []
         self.serial_wire_instruments = []
         self.storage_instrument = None
-        self.file_system = None
         self.gpio_instruments = []
         self.gpio_instrument_by_name = {}
         self.battery_instrument = None
@@ -61,8 +60,6 @@ class Fixture:
         self.voltage_serial_wire_instruments.append(self.manager.get_instrument(6))
 
         self.storage_instrument = self.manager.get_instrument(4)
-        self.file_system = FileSystem(self.storage_instrument)
-        self.presenter.log('Inspecting file system...')
 
         gpio_names = [
             "IOA0",
@@ -139,11 +136,6 @@ class FixtureScript(Script):
     def setup(self):
         super().setup()
         self.fixture.setup()
-
-        self.presenter.log('File system entries:')
-        entries = self.fixture.file_system.list()
-        for entry in entries:
-            self.log(f"  {entry.name} {entry.length}")
 
     def main(self):
         super().main()
@@ -700,8 +692,43 @@ class NRF53:
 
     reset_network_forceoff = 0x50005614
 
+    class IO:
+
+        def __init__(self, port, pin):
+            self.port = port
+            self.pin = pin
+
+    class GPIO:
+
+        def __init__(self, base):
+            self.r_out = base + 0x004
+            self.r_outset = base + 0x008
+            self.r_outclr = base + 0x00c
+            self.r_in = base + 0x010
+            self.r_dir = base + 0x014
+            self.r_dirset = base + 0x018
+            self.r_dirclr = base + 0x01c
+            self.r_pin_cnf = []
+            for i in range(32):
+                self.r_pin_cnf.append(base + 0x200 + (i * 0x4))
+
+    class UICR:
+
+        def __init__(self):
+            base = 0x00FF8000
+            self.r_nfcpins = base + 0x028
+
+
+    class Application:
+
+        def __init__(self):
+            self.p0_s = NRF53.GPIO(0x50842500)
+            self.p1_s = NRF53.GPIO(0x50842800)
+            self.p_s = [self.p0_s, self.p1_s]
+
     def __init__(self, serial_wire_instrument):
         self.serial_wire_instrument = serial_wire_instrument
+        self.application = NRF53.Application()
 
     def select_ahb(self, ahb):
         self.serial_wire_instrument.set_access_port_id(ahb)
@@ -747,9 +774,35 @@ class NRF53:
         self.select_ctrl(NRF53.dp_select_apsel_ctrl_net)
         self.erase_all()
 
-        # See nRF5340 Production Programming nAN42 -denis
         self.initialize_ahb(NRF53.dp_select_apsel_ahb_app)
+        # See nRF5340 Production Programming nAN42 -denis
         self.release_network_forceoff()
+
+    def configure_output(self, io, value):
+        p_s = self.application.p_s[io.port]
+        pin_cnf = p_s.r_pin_cnf[io.pin]
+        self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000001)
+        self.set_output(io, value)
+
+    def set_output(self, io, value):
+        p_s = self.application.p_s[io.port]
+        if value:
+            self.serial_wire_instrument.write_memory_uint32(p_s.r_outset, 1 << io.pin)
+        else:
+            self.serial_wire_instrument.write_memory_uint32(p_s.r_outclr, 1 << io.pin)
+
+    def configure_input(self, io):
+        p_s = self.application.p_s[io.port]
+        pin_cnf = p_s.r_pin_cnf[io.pin]
+        self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000000)
+
+    def configure_default(self, io):
+        self.configure_input(io)
+
+    def get_input(self, io):
+        p_s = self.application.p_s[io.port]
+        r_in = self.serial_wire_instrument.read_memory_uint32(p_s.r_in)
+        return (r_in & (1 << io.pin)) != 0
 
 
 class ProgramScript(FixtureScript):
@@ -825,7 +878,7 @@ class ProgramScript(FixtureScript):
         super().main()
 
         serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
-        flasher = Flasher(self.presenter, serial_wire_instrument, self.mcu, self.name, self.fixture.file_system)
+        flasher = Flasher(self.presenter, serial_wire_instrument, self.mcu, self.name)
         flasher.setup()
         self.log(str(flasher.rpc.firmware))
         flasher.program()
