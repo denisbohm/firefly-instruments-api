@@ -12,18 +12,11 @@
  <Memory4/>
  <Project>
   <ProjectSessionItem path="flasher_nrf53"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app;Script Files"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app;Source Files"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app;System Files"/>
   <ProjectSessionItem path="flasher_nrf53;nrf53_app_test"/>
   <ProjectSessionItem path="flasher_nrf53;nrf53_app_test;Device Files"/>
   <ProjectSessionItem path="flasher_nrf53;nrf53_app_test;Script Files"/>
   <ProjectSessionItem path="flasher_nrf53;nrf53_app_test;Source Files"/>
   <ProjectSessionItem path="flasher_nrf53;nrf53_app_test;System Files"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_net_test"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_net_test;Script Files"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_net_test;Source Files"/>
  </Project>
  <Register1/>
  <Register2/>
@@ -48,17 +41,8 @@
   <Watches active="0" update="Never"/>
  </Watch4>
  <Files>
-  <SessionOpenFile windowGroup="DockEditLeft" x="63" y="104" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="ses_nrf5340_xxaa_application.icf" selected="0" top="110" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="9" y="141" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="ses_nrf5340_xxaa_network.icf" selected="0" top="115" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nRF/Device/Linker/ses_nrf5340_xxaa_application.icf" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nRF/Device/Startup/ses_startup_nrf5340_network.s" selected="0" top="194" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nRF/Device/Linker/ses_nrf5340_xxaa_network.icf" selected="0" top="33" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nRF/Device/MemoryMap/nRF5340_xxAA_Application_MemoryMap.xml" selected="0" top="0" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nRF/Device/Startup/ses_startup_nrf_common.s" selected="0" top="232" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nRF/Device/Startup/ses_startup_nrf5340_application.s" selected="0" top="270" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="0" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="SEGGER_THUMB_Startup.s" selected="0" top="240" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="23" y="233" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nRF/Device/Source/system_nrf5340_application.c" selected="0" top="211" codecName="Default"/>
-  <SessionOpenFile windowGroup="DockEditLeft" x="67" y="56" useTextEdit="1" openedFrom="/Users/denis/sandbox/denisbohm/firefly-instruments-api/flasher/nrf53/nRF/Device/Source/system_nrf5340_application.c" useBinaryEdit="0" left="0" path="nRF/Device/Include/system_nrf53_approtect.h" selected="1" top="35" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="7" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/fd_flasher_test_nrf53.c" selected="0" top="0" codecName="Default"/>
+  <SessionOpenFile windowGroup="DockEditLeft" x="0" y="172" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="nRF/Device/Source/system_nrf5340_application.c" selected="1" top="149" codecName="Default"/>
  </Files>
- <ARMCrossStudioWindow activeProject="nrf53_net_test" fileDialogDefaultFilter="*.*" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="/Users/denis/sandbox/denisbohm/firefly-instruments-api/flasher/nrf53" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <ARMCrossStudioWindow activeProject="nrf53_app_test" fileDialogDefaultFilter="*.*" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="/Users/denis/sandbox/denisbohm/firefly-instruments-api/flasher/nrf53" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

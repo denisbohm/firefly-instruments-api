@@ -1,5 +1,4 @@
 from enum import Enum
-import time
 from typing import Set
 from typing import Tuple
 from .usb import MacOsHidDevice

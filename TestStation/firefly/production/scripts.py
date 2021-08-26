@@ -1,12 +1,12 @@
-import time
+from enum import Enum
 import hashlib
+import time
 from collections import namedtuple
 from .bundle import Bundle
 from .instruments import InstrumentManager
 from .instruments import SerialWireInstrument
 from .instruments import SerialWireDebugTransfer
 from .instruments import StorageInstrument
-from .storage import FileSystem
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
 
@@ -742,6 +742,10 @@ class NRF53:
         if idr != NRF53.ap_idr_ctrl:
             raise IOError("unexpected ctrl idr value")
 
+    def reset(self):
+        self.select_ctrl(NRF53.dp_select_apsel_ctrl_app)
+        self.serial_wire_instrument.select_and_write_access_port(NRF53.ctrl_ap_reset, 0x00000001)
+
     def read_erase_all_status(self):
         return self.serial_wire_instrument.select_and_read_access_port(NRF53.ctrl_ap_eraseallstatus)
 
@@ -771,6 +775,7 @@ class NRF53:
     def recover(self):
         self.select_ctrl(NRF53.dp_select_apsel_ctrl_app)
         self.erase_all()
+
         self.select_ctrl(NRF53.dp_select_apsel_ctrl_net)
         self.erase_all()
 
@@ -782,6 +787,12 @@ class NRF53:
         p_s = self.application.p_s[io.port]
         pin_cnf = p_s.r_pin_cnf[io.pin]
         self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000001)
+        self.set_output(io, value)
+
+    def configure_output_open_drain(self, io, value):
+        p_s = self.application.p_s[io.port]
+        pin_cnf = p_s.r_pin_cnf[io.pin]
+        self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000401)
         self.set_output(io, value)
 
     def set_output(self, io, value):
@@ -803,6 +814,394 @@ class NRF53:
         p_s = self.application.p_s[io.port]
         r_in = self.serial_wire_instrument.read_memory_uint32(p_s.r_in)
         return (r_in & (1 << io.pin)) != 0
+
+
+class I2CM:
+
+    class Device:
+
+        def __init__(self, address):
+            self.address = address
+
+    class Direction(Enum):
+        tx = 0
+        rx = 1
+
+    class Transfer:
+
+        def __init__(self, direction, data=None, count=0):
+            self.direction = direction
+            self.data = data
+            self.count = count
+
+        @staticmethod
+        def tx(data):
+            return I2CM.Transfer(I2CM.Direction.tx, data=data)
+
+        @staticmethod
+        def rx(count):
+            return I2CM.Transfer(I2CM.Direction.rx, count=count)
+
+    class IO:
+
+        def __init__(self, transfers):
+            self.transfers = transfers
+
+    def __init__(self):
+        pass
+
+    def delay(self):
+        pass
+    
+    def configure_in(self):
+        raise IOError("unimplemented")
+    
+    def configure_out(self):
+        raise IOError("unimplemented")
+
+    def set_scl(self, value: bool):
+        raise IOError("unimplemented")
+
+    def set_sda(self, value: bool):
+        raise IOError("unimplemented")
+
+    def get_sda(self) -> bool:
+        raise IOError("unimplemented")
+
+    def clear_bus(self):
+        self.set_scl(True)
+        self.set_sda(True)
+        self.delay()
+        for _ in range(9):
+            self.set_scl(False)
+            self.delay()
+            self.set_scl(True)
+            self.delay()
+
+    def start(self):
+        self.set_scl(True)
+        self.set_sda(True)
+        self.delay()
+        self.set_sda(False)
+        self.delay()
+        self.set_scl(False)
+        self.delay()
+    
+    def stop(self):
+        self.set_sda(False)
+        self.delay()
+        self.set_scl(True)
+        self.delay()
+        self.set_sda(True)
+        self.delay()
+    
+    def write_bit(self, bit: bool):
+        self.set_sda(bit)
+        self.delay()
+        self.set_scl(True)
+        self.delay()
+        self.set_scl(False)
+    
+    def read_bit(self) -> bool:
+        self.set_sda(True)
+        self.delay()
+        self.set_scl(True)
+        self.delay()
+        bit = self.get_sda()
+        self.set_scl(False)
+        return bit
+    
+    def write_byte(self, byte) -> bool:
+        for _ in range(8):
+            self.write_bit((byte & 0x80) != 0)
+            byte <<= 1
+    
+        self.set_sda(True)
+        self.configure_in()
+        ack = self.read_bit()
+        self.configure_out()
+        return ack is False
+    
+    def read_byte(self, ack: bool) -> int:
+        self.configure_in()
+        byte = 0
+        for _ in range(8):
+            bit = self.read_bit()
+            byte = (byte << 1) | (1 if bit else 0)
+        self.configure_out()
+        self.write_bit(not ack)
+        return byte
+    
+    def bus_tx(self, bytes) -> bool:
+        for byte in bytes:
+            ack = self.write_byte(byte)
+            if not ack:
+                return False
+        return True
+
+    def bus_rx(self, count: int, ack: bool):
+        bytes = []
+        for i in range(count):
+            byte = self.read_byte(ack or (i < (count - 1)))
+            bytes.append(byte)
+        return bytes
+
+    def start_write(self, device):
+        self.start()
+        return self.write_byte(device.address << 1)
+    
+    def start_read(self, device) -> bool:
+        self.start()
+        return self.write_byte((device.address << 1) | 1)
+    
+    def device_io(self, device, io) -> bool:
+        last_direction = -1
+        ack = True
+        try:
+            for i in range(len(io.transfers)):
+                transfer = io.transfers[i]
+                if transfer.direction == I2CM.Direction.tx:
+                    if transfer.direction != last_direction:
+                        ack = self.start_write(device)
+                        if not ack:
+                            raise IOError("I2C nack")
+                    ack = self.bus_tx(transfer.data)
+                    if not ack:
+                        raise IOError("I2C nack")
+                elif transfer.direction == I2CM.Direction.rx:
+                    if transfer.direction != last_direction:
+                        ack = self.start_read(device)
+                        if not ack:
+                            raise IOError("I2C nack")
+                    rx_ack = (i < len(io.transfers) - 1) or (io.transfers[i + 1].direction == I2CM.Direction.rx)
+                    transfer.data = self.bus_rx(transfer.count, rx_ack)
+                last_direction = transfer.direction
+        except IOError:
+            self.stop()
+        return ack
+    
+    def initialize(self):
+        self.set_scl(True)
+        self.set_sda(True)
+        self.configure_out()
+        self.clear_bus()
+
+    def read_register(self, device, address) -> int:
+        rx = I2CM.Transfer.rx(1)
+        io = I2CM.IO([I2CM.Transfer.tx([address]), rx])
+        self.device_io(device, io)
+        return rx.data[0]
+
+
+class I2CMnRF53(I2CM):
+
+    def __init__(self, nrf53, scl, sda):
+        super().__init__()
+        self.nrf53 = nrf53
+        self.scl = scl
+        self.sda = sda
+
+    def delay(self):
+        pass
+
+    def configure_in(self):
+        self.nrf53.configure_input(self.sda)
+
+    def configure_out(self):
+        self.nrf53.configure_output_open_drain(self.sda, True)
+
+    def set_scl(self, value: bool):
+        self.nrf53.set_output(self.scl, value)
+
+    def set_sda(self, value: bool):
+        self.nrf53.set_output(self.sda, value)
+
+    def get_sda(self) -> bool:
+        return self.nrf53.get_input(self.sda)
+
+
+class QSPI:
+
+    def __init__(self):
+        pass
+
+    def configure_dq_as_single(self):
+        raise IOError("unimplemented")
+
+    def configure_dq_as_quad_input(self):
+        raise IOError("unimplemented")
+
+    def configure_dq_as_quad_output(self):
+        raise IOError("unimplemented")
+
+    def set_chip_select(self, value):
+        raise IOError("unimplemented")
+
+    def set_clock(self, value):
+        raise IOError("unimplemented")
+
+    def set_hold(self, value):
+        raise IOError("unimplemented")
+
+    def set_write_protect(self, value):
+        raise IOError("unimplemented")
+
+    def set_reset(self, value):
+        raise IOError("unimplemented")
+
+    def set_dq_single(self, value: int):
+        raise IOError("unimplemented")
+
+    def get_dq_single(self) -> int:
+        raise IOError("unimplemented")
+
+    def set_dq_quad(self, value: int):
+        raise IOError("unimplemented")
+
+    def get_dq_quad(self) -> int:
+        raise IOError("unimplemented")
+
+    def initialize(self):
+        raise IOError("unimplemented")
+
+    def io(self, tx, rxn):
+        self.set_chip_select(True)
+        self.configure_dq_as_single()
+        count = max(len(tx), rxn)
+        rx = []
+        for i in range(count):
+            tx_byte = tx[i]
+            rx_byte = 0
+            for j in range(8):
+                self.set_dq_single(tx_byte >> 7)
+                tx_byte <<= 1
+                self.set_clock(True)
+                rx_byte <<= 1
+                rx_byte |= self.get_dq_single()
+                self.set_clock(False)
+            rx.append(rx_byte)
+        return rx
+
+    def read_id(self):
+        tx = [0x9F]
+        rx = self.io(tx, 20)
+
+    '''
+    to enable the quad mode
+    1. send ENTER QUAD INPUT/OUTPUT MODE command 0x35h
+    2. send write enable cmd 0x06
+    3. to write into enhanced volatile configuration register - send  0x61 command.
+    4. 0x7F is written in the above register to activate in quad mode
+    5. poll the configuration register i.e read the enhanced volatile config register command is 0x65 and wait untill it
+    becomes 0X7F
+    '''
+    def enter_quad_mode(self):
+        self.io([0x35], 0)
+        self.configure_dq_as_quad_input()
+
+    def io_quad(self, tx, rxn):
+        self.set_chip_select(True)
+        self.configure_dq_as_quad_output()
+        for i in range(len(tx)):
+            byte = tx[i]
+            self.set_dq_quad(byte >> 4)
+            self.set_clock(True)
+            self.set_clock(False)
+            self.set_dq_quad(byte & 0xf)
+            self.set_clock(True)
+            self.set_clock(False)
+        self.configure_dq_as_quad_input()
+        """
+        for _ in range(2):
+            self.set_clock(True)
+            self.set_clock(False)
+        """
+        rx = []
+        for i in range(rxn):
+            nibble_h = self.get_dq_quad()
+            self.set_clock(True)
+            self.set_clock(False)
+            nibble_l = self.get_dq_quad()
+            self.set_clock(True)
+            self.set_clock(False)
+            byte = (nibble_h << 4) | nibble_l
+            rx.append(byte)
+        self.set_chip_select(False)
+        return rx
+
+    def read_id_quad(self):
+        tx = [0xAF]
+        return self.io_quad(tx, 20)
+
+
+class QSPInRF53(QSPI):
+
+    def __init__(self, nrf53, csn, c, d0, d1, d2, d3):
+        super().__init__()
+        self.nrf53 = nrf53
+        self.csn = csn
+        self.c = c
+        self.d0 = d0
+        self.d1 = d1
+        self.d2 = d2
+        self.d3 = d3
+
+    def configure_dq_as_single(self):
+        self.nrf53.configure_output(self.d0, True)
+        self.nrf53.configure_input(self.d1)
+        self.nrf53.configure_output(self.d2, True)
+        self.nrf53.configure_output(self.d3, True)
+
+    def configure_dq_as_quad_input(self):
+        self.nrf53.configure_input(self.d0)
+        self.nrf53.configure_input(self.d1)
+        self.nrf53.configure_input(self.d2)
+        self.nrf53.configure_input(self.d3)
+
+    def configure_dq_as_quad_output(self):
+        self.nrf53.configure_output(self.d0, True)
+        self.nrf53.configure_output(self.d1, True)
+        self.nrf53.configure_output(self.d2, True)
+        self.nrf53.configure_output(self.d3, True)
+
+    def set_chip_select(self, value):
+        self.nrf53.set_output(self.csn, value)
+
+    def set_clock(self, value):
+        self.nrf53.set_output(self.c, value)
+
+    def set_hold(self, value):
+        self.nrf53.set_output(self.d3, value)
+
+    def set_write_protect(self, value):
+        self.nrf53.set_output(self.d2, value)
+
+    def set_reset(self, value):
+        pass
+
+    def set_dq_single(self, value: int):
+        self.nrf53.set_output(self.d0, True if (value & 1) == 1 else False)
+
+    def get_dq_single(self) -> int:
+        return 1 if self.nrf53.get_input(self.d0) else 0
+
+    def set_dq_quad(self, value: int):
+        self.nrf53.set_output(self.d0, True if (value & 0b0001) else False)
+        self.nrf53.set_output(self.d1, True if (value & 0b0010) else False)
+        self.nrf53.set_output(self.d2, True if (value & 0b0100) else False)
+        self.nrf53.set_output(self.d3, True if (value & 0b1000) else False)
+
+    def get_dq_quad(self) -> int:
+        nibble = 0b0001 if self.nrf53.get_input(self.d0) else 0b0000
+        nibble |= 0b0010 if self.nrf53.get_input(self.d0) else 0b0000
+        nibble |= 0b0100 if self.nrf53.get_input(self.d0) else 0b0000
+        nibble |= 0b1000 if self.nrf53.get_input(self.d0) else 0b0000
+        return nibble
+
+    def initialize(self):
+        self.nrf53.configure_output(self.csn, True)
+        self.nrf53.configure_output(self.c, False)
+        self.configure_dq_as_single()
 
 
 class ProgramScript(FixtureScript):
