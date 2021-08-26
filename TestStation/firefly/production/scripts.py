@@ -745,6 +745,7 @@ class NRF53:
     def reset(self):
         self.select_ctrl(NRF53.dp_select_apsel_ctrl_app)
         self.serial_wire_instrument.select_and_write_access_port(NRF53.ctrl_ap_reset, 0x00000001)
+        self.serial_wire_instrument.select_and_write_access_port(NRF53.ctrl_ap_reset, 0x00000000)
 
     def read_erase_all_status(self):
         return self.serial_wire_instrument.select_and_read_access_port(NRF53.ctrl_ap_eraseallstatus)
@@ -792,7 +793,7 @@ class NRF53:
     def configure_output_open_drain(self, io, value):
         p_s = self.application.p_s[io.port]
         pin_cnf = p_s.r_pin_cnf[io.pin]
-        self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000401)
+        self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000601)
         self.set_output(io, value)
 
     def set_output(self, io, value):
@@ -973,11 +974,12 @@ class I2CM:
                         ack = self.start_read(device)
                         if not ack:
                             raise IOError("I2C nack")
-                    rx_ack = (i < len(io.transfers) - 1) or (io.transfers[i + 1].direction == I2CM.Direction.rx)
+                    rx_ack = (i < len(io.transfers) - 1) and (io.transfers[i + 1].direction == I2CM.Direction.rx)
                     transfer.data = self.bus_rx(transfer.count, rx_ack)
                 last_direction = transfer.direction
         except IOError:
-            self.stop()
+            pass
+        self.stop()
         return ack
     
     def initialize(self):
@@ -989,7 +991,9 @@ class I2CM:
     def read_register(self, device, address) -> int:
         rx = I2CM.Transfer.rx(1)
         io = I2CM.IO([I2CM.Transfer.tx([address]), rx])
-        self.device_io(device, io)
+        ack = self.device_io(device, io)
+        if not ack:
+            raise IOError("I2C nack")
         return rx.data[0]
 
 
@@ -1000,6 +1004,10 @@ class I2CMnRF53(I2CM):
         self.nrf53 = nrf53
         self.scl = scl
         self.sda = sda
+
+    def initialize(self):
+        self.nrf53.configure_output_open_drain(self.scl, True)
+        super().initialize()
 
     def delay(self):
         pass
@@ -1064,13 +1072,15 @@ class QSPI:
     def initialize(self):
         raise IOError("unimplemented")
 
-    def io(self, tx, rxn):
-        self.set_chip_select(True)
+    def io(self, tx, rxn, skip=None):
+        if skip is None:
+            skip = len(tx)
+        self.set_chip_select(False)
         self.configure_dq_as_single()
         count = max(len(tx), rxn)
         rx = []
         for i in range(count):
-            tx_byte = tx[i]
+            tx_byte = tx[i] if i < len(tx) else 0xff
             rx_byte = 0
             for j in range(8):
                 self.set_dq_single(tx_byte >> 7)
@@ -1079,12 +1089,15 @@ class QSPI:
                 rx_byte <<= 1
                 rx_byte |= self.get_dq_single()
                 self.set_clock(False)
-            rx.append(rx_byte)
+            if i >= skip:
+                rx.append(rx_byte)
+        self.set_chip_select(True)
         return rx
 
     def read_id(self):
         tx = [0x9F]
         rx = self.io(tx, 20)
+        return rx
 
     '''
     to enable the quad mode
@@ -1100,7 +1113,7 @@ class QSPI:
         self.configure_dq_as_quad_input()
 
     def io_quad(self, tx, rxn):
-        self.set_chip_select(True)
+        self.set_chip_select(False)
         self.configure_dq_as_quad_output()
         for i in range(len(tx)):
             byte = tx[i]
@@ -1126,12 +1139,13 @@ class QSPI:
             self.set_clock(False)
             byte = (nibble_h << 4) | nibble_l
             rx.append(byte)
-        self.set_chip_select(False)
+        self.set_chip_select(True)
         return rx
 
     def read_id_quad(self):
         tx = [0xAF]
-        return self.io_quad(tx, 20)
+        rx = self.io_quad(tx, 20)
+        return rx
 
 
 class QSPInRF53(QSPI):
@@ -1183,7 +1197,7 @@ class QSPInRF53(QSPI):
         self.nrf53.set_output(self.d0, True if (value & 1) == 1 else False)
 
     def get_dq_single(self) -> int:
-        return 1 if self.nrf53.get_input(self.d0) else 0
+        return 1 if self.nrf53.get_input(self.d1) else 0
 
     def set_dq_quad(self, value: int):
         self.nrf53.set_output(self.d0, True if (value & 0b0001) else False)
