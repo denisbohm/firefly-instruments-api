@@ -727,14 +727,17 @@ class NRF53:
     class CLOCK:
 
         def __init__(self, base):
-            self.r_hfclkstart = base + 0x000
-            self.r_lfclkstart = base + 0x008
+            self.r_tasks_hfclkstart = base + 0x000
+            self.r_tasks_lfclkstart = base + 0x008
+            self.r_events_hfclkstarted = base + 0x100
+            self.r_events_lfclkstarted = base + 0x104
             self.r_hfclkrun = base + 0x408
             self.r_hfclkstat = base + 0x40C
             self.r_lfclkrun = base + 0x414
             self.r_lfclkstat = base + 0x418
             self.r_hfclksrc = base + 0x514
             self.r_lfclksrc = base + 0x518
+            self.r_hfclkalwaysrun = base + 0x570
             self.r_lfclkalwaysrun = base + 0x574
 
     class OSCILLATORS:
@@ -845,45 +848,66 @@ class NRF53:
         r_in = self.serial_wire_instrument.read_memory_uint32(p_s.r_in)
         return (r_in & (1 << io.pin)) != 0
 
-    def read_lfclkstat(self):
+    def read_events_lfclkstarted(self):
         clock_s = self.application.clock_s
-        lfclkstat = self.serial_wire_instrument.read_memory_uint32(clock_s.r_lfclkstat)
-        return lfclkstat
+        events_lfclkstarted = self.serial_wire_instrument.read_memory_uint32(clock_s.r_events_lfclkstarted)
+        return events_lfclkstarted
 
-    def start_lfclk(self):
+    def start_lfclk(self, capacitance=6):
+        p_s = self.application.p0_s
+        for pin in range(2):
+            pin_cnf = p_s.r_pin_cnf[pin]
+            self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x30000002)
+
         oscillators_s = self.application.oscillators_s
-        self.serial_wire_instrument.write_memory_uint32(oscillators_s.r_xosc32ki_intcap, 0x00000003)  # 9 pF
+        if capacitance == 0:
+            intcap = 0
+        elif capacitance <= 6:
+            intcap = 1
+        elif capacitance <= 7:
+            intcap = 2
+        else:
+            intcap = 3
+        self.serial_wire_instrument.write_memory_uint32(oscillators_s.r_xosc32ki_intcap, intcap)
 
         clock_s = self.application.clock_s
-        self.serial_wire_instrument.write_memory_uint32(clock_s.r_lfclksrc, 0x00000000)
-        self.serial_wire_instrument.write_memory_uint32(clock_s.r_lfclkalwaysrun, 0x00000000)
-        self.serial_wire_instrument.write_memory_uint32(clock_s.r_lfclkstart, 0x00000000)
+        self.serial_wire_instrument.write_memory_uint32(clock_s.r_lfclksrc, 0x00000002)
+        self.serial_wire_instrument.write_memory_uint32(clock_s.r_lfclkalwaysrun, 0x00000001)
+        self.serial_wire_instrument.write_memory_uint32(clock_s.r_events_lfclkstarted, 0x00000000)
+        self.serial_wire_instrument.write_memory_uint32(clock_s.r_tasks_lfclkstart, 0x00000001)
+
         retry(
-            lambda: self.read_lfclkstat() == 0x00010012,
-            0.5, "32kHz clock startup timeout")
+            lambda: self.read_events_lfclkstarted() == 0x00000001,
+            1.0, "32.768 kHz clock startup timeout")
+        lfclkstat = self.serial_wire_instrument.read_memory_uint32(clock_s.r_lfclkstat)
+        if lfclkstat != 0x00010012:
+            raise IOError("32.768 kHz clock unexpected status")
 
-    def read_hfclkstat(self):
+    def read_events_hfclkstarted(self):
         clock_s = self.application.clock_s
-        hfclkstat = self.serial_wire_instrument.read_memory_uint32(clock_s.r_hfclkstat)
-        return hfclkstat
+        events_hfclkstarted = self.serial_wire_instrument.read_memory_uint32(clock_s.r_events_hfclkstarted)
+        return events_hfclkstarted
 
-    def start_hfclk(self):
-        capacitance = 12.0  # pF
+    def start_hfclk(self, capacitance=9.5):
         ficr = self.application.ficr
         xosc32mtrim = self.serial_wire_instrument.read_memory_uint32(ficr.r_xosc32mtrim)
         offset = xosc32mtrim & 0x1f
         slope = (xosc32mtrim >> 5) & 0x1f
-        capvalue = (((slope + 56) * (capacitance * 2 - 14)) + ((offset - 8) << 4) + 32) >> 6
+        capvalue = int(((slope + 56) * (capacitance * 2 - 14)) + ((offset - 8) << 4) + 32) >> 6
         oscillators_s = self.application.oscillators_s
         self.serial_wire_instrument.write_memory_uint32(oscillators_s.r_xosc32mcaps, 0x00000100 | capvalue)
 
         clock_s = self.application.clock_s
-        self.serial_wire_instrument.write_memory_uint32(clock_s.r_hfclksrc, 0x00000000)
-        self.serial_wire_instrument.write_memory_uint32(clock_s.r_lfclkalwaysrun, 0x00000000)
-        self.serial_wire_instrument.write_memory_uint32(clock_s.r_hfclkstart, 0x00000000)
+        self.serial_wire_instrument.write_memory_uint32(clock_s.r_hfclksrc, 0x00000001)
+        self.serial_wire_instrument.write_memory_uint32(clock_s.r_hfclkalwaysrun, 0x00000001)
+        self.serial_wire_instrument.write_memory_uint32(clock_s.r_events_hfclkstarted, 0x00000000)
+        self.serial_wire_instrument.write_memory_uint32(clock_s.r_tasks_hfclkstart, 0x00000001)
         retry(
-            lambda: self.read_hfclkstat() == 0x00010012,
-            0.5, "32kHz clock startup timeout")
+            lambda: self.read_events_hfclkstarted() == 0x00000001,
+            1.0, "32 MHz clock startup timeout")
+        hfclkstat = self.serial_wire_instrument.read_memory_uint32(clock_s.r_hfclkstat)
+        if hfclkstat != 0x00010011:
+            raise IOError("32 MHz clock unexpected status")
 
 
 class I2CM:
