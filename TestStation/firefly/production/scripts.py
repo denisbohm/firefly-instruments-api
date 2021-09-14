@@ -662,7 +662,173 @@ class Flasher:
         self.verify()
 
 
-class NRF53:
+class SOC:
+
+    class IO:
+
+        def __init__(self, port, pin):
+            self.port = port
+            self.pin = pin
+
+    def __init__(self, serial_wire_instrument):
+        self.serial_wire_instrument = serial_wire_instrument
+
+    def configure_output(self, io, value):
+        raise IOError("unimplemented")
+
+    def configure_output_open_drain(self, io, value):
+        raise IOError("unimplemented")
+
+    def set_output(self, io, value):
+        raise IOError("unimplemented")
+
+    def configure_input(self, io):
+        raise IOError("unimplemented")
+
+    def configure_default(self, io):
+        raise IOError("unimplemented")
+
+    def get_input(self, io):
+        raise IOError("unimplemented")
+
+
+class KL0(SOC):
+
+    mcu = "KL0"
+
+    dpid = 0x0BC11477
+
+    class SIM:
+
+        def __init__(self):
+            self.r_SCGC5 = 0x40048038
+
+    class OSC:
+
+        def __init__(self):
+            self.r_CR = 0x40065000
+
+    class TPM:
+
+        def __init__(self, base):
+            self.r_SC     = base + 0x000  # Status and Control (TPM0_SC) 32 R/W 0000_0000h 31.4.1/465
+            self.r_CNT    = base + 0x004  # Counter (TPM0_CNT) 32 R/W 0000_0000h 31.4.2/466
+            self.r_MOD    = base + 0x008  # Modulo (TPM0_MOD) 32 R/W 0000_FFFFh 31.4.3/467
+            self.r_C0SC   = base + 0x00C  # Channel (n) Status and Control (TPM0_C0SC) 32 R/W 0000_0000h 31.4.4/468
+            self.r_C0V    = base + 0x010  # Channel (n) Value (TPM0_C0V) 32 R/W 0000_0000h 31.4.5/469
+            self.r_C1SC   = base + 0x014  # Channel (n) Status and Control (TPM0_C1SC) 32 R/W 0000_0000h 31.4.4/468
+            self.r_C1V    = base + 0x018  # Channel (n) Value (TPM0_C1V) 32 R/W 0000_0000h 31.4.5/469
+            self.r_STATUS = base + 0x050  # Capture and Compare Status (TPM0_STATUS) 32 R/W 0000_0000h 31.4.6/470
+            self.r_CONF   = base + 0x084  # Configuration (TPM0_CONF)
+
+    class PORT:
+        def __init__(self, base):
+            self.r_pcr = []
+            for i in range(32):
+                self.r_pcr.append(base + 0x000 + i * 4)
+            self.r_gpclr = base + 0x080
+            self.r_gpchr = base + 0x084
+            self.r_isfr = base + 0x0a0
+
+    class FGPIO:
+
+        def __init__(self, base):
+            self.r_pdor = base + 0x000
+            self.r_psor = base + 0x004
+            self.r_pcor = base + 0x008
+            self.r_ptor = base + 0x00C
+            self.r_pdir = base + 0x010
+            self.r_pddr = base + 0x014
+
+    def __init__(self, serial_wire_instrument):
+        super().__init__(serial_wire_instrument)
+        self.sim = KL0.SIM()
+        self.osc = KL0.OSC()
+        self.tpm0 = KL0.TPM(0x40038000)
+        self.tpm1 = KL0.TPM(0x40039000)
+        self.tpm = [self.tpm0, self.tpm1]
+        self.porta = KL0.PORT(0x40049000)
+        self.portb = KL0.PORT(0x4004A000)
+        self.port = [self.porta, self.portb]
+        self.fgpioa = KL0.FGPIO(0xF8000000)
+        self.fgpiob = KL0.FGPIO(0xF8000040)
+        self.fgpio = [self.fgpioa, self.fgpiob]
+
+    def start_counter(self):
+        osc = self.osc
+        # enable external reference clock
+        self.serial_wire_instrument.write_memory_uint32(osc.r_CR, 0xa0)
+
+        tpm = self.tpm0
+        # increment on every TPM counter clock
+        self.serial_wire_instrument.write_memory_uint32(tpm.r_SC, 0x00000008)
+        self.serial_wire_instrument.write_memory_uint32(tpm.r_CNT, 0x00000000)
+        self.serial_wire_instrument.write_memory_uint32(tpm.r_MOD, 0x0000ffff)
+        # Counter Stop On Overflow, counter continues in debug mode
+        self.serial_wire_instrument.write_memory_uint32(tpm.r_CONF, 0x000200c0)
+        # Input Capture on Rising Edge
+        self.serial_wire_instrument.write_memory_uint32(tpm.r_C0SC, 0x00000004)
+
+    def get_count(self):
+        tpm = self.tpm0
+        cnt = self.serial_wire_instrument.read_memory_uint32(tpm.r_CNT)
+        return cnt
+
+    def configure_io(self, io, output=False, connected=True):
+        """
+        // Enable PORTB
+        SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
+        """
+        scgc5 = self.serial_wire_instrument.read_memory_uint32(self.sim.r_SCGC5)
+        scgc5 |= 0x20 << io.port
+        self.serial_wire_instrument.write_memory_uint32(self.sim.r_SCGC5, scgc5)
+
+        """
+        // LED AF 1 GPIO, OUTPUT
+        PORTB->PCR[led_pin] = PORT_PCR_MUX(1);
+        PTB->PDDR |= 1 << led_pin;
+        """
+        port = self.port[io.port]
+        if connected:
+            pcr = 0x00000100
+        else:
+            pcr = 0x00000000
+        self.serial_wire_instrument.write_memory_uint32(port.r_pcr[io.pin], pcr)
+        fgpio = self.fgpio[io.port]
+        pddr = self.serial_wire_instrument.read_memory_uint32(fgpio.r_pddr)
+        if output:
+            pddr = pddr | 1 << io.pin
+        else:
+            pddr = pddr & ~(1 << io.pin)
+        self.serial_wire_instrument.write_memory_uint32(fgpio.r_pddr, pddr | 1 << io.pin)
+
+    def configure_output(self, io, value):
+        self.configure_io(io, output=True)
+        self.set_output(io, value)
+
+    def configure_output_open_drain(self, io, value):
+        raise IOError("unimplemented")
+
+    def set_output(self, io, value):
+        fgpio = self.fgpio[io.port]
+        if value:
+            self.serial_wire_instrument.write_memory_uint32(fgpio.r_psor, 1 << io.pin)
+        else:
+            self.serial_wire_instrument.write_memory_uint32(fgpio.r_pcor, 1 << io.pin)
+
+    def configure_input(self, io):
+        self.configure_io(io, output=False)
+
+    def configure_default(self, io):
+        self.configure_io(io, connected=False)
+
+    def get_input(self, io):
+        fgpio = self.fgpio[io.port]
+        pdir = self.serial_wire_instrument.read_memory_uint32(fgpio.r_pdir)
+        return (pdir & (1 << io.pin)) != 0
+
+
+class NRF53(SOC):
 
     mcu_app = "nrf53_app"
     mcu_net = "nrf53_net"
@@ -692,12 +858,6 @@ class NRF53:
 
     reset_network_forceoff = 0x50005614
 
-    class IO:
-
-        def __init__(self, port, pin):
-            self.port = port
-            self.pin = pin
-
     class GPIO:
 
         def __init__(self, base):
@@ -716,7 +876,7 @@ class NRF53:
 
         def __init__(self):
             base = 0x00FF0000
-            self.r_xosc32mtrim = 0xC20
+            self.r_xosc32mtrim = base + 0xC20
 
     class UICR:
 
@@ -759,7 +919,7 @@ class NRF53:
             self.oscillators_s = NRF53.OSCILLATORS(0x50004000)
 
     def __init__(self, serial_wire_instrument):
-        self.serial_wire_instrument = serial_wire_instrument
+        super().__init__(serial_wire_instrument)
         self.application = NRF53.Application()
 
     def select_ahb(self, ahb):
@@ -1089,6 +1249,12 @@ class I2CM:
             raise IOError("I2C nack")
         return rx.data[0]
 
+    def write_register(self, device, address, value):
+        io = I2CM.IO([I2CM.Transfer.tx([address, value])])
+        ack = self.device_io(device, io)
+        if not ack:
+            raise IOError("I2C nack")
+
 
 class I2CMnRF53(I2CM):
 
@@ -1121,51 +1287,76 @@ class I2CMnRF53(I2CM):
         return self.nrf53.get_input(self.sda)
 
 
-class QSPI:
+class SPI:
 
-    def __init__(self):
-        pass
+    def __init__(self, soc, csn, c, d0, d1, d2=None, d3=None):
+        super().__init__()
+        self.soc = soc
+        self.csn = csn
+        self.c = c
+        self.d0 = d0
+        self.d1 = d1
+        self.d2 = d2
+        self.d3 = d3
 
     def configure_dq_as_single(self):
-        raise IOError("unimplemented")
+        self.soc.configure_output(self.d0, True)
+        self.soc.configure_input(self.d1)
+        self.soc.configure_output(self.d2, True)
+        self.soc.configure_output(self.d3, True)
 
     def configure_dq_as_quad_input(self):
-        raise IOError("unimplemented")
+        self.soc.configure_input(self.d0)
+        self.soc.configure_input(self.d1)
+        self.soc.configure_input(self.d2)
+        self.soc.configure_input(self.d3)
 
     def configure_dq_as_quad_output(self):
-        raise IOError("unimplemented")
+        self.soc.configure_output(self.d0, True)
+        self.soc.configure_output(self.d1, True)
+        self.soc.configure_output(self.d2, True)
+        self.soc.configure_output(self.d3, True)
 
     def set_chip_select(self, value):
-        raise IOError("unimplemented")
+        self.soc.set_output(self.csn, value)
 
     def set_clock(self, value):
-        raise IOError("unimplemented")
+        self.soc.set_output(self.c, value)
 
     def set_hold(self, value):
-        raise IOError("unimplemented")
+        self.soc.set_output(self.d3, value)
 
     def set_write_protect(self, value):
-        raise IOError("unimplemented")
+        self.soc.set_output(self.d2, value)
 
     def set_reset(self, value):
-        raise IOError("unimplemented")
+        pass
 
     def set_dq_single(self, value: int):
-        raise IOError("unimplemented")
+        self.soc.set_output(self.d0, True if (value & 1) == 1 else False)
 
     def get_dq_single(self) -> int:
-        raise IOError("unimplemented")
+        return 1 if self.soc.get_input(self.d1) else 0
 
     def set_dq_quad(self, value: int):
-        raise IOError("unimplemented")
+        self.soc.set_output(self.d0, True if (value & 0b0001) else False)
+        self.soc.set_output(self.d1, True if (value & 0b0010) else False)
+        self.soc.set_output(self.d2, True if (value & 0b0100) else False)
+        self.soc.set_output(self.d3, True if (value & 0b1000) else False)
 
     def get_dq_quad(self) -> int:
-        raise IOError("unimplemented")
+        nibble = 0b0001 if self.soc.get_input(self.d0) else 0b0000
+        nibble |= 0b0010 if self.soc.get_input(self.d0) else 0b0000
+        nibble |= 0b0100 if self.soc.get_input(self.d0) else 0b0000
+        nibble |= 0b1000 if self.soc.get_input(self.d0) else 0b0000
+        return nibble
 
     def initialize(self):
-        raise IOError("unimplemented")
+        self.soc.configure_output(self.csn, True)
+        self.soc.configure_output(self.c, False)
+        self.configure_dq_as_single()
 
-    def io(self, tx, rxn, skip=None):
+    def io(self, tx, rxn=0, skip=None):
         if skip is None:
             skip = len(tx)
         self.set_chip_select(False)
@@ -1241,76 +1432,6 @@ class QSPI:
         return rx
 
 
-class QSPInRF53(QSPI):
-
-    def __init__(self, nrf53, csn, c, d0, d1, d2, d3):
-        super().__init__()
-        self.nrf53 = nrf53
-        self.csn = csn
-        self.c = c
-        self.d0 = d0
-        self.d1 = d1
-        self.d2 = d2
-        self.d3 = d3
-
-    def configure_dq_as_single(self):
-        self.nrf53.configure_output(self.d0, True)
-        self.nrf53.configure_input(self.d1)
-        self.nrf53.configure_output(self.d2, True)
-        self.nrf53.configure_output(self.d3, True)
-
-    def configure_dq_as_quad_input(self):
-        self.nrf53.configure_input(self.d0)
-        self.nrf53.configure_input(self.d1)
-        self.nrf53.configure_input(self.d2)
-        self.nrf53.configure_input(self.d3)
-
-    def configure_dq_as_quad_output(self):
-        self.nrf53.configure_output(self.d0, True)
-        self.nrf53.configure_output(self.d1, True)
-        self.nrf53.configure_output(self.d2, True)
-        self.nrf53.configure_output(self.d3, True)
-
-    def set_chip_select(self, value):
-        self.nrf53.set_output(self.csn, value)
-
-    def set_clock(self, value):
-        self.nrf53.set_output(self.c, value)
-
-    def set_hold(self, value):
-        self.nrf53.set_output(self.d3, value)
-
-    def set_write_protect(self, value):
-        self.nrf53.set_output(self.d2, value)
-
-    def set_reset(self, value):
-        pass
-
-    def set_dq_single(self, value: int):
-        self.nrf53.set_output(self.d0, True if (value & 1) == 1 else False)
-
-    def get_dq_single(self) -> int:
-        return 1 if self.nrf53.get_input(self.d1) else 0
-
-    def set_dq_quad(self, value: int):
-        self.nrf53.set_output(self.d0, True if (value & 0b0001) else False)
-        self.nrf53.set_output(self.d1, True if (value & 0b0010) else False)
-        self.nrf53.set_output(self.d2, True if (value & 0b0100) else False)
-        self.nrf53.set_output(self.d3, True if (value & 0b1000) else False)
-
-    def get_dq_quad(self) -> int:
-        nibble = 0b0001 if self.nrf53.get_input(self.d0) else 0b0000
-        nibble |= 0b0010 if self.nrf53.get_input(self.d0) else 0b0000
-        nibble |= 0b0100 if self.nrf53.get_input(self.d0) else 0b0000
-        nibble |= 0b1000 if self.nrf53.get_input(self.d0) else 0b0000
-        return nibble
-
-    def initialize(self):
-        self.nrf53.configure_output(self.csn, True)
-        self.nrf53.configure_output(self.c, False)
-        self.configure_dq_as_single()
-
-
 class ProgramScript(FixtureScript):
 
     def __init__(self, presenter, fixture, mcu, name, serial_wire_instrument_number=0, access_port_id=0):
@@ -1320,24 +1441,8 @@ class ProgramScript(FixtureScript):
         self.serial_wire_instrument_number = serial_wire_instrument_number
         self.access_port_id = access_port_id
 
-    def setup(self):
-        super().setup()
-
-        '''
-        relay_vusb_to_dut = self.fixture.relay_vusb_to_dut
-        relay_vusb_to_dut.set(True)
-
-        serial_wire_instrument = self.fixture.serial_wire_instruments[self.serial_wire_instrument_number]
-        serial_wire_instrument.set_enabled(True)
-        time.sleep(0.2)
-        voltage_serial_wire_instrument = self.fixture.voltage_serial_wire_instruments[self.serial_wire_instrument_number]
-        serial_wire_voltage = voltage_serial_wire_instrument.convert()
-        self.log(f"system voltage: {serial_wire_voltage:.2f}V")
-
-        swd = SerialWireDebug(serial_wire_instrument, self.access_port_id)
-        dpid = swd.connect()
-        # DPID 0x6BA02477
-        self.log(f"dpid: 0x{dpid:08x}")
+    @staticmethod
+    def dpid_str(dpid):
         revision = (dpid >> 28) & 0xf
         partno = (dpid >> 20) & 0xff
         res0 = (dpid >> 17) & 0x7
@@ -1345,40 +1450,11 @@ class ProgramScript(FixtureScript):
         version = (dpid >> 12) & 0xf
         designer = (dpid >> 1) & 0x7ff
         ra0 = (dpid >> 0) & 0x1
-        self.log(f"revision {revision}, partno {partno}, min {min}, version {version}, designer {designer:03x}")
+        return f"dpid: 0x{dpid:08x}" +\
+               f"(revision {revision}, partno {partno}, min {min}, version {version}, designer {designer:03x})"
 
-        r0 = serial_wire_instrument.read_register(0)
-        self.log(f"r0: 0x{r0:08x}")
-
-        battery_instrument = self.fixture.battery_instrument
-        battery_instrument.set_voltage(3.8)
-        battery_instrument.set_enabled(True)
-        relay_battery_to_dut = self.fixture.relay_battery_to_dut
-        relay_battery_to_dut.set(True)
-
-        storage_instrument = self.fixture.storage_instrument
-        storage_instrument.file_mkfs()
-        name = "test.bin"
-        storage_instrument.file_open(name, StorageInstrument.FA_CREATE_NEW)
-        for info in storage_instrument.file_list():
-            self.log(f"info: {info.name} {info.size}")
-        storage_instrument.file_expand(name, 4096)
-        address = storage_instrument.file_address(name)
-        data = bytes([0xf0])
-        offset = 0
-        storage_instrument.file_write(name, offset, data)
-        verify = storage_instrument.file_read(name, offset, len(data))
-        self.log(f"file: {data} {verify} @ 0x{address:08x}")
-        verify = storage_instrument.read(address, len(data))
-        self.log(f"storage: {data} {verify}")
-
-        gpio = self.fixture.gpio_instruments[0]
-        capabilities = gpio.get_capabilities()
-        self.log(f"capabilities: {capabilities}")
-        gpio.set_configuration(domain=GpioInstrument.Domain.analog, direction=GpioInstrument.Direction.input)
-        voltage = gpio.get_analog_input()
-        self.log(f"voltage: {voltage}")
-        '''
+    def setup(self):
+        super().setup()
 
     def main(self):
         super().main()
