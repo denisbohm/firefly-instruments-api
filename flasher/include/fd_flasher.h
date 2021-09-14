@@ -7,6 +7,7 @@ typedef enum {
      fd_flasher_status_success = 0,
      fd_flasher_status_failure = 1,
      fd_flasher_status_invalid_parameter = 2,
+     fd_flasher_status_unimplemented = 3,
 } fd_flasher_status_t;
 
 __attribute__((used))
