@@ -673,22 +673,53 @@ class SOC:
     def __init__(self, serial_wire_instrument):
         self.serial_wire_instrument = serial_wire_instrument
 
+    def configure_default(self, io):
+        transactions = []
+        self.append_configure_default_transactions(transactions, io)
+        self.serial_wire_instrument.transfer(transactions)
+
+    def append_configure_default_transactions(self, transactions, io):
+        raise IOError("unimplemented")
+
     def configure_output(self, io, value):
+        transactions = []
+        self.append_configure_output_transactions(transactions, io, value)
+        self.serial_wire_instrument.transfer(transactions)
+
+    def append_configure_output_transactions(self, transactions, io, value):
         raise IOError("unimplemented")
 
     def configure_output_open_drain(self, io, value):
+        transactions = []
+        self.append_configure_output_open_drain_transactions(transactions, io, value)
+        self.serial_wire_instrument.transfer(transactions)
+
+    def append_configure_output_open_drain_transactions(self, transactions, io, value):
         raise IOError("unimplemented")
 
     def set_output(self, io, value):
+        transactions = []
+        self.append_set_output_transactions(transactions, io, value)
+        self.serial_wire_instrument.transfer(transactions)
+
+    def append_set_output_transactions(self, transactions, io, value):
         raise IOError("unimplemented")
 
     def configure_input(self, io):
-        raise IOError("unimplemented")
+        transactions = []
+        self.append_configure_input_transactions(transactions, io)
+        self.serial_wire_instrument.transfer(transactions)
 
-    def configure_default(self, io):
+    def append_configure_input_transactions(self, transactions, io):
         raise IOError("unimplemented")
 
     def get_input(self, io):
+        transactions = []
+        get = self.append_get_input_transactions(transactions, io)
+        self.serial_wire_instrument.transfer(transactions)
+        return get()
+
+    def append_get_input_transactions(self, transactions, io):
         raise IOError("unimplemented")
 
 
@@ -804,6 +835,11 @@ class KL0(SOC):
         halt = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen | SerialWireDebug.dhcsr_ctrl_halt
         self.serial_wire_instrument.write_memory_uint32(SerialWireDebug.memory_dhcsr, halt)
 
+        # enable port a and b
+        scgc5 = self.serial_wire_instrument.read_memory_uint32(self.sim.r_SCGC5)
+        scgc5 |= 0x60
+        self.serial_wire_instrument.write_memory_uint32(self.sim.r_SCGC5, scgc5)
+
     def start_counter(self):
         osc = self.osc
         # enable external reference clock
@@ -824,58 +860,36 @@ class KL0(SOC):
         cnt = self.serial_wire_instrument.read_memory_uint32(tpm.r_CNT)
         return cnt
 
-    def configure_io(self, io, output=False, connected=True):
-        """
-        // Enable PORTB
-        SIM->SCGC5 |= SIM_SCGC5_PORTB_MASK;
-        """
-        scgc5 = self.serial_wire_instrument.read_memory_uint32(self.sim.r_SCGC5)
-        scgc5 |= 0x20 << io.port
-        self.serial_wire_instrument.write_memory_uint32(self.sim.r_SCGC5, scgc5)
-
-        """
-        // LED AF 1 GPIO, OUTPUT
-        PORTB->PCR[led_pin] = PORT_PCR_MUX(1);
-        PTB->PDDR |= 1 << led_pin;
-        """
+    def append_configure_io_transactions(self, transactions, io, output=False, connected=True):
         port = self.port[io.port]
-        if connected:
-            pcr = 0x00000100
-        else:
-            pcr = 0x00000000
-        self.serial_wire_instrument.write_memory_uint32(port.r_pcr[io.pin], pcr)
-        fgpio = self.fgpio[io.port]
-        pddr = self.serial_wire_instrument.read_memory_uint32(fgpio.r_pddr)
-        if output:
-            pddr = pddr | 1 << io.pin
-        else:
-            pddr = pddr & ~(1 << io.pin)
-        self.serial_wire_instrument.write_memory_uint32(fgpio.r_pddr, pddr | 1 << io.pin)
+        pcr = 0x00000100 if connected else 0x00000000
+        transactions.append(SerialWireDebugTransfer.write_memory(port.r_pcr[io.pin], pcr))
 
-    def configure_output(self, io, value):
-        self.configure_io(io, output=True)
-        self.set_output(io, value)
+        self.append_set_output_transactions(transactions, io, output)
 
-    def configure_output_open_drain(self, io, value):
+    def append_configure_default_transactions(self, transactions, io):
+        self.append_configure_io_transactions(transactions, io, connected=False)
+
+    def append_configure_output_transactions(self, transactions, io, value):
+        self.append_configure_io_transactions(transactions, io, output=True)
+        self.append_set_output_transactions(transactions, io, value)
+
+    def append_configure_output_open_drain_transactions(self, transactions, io, value):
         raise IOError("unimplemented")
 
-    def set_output(self, io, value):
+    def append_set_output_transactions(self, transactions, io, value):
         fgpio = self.fgpio[io.port]
-        if value:
-            self.serial_wire_instrument.write_memory_uint32(fgpio.r_psor, 1 << io.pin)
-        else:
-            self.serial_wire_instrument.write_memory_uint32(fgpio.r_pcor, 1 << io.pin)
+        address = fgpio.r_psor if value else fgpio.r_pcor
+        transactions.append(SerialWireDebugTransfer.write_memory(address, 1 << io.pin))
 
-    def configure_input(self, io):
-        self.configure_io(io, output=False)
+    def append_configure_input_transactions(self, transactions, io):
+        self.append_configure_io_transactions(transactions, io, output=False)
 
-    def configure_default(self, io):
-        self.configure_io(io, connected=False)
-
-    def get_input(self, io):
+    def append_get_input_transactions(self, transactions, io):
         fgpio = self.fgpio[io.port]
-        pdir = self.serial_wire_instrument.read_memory_uint32(fgpio.r_pdir)
-        return (pdir & (1 << io.pin)) != 0
+        transaction = SerialWireDebugTransfer.read_memory(fgpio.r_pdir)
+        transactions.append(transaction)
+        return lambda: (transaction.data & (1 << io.pin)) != 0
 
 
 class NRF53(SOC):
@@ -1026,37 +1040,37 @@ class NRF53(SOC):
         # See nRF5340 Production Programming nAN42 -denis
         self.release_network_forceoff()
 
-    def configure_output(self, io, value):
+    def append_configure_default_transactions(self, transactions, io):
+        self.append_configure_input_transactions(transactions, io)
+
+    def append_configure_output_transactions(self, transactions, io, value):
         p_s = self.application.p_s[io.port]
         pin_cnf = p_s.r_pin_cnf[io.pin]
-        self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000001)
-        self.set_output(io, value)
+        transactions.append(SerialWireDebugTransfer.write_memory(pin_cnf, 0x00000001))
+        self.append_set_output_transactions(transactions, io, value)
 
-    def configure_output_open_drain(self, io, value):
+    def append_configure_output_open_drain_transactions(self, transactions, io, value):
         p_s = self.application.p_s[io.port]
         pin_cnf = p_s.r_pin_cnf[io.pin]
-        self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000601)
-        self.set_output(io, value)
+        transactions.append(SerialWireDebugTransfer.write_memory(pin_cnf, 0x00000601))
+        self.append_set_output_transactions(transactions, io, value)
 
-    def set_output(self, io, value):
+    def append_set_output_transactions(self, transactions, io, value):
         p_s = self.application.p_s[io.port]
-        if value:
-            self.serial_wire_instrument.write_memory_uint32(p_s.r_outset, 1 << io.pin)
-        else:
-            self.serial_wire_instrument.write_memory_uint32(p_s.r_outclr, 1 << io.pin)
+        address = p_s.r_outset if value else p_s.r_outclr
+        data = 1 << io.pin
+        transactions.append(SerialWireDebugTransfer.write_memory(address, data))
 
-    def configure_input(self, io):
+    def append_configure_input_transactions(self, transactions, io):
         p_s = self.application.p_s[io.port]
         pin_cnf = p_s.r_pin_cnf[io.pin]
-        self.serial_wire_instrument.write_memory_uint32(pin_cnf, 0x00000000)
+        transactions.append(SerialWireDebugTransfer.write_memory(pin_cnf, 0x00000000))
 
-    def configure_default(self, io):
-        self.configure_input(io)
-
-    def get_input(self, io):
+    def append_get_input_transactions(self, transactions, io):
         p_s = self.application.p_s[io.port]
-        r_in = self.serial_wire_instrument.read_memory_uint32(p_s.r_in)
-        return (r_in & (1 << io.pin)) != 0
+        transaction = SerialWireDebugTransfer.read_memory(p_s.r_in)
+        transactions.append(transaction)
+        return lambda: (transaction.data & (1 << io.pin)) != 0
 
     def read_events_lfclkstarted(self):
         clock_s = self.application.clock_s
@@ -1151,89 +1165,129 @@ class I2CM:
         def __init__(self, transfers):
             self.transfers = transfers
 
-    def __init__(self):
-        pass
+    def __init__(self, soc, scl, sda):
+        self.soc = soc
+        self.scl = scl
+        self.sda = sda
 
     def delay(self):
         pass
-    
+
+    """
     def configure_in(self):
-        raise IOError("unimplemented")
-    
+        self.soc.configure_input(self.sda)
+
     def configure_out(self):
-        raise IOError("unimplemented")
+        self.soc.configure_output_open_drain(self.sda, True)
 
     def set_scl(self, value: bool):
-        raise IOError("unimplemented")
+        self.soc.set_output(self.scl, value)
 
     def set_sda(self, value: bool):
-        raise IOError("unimplemented")
+        self.soc.set_output(self.sda, value)
 
     def get_sda(self) -> bool:
-        raise IOError("unimplemented")
+        return self.soc.get_input(self.sda)
+    """
 
-    def clear_bus(self):
-        self.set_scl(True)
-        self.set_sda(True)
+    def clear_bus(self, transactions):
+        # self.set_scl(True)
+        self.soc.append_set_output_transactions(transactions, self.scl, True)
+        # self.set_sda(True)
+        self.soc.append_set_output_transactions(transactions, self.sda, True)
         self.delay()
         for _ in range(9):
-            self.set_scl(False)
+            # self.set_scl(False)
+            self.soc.append_set_output_transactions(transactions, self.scl, False)
             self.delay()
-            self.set_scl(True)
+            # self.set_scl(True)
+            self.soc.append_set_output_transactions(transactions, self.scl, True)
             self.delay()
 
     def start(self):
-        self.set_scl(True)
-        self.set_sda(True)
+        transactions = []
+        # self.set_scl(True)
+        self.soc.append_set_output_transactions(transactions, self.scl, True)
+        # self.set_sda(True)
+        self.soc.append_set_output_transactions(transactions, self.sda, True)
         self.delay()
-        self.set_sda(False)
+        # self.set_sda(False)
+        self.soc.append_set_output_transactions(transactions, self.sda, False)
         self.delay()
-        self.set_scl(False)
+        # self.set_scl(False)
+        self.soc.append_set_output_transactions(transactions, self.scl, False)
         self.delay()
+        self.soc.serial_wire_instrument.transfer(transactions)
     
     def stop(self):
-        self.set_sda(False)
+        transactions = []
+        # self.set_sda(False)
+        self.soc.append_set_output_transactions(transactions, self.sda, False)
         self.delay()
-        self.set_scl(True)
+        # self.set_scl(True)
+        self.soc.append_set_output_transactions(transactions, self.scl, True)
         self.delay()
-        self.set_sda(True)
+        # self.set_sda(True)
+        self.soc.append_set_output_transactions(transactions, self.sda, True)
         self.delay()
-    
-    def write_bit(self, bit: bool):
-        self.set_sda(bit)
+        self.soc.serial_wire_instrument.transfer(transactions)
+
+    def write_bit(self, transactions, bit: bool):
+        # self.set_sda(bit)
+        self.soc.append_set_output_transactions(transactions, self.sda, bit)
         self.delay()
-        self.set_scl(True)
+        # self.set_scl(True)
+        self.soc.append_set_output_transactions(transactions, self.scl, True)
         self.delay()
-        self.set_scl(False)
-    
-    def read_bit(self) -> bool:
-        self.set_sda(True)
+        # self.set_scl(False)
+        self.soc.append_set_output_transactions(transactions, self.scl, False)
+
+    def read_bit(self, transactions):
+        # self.set_sda(True)
+        self.soc.append_set_output_transactions(transactions, self.sda, True)
         self.delay()
-        self.set_scl(True)
+        # self.set_scl(True)
+        self.soc.append_set_output_transactions(transactions, self.scl, True)
         self.delay()
-        bit = self.get_sda()
-        self.set_scl(False)
-        return bit
+        # bit = self.get_sda()
+        get = self.soc.append_get_input_transactions(transactions, self.sda)
+        # self.set_scl(False)
+        self.soc.append_set_output_transactions(transactions, self.scl, False)
+        return get
     
     def write_byte(self, byte) -> bool:
+        transactions = []
         for _ in range(8):
-            self.write_bit((byte & 0x80) != 0)
+            self.write_bit(transactions, (byte & 0x80) != 0)
             byte <<= 1
     
-        self.set_sda(True)
-        self.configure_in()
-        ack = self.read_bit()
-        self.configure_out()
+        # self.set_sda(True)
+        self.soc.append_set_output_transactions(transactions, self.sda, True)
+        # self.configure_in()
+        self.soc.append_configure_input_transactions(transactions, self.sda)
+        get_ack = self.read_bit(transactions)
+        # self.configure_out(transactions)
+        self.soc.append_configure_output_open_drain_transactions(transactions, self.sda, True)
+        self.soc.serial_wire_instrument.transfer(transactions)
+        ack = get_ack()
         return ack is False
     
     def read_byte(self, ack: bool) -> int:
-        self.configure_in()
-        byte = 0
+        transactions = []
+        # self.configure_in()
+        self.soc.append_configure_input_transactions(transactions, self.sda)
+        get_bits = []
         for _ in range(8):
-            bit = self.read_bit()
+            get_bits.append(self.read_bit(transactions))
+        # self.configure_out()
+        self.soc.append_configure_output_open_drain_transactions(transactions, self.sda, True)
+        self.write_bit(transactions, not ack)
+        self.soc.serial_wire_instrument.transfer(transactions)
+        byte = 0
+        for i in range(8):
+            get_bit = get_bits[i]
+            bit = get_bit()
             byte = (byte << 1) | (1 if bit else 0)
-        self.configure_out()
-        self.write_bit(not ack)
         return byte
     
     def bus_tx(self, bytes) -> bool:
@@ -1286,10 +1340,11 @@ class I2CM:
         return ack
     
     def initialize(self):
-        self.set_scl(True)
-        self.set_sda(True)
-        self.configure_out()
-        self.clear_bus()
+        transactions = []
+        self.soc.append_configure_output_open_drain_transactions(transactions, self.scl, True)
+        self.soc.append_configure_output_open_drain_transactions(transactions, self.sda, True)
+        self.clear_bus(transactions)
+        self.soc.serial_wire_instrument.transfer(transactions)
 
     def read_register(self, device, address) -> int:
         rx = I2CM.Transfer.rx(1)
@@ -1304,37 +1359,6 @@ class I2CM:
         ack = self.device_io(device, io)
         if not ack:
             raise IOError("I2C nack")
-
-
-class I2CMnRF53(I2CM):
-
-    def __init__(self, nrf53, scl, sda):
-        super().__init__()
-        self.nrf53 = nrf53
-        self.scl = scl
-        self.sda = sda
-
-    def initialize(self):
-        self.nrf53.configure_output_open_drain(self.scl, True)
-        super().initialize()
-
-    def delay(self):
-        pass
-
-    def configure_in(self):
-        self.nrf53.configure_input(self.sda)
-
-    def configure_out(self):
-        self.nrf53.configure_output_open_drain(self.sda, True)
-
-    def set_scl(self, value: bool):
-        self.nrf53.set_output(self.scl, value)
-
-    def set_sda(self, value: bool):
-        self.nrf53.set_output(self.sda, value)
-
-    def get_sda(self) -> bool:
-        return self.nrf53.get_input(self.sda)
 
 
 class SPI:
@@ -1383,7 +1407,7 @@ class SPI:
         pass
 
     def set_dq_single(self, value: int):
-        self.soc.set_output(self.d0, True if (value & 1) == 1 else False)
+        self.soc.set_output(self.d0, (value & 1) == 1)
 
     def get_dq_single(self) -> int:
         return 1 if self.soc.get_input(self.d1) else 0
@@ -1409,28 +1433,41 @@ class SPI:
     def io(self, tx, rxn=0, skip=None):
         if skip is None:
             skip = len(tx)
-        self.set_chip_select(False)
-        self.configure_dq_as_single()
+
+        transactions = []
+        self.soc.append_configure_output_transactions(transactions, self.d0, True)
+        self.soc.append_configure_input_transactions(transactions, self.d1)
+        self.soc.append_configure_output_transactions(transactions, self.d2, True)
+        self.soc.append_configure_output_transactions(transactions, self.d3, True)
+        self.soc.append_set_output_transactions(transactions, self.csn, False)
         count = max(len(tx), rxn)
-        rx = []
+        gets = []
         for i in range(count):
             tx_byte = tx[i] if i < len(tx) else 0xff
+            for j in range(8):
+                self.soc.append_set_output_transactions(transactions, self.d0, (tx_byte & 0x80) != 0)
+                tx_byte <<= 1
+                self.soc.append_set_output_transactions(transactions, self.c, True)
+                gets.append(self.soc.append_get_input_transactions(transactions, self.d1))
+                self.soc.append_set_output_transactions(transactions, self.c, False)
+        self.soc.append_set_output_transactions(transactions, self.csn, True)
+        self.soc.serial_wire_instrument.transfer(transactions)
+
+        rx = []
+        for i in range(count):
             rx_byte = 0
             for j in range(8):
-                self.set_dq_single(tx_byte >> 7)
-                tx_byte <<= 1
-                self.set_clock(True)
+                get = gets[i * 8 + j]
+                value = get()
                 rx_byte <<= 1
-                rx_byte |= self.get_dq_single()
-                self.set_clock(False)
+                rx_byte |= 1 if value else 0
             if i >= skip:
                 rx.append(rx_byte)
-        self.set_chip_select(True)
         return rx
 
     def read_id(self):
         tx = [0x9F]
-        rx = self.io(tx, 20)
+        rx = self.io(tx, 4)
         return rx
 
     '''
@@ -1478,7 +1515,7 @@ class SPI:
 
     def read_id_quad(self):
         tx = [0xAF]
-        rx = self.io_quad(tx, 20)
+        rx = self.io_quad(tx, 4)
         return rx
 
 

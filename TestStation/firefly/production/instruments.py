@@ -732,7 +732,7 @@ class SerialWireInstrument(Instrument):
                 arguments.put_varuint(len(transfer.data))
                 arguments.put_bytes(transfer.data)
             else:
-                break
+                raise IOError('unknown transfer type')
         results = self.call(SerialWireInstrument.apiTypeTransfer, arguments)
         code = results.get_varuint()
         if code != 0:
@@ -753,7 +753,7 @@ class SerialWireInstrument(Instrument):
                     raise IOError('transfer mismatch')
                 transfer.data = results.get_uint32()
             elif transfer.type == SerialWireDebugTransfer.typeWritePort:
-                break
+                continue
             if transfer.type == SerialWireDebugTransfer.typeSelectAndReadAccessPort:
                 transfer_type = results.get_varuint()
                 if transfer_type != transfer.type:
@@ -763,8 +763,8 @@ class SerialWireInstrument(Instrument):
                     raise IOError('transfer mismatch')
                 transfer.data = results.get_uint32()
             elif transfer.type == SerialWireDebugTransfer.typeSelectAndWriteAccessPort:
-                break
-            if transfer.type == SerialWireDebugTransfer.typeReadRegister:
+                continue
+            elif transfer.type == SerialWireDebugTransfer.typeReadRegister:
                 transfer_type = results.get_varuint()
                 if transfer_type != transfer.type:
                     raise IOError('transfer mismatch')
@@ -773,7 +773,7 @@ class SerialWireInstrument(Instrument):
                     raise IOError('transfer mismatch')
                 transfer.data = results.get_uint32()
             elif transfer.type == SerialWireDebugTransfer.typeWriteRegister:
-                break
+                continue
             elif transfer.type == SerialWireDebugTransfer.typeReadMemory:
                 transfer_type = results.get_varuint()
                 if transfer_type != transfer.type:
@@ -783,7 +783,7 @@ class SerialWireInstrument(Instrument):
                     raise IOError('transfer mismatch')
                 transfer.data = results.get_uint32()
             elif transfer.type == SerialWireDebugTransfer.typeWriteMemory:
-                break
+                continue
             elif transfer.type == SerialWireDebugTransfer.typeReadData:
                 transfer_type = results.get_varuint()
                 if transfer_type != transfer.type:
@@ -793,9 +793,9 @@ class SerialWireInstrument(Instrument):
                     raise IOError('transfer mismatch')
                 transfer.data = results.get_uint32()
             elif transfer.type == SerialWireDebugTransfer.typeWriteData:
-                break
+                continue
             else:
-                break
+                raise IOError('unknown transfer type')
 
     def read_port(self, port, register):
         transfer = SerialWireDebugTransfer.read_port(port, register)
