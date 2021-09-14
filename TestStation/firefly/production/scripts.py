@@ -698,6 +698,19 @@ class KL0(SOC):
 
     dpid = 0x0BC11477
 
+    dp_select_apsel_ahb = 0
+    dp_select_apsel_mdm = 1
+
+    mdm_ap_status = 0x01000000
+    mdm_ap_control = 0x01000004
+    mdm_ap_idr = 0x010000fc
+
+    mdm_ap_control_flash_mass_erase = 0x00000001
+    mdm_ap_control_system_reset = 0x00000008
+
+    ap_idr_ahb = 0x84770001
+    ap_idr_mdm = 0x001c0200
+
     class SIM:
 
         def __init__(self):
@@ -753,6 +766,43 @@ class KL0(SOC):
         self.fgpioa = KL0.FGPIO(0xF8000000)
         self.fgpiob = KL0.FGPIO(0xF8000040)
         self.fgpio = [self.fgpioa, self.fgpiob]
+
+    def select_ahb(self):
+        self.serial_wire_instrument.set_access_port_id(KL0.dp_select_apsel_ahb)
+        idr = self.serial_wire_instrument.select_and_read_access_port(SerialWireDebug.ap_idr)
+        if idr != KL0.ap_idr_ahb:
+            raise IOError("unexpected ahb idr value")
+
+    def select_mdm(self):
+        self.serial_wire_instrument.set_access_port_id(KL0.dp_select_apsel_mdm)
+        idr = self.serial_wire_instrument.select_and_read_access_port(SerialWireDebug.ap_idr)
+        if idr != KL0.ap_idr_mdm:
+            raise IOError("unexpected mdm idr value")
+
+    def reset(self):
+        self.select_mdm()
+        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, KL0.mdm_ap_control_system_reset)
+        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, 0)
+
+    def read_erase_all_status(self):
+        status = self.serial_wire_instrument.select_and_read_access_port(KL0.mdm_ap_control)
+        return (status & KL0.mdm_ap_control_flash_mass_erase) != 0
+
+    def erase_all(self):
+        self.select_mdm()
+        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, KL0.mdm_ap_control_flash_mass_erase)
+        retry(lambda: self.read_erase_all_status() == 0, 1.0, "KL0 mdm ap erase all timeout")
+
+    def initialize_ahb(self):
+        self.select_ahb()
+        self.serial_wire_instrument.select_and_write_access_port(
+            SerialWireDebug.ap_csw,
+            SerialWireDebug.ap_csw_prot |
+            SerialWireDebug.ap_csw_addrinc_single |
+            SerialWireDebug.ap_csw_size_32bit
+        )
+        halt = SerialWireDebug.dhcsr_dbgkey | SerialWireDebug.dhcsr_ctrl_debugen | SerialWireDebug.dhcsr_ctrl_halt
+        self.serial_wire_instrument.write_memory_uint32(SerialWireDebug.memory_dhcsr, halt)
 
     def start_counter(self):
         osc = self.osc
