@@ -501,7 +501,8 @@ class CortexM:
 def retry(function, timeout, error):
     start = time.time()
     while True:
-        if function():
+        complete = function()
+        if complete:
             break
         delta = time.time() - start
         if delta > timeout:
@@ -670,7 +671,8 @@ class Flasher:
     def verify(self):
         address = self.firmware.address
         count = len(self.firmware.data)
-        if self.storage_instrument is not None:
+        use_storage = True
+        if use_storage and (self.storage_instrument is not None):
             code = self.rpc.serial_wire_instrument.compare_to_storage(
                 address, count, self.storage_instrument.identifier, self.file_address
             )
@@ -679,6 +681,12 @@ class Flasher:
         else:
             data = self.rpc.serial_wire_instrument.read_memory(address, count)
             if data != self.firmware.data:
+                mismatches = 0
+                for i in range(count):
+                    vi = data[i]
+                    di = self.firmware.data[i]
+                    if vi != di:
+                        mismatches += 1
                 raise IOError("firmware verification failed")
 
     def program(self):
@@ -763,7 +771,7 @@ class KL0(SOC):
 
     mdm_ap_control_flash_mass_erase = 0x00000001
     mdm_ap_control_debug_request = 0x00000004
-    mdm_ap_control_system_reset = 0x00000008
+    mdm_ap_control_system_reset_request = 0x00000008
 
     ap_idr_ahb = 0x04770031
     ap_idr_mdm = 0x001c0020
@@ -838,17 +846,22 @@ class KL0(SOC):
 
     def reset(self):
         self.select_mdm()
-        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, KL0.mdm_ap_control_system_reset)
+        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control,
+                                                                 KL0.mdm_ap_control_system_reset_request)
         self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, 0)
 
-    def read_erase_all_status(self):
-        status = self.serial_wire_instrument.select_and_read_access_port(KL0.mdm_ap_control)
-        return (status & KL0.mdm_ap_control_flash_mass_erase) != 0
+    def is_erase_complete(self):
+        control = self.serial_wire_instrument.select_and_read_access_port(KL0.mdm_ap_control)
+        return (control & KL0.mdm_ap_control_flash_mass_erase) == 0
 
     def erase_all(self):
+        self.serial_wire_instrument.set(SerialWireInstrument.outputReset, True)
         self.select_mdm()
-        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, KL0.mdm_ap_control_flash_mass_erase)
-        retry(lambda: self.read_erase_all_status() == 0, 1.0, "KL0 mdm ap erase all timeout")
+        self.reset()
+        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control,
+                                                                 KL0.mdm_ap_control_flash_mass_erase)
+        retry(lambda: self.is_erase_complete(), 1.0, "KL0 mdm ap erase all timeout")
+        self.serial_wire_instrument.set(SerialWireInstrument.outputReset, False)
         self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, KL0.mdm_ap_control_debug_request)
         self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, 0)
 
