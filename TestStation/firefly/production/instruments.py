@@ -573,6 +573,7 @@ class SerialWireInstrument(Instrument):
 
     def __init__(self, manager, identifier):
         super().__init__(manager, identifier)
+        self.max_count = 1024
 
     def reset(self):
         self.invoke(SerialWireInstrument.apiTypeReset)
@@ -653,11 +654,10 @@ class SerialWireInstrument(Instrument):
             raise IOError(f"memory transfer issue: code={code}")
 
     def write_memory(self, address, data):
-        max_count = 1024
         subaddress = address
         while True:
             offset = subaddress - address
-            count = min(len(data) - offset, max_count)
+            count = min(len(data) - offset, self.max_count)
             if count == 0:
                 break
             subdata = data[offset:offset + count]
@@ -678,12 +678,11 @@ class SerialWireInstrument(Instrument):
         return result
 
     def read_memory(self, address, length):
-        max_count = 1024
         data = []
         subaddress = address
         while True:
             offset = subaddress - address
-            count = min(length - offset, max_count)
+            count = min(length - offset, self.max_count)
             if count == 0:
                 break
             subdata = self.read_memory_raw(subaddress, count)

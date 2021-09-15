@@ -168,7 +168,7 @@ class FirmwareRange:
 
 class Firmware:
 
-    def __init__(self, name):
+    def __init__(self, name, pad=8):
         self.name = name
         self.address = None
         self.data = None
@@ -176,6 +176,7 @@ class Firmware:
         self.stack = None
         self.functions = None
         self.load_elf_from_resource(name)
+        self.pad(pad)
 
     def load_symbols(self, elf):
         self.functions = {}
@@ -240,8 +241,14 @@ class Firmware:
             firmware_data[start:end] = data
         self.address = firmware_address
         self.data = firmware_data
-        self.heap = self.get_section_range(elf, '.bss.block.heap')
-        self.stack = self.get_section_range(elf, '.bss.block.stack')
+        try:
+            self.heap = self.get_section_range(elf, '.heap')
+        except Exception:
+            self.heap = self.get_section_range(elf, '.bss.block.heap')
+        try:
+            self.stack = self.get_section_range(elf, '.stack')
+        except Exception:
+            self.stack = self.get_section_range(elf, '.bss.block.stack')
 
     def load_elf(self, name):
         with open(name, 'rb') as file:
@@ -253,6 +260,11 @@ class Firmware:
         bundle = Bundle.get_default_bundle()
         path = bundle.path_for_resource(name)
         self.load_elf(path)
+
+    def pad(self, size):
+        remainder = len(self.data) % size
+        if remainder != 0:
+            self.data.extend([0] * (size - remainder))
 
     def __str__(self):
         string = f"code: 0x{self.address:08x} size: 0x{len(self.data):08x}"
@@ -387,6 +399,18 @@ class SerialWireDebug:
 
     def __init__(self, serial_wire_instrument):
         self.serial_wire_instrument = serial_wire_instrument
+
+    @staticmethod
+    def dpid_str(dpid):
+        revision = (dpid >> 28) & 0xf
+        partno = (dpid >> 20) & 0xff
+        res0 = (dpid >> 17) & 0x7
+        min = (dpid >> 16) & 0x1
+        version = (dpid >> 12) & 0xf
+        designer = (dpid >> 1) & 0x7ff
+        ra0 = (dpid >> 0) & 0x1
+        return f"dpid: 0x{dpid:08x}" +\
+               f"(revision {revision}, partno {partno}, min {min}, version {version}, designer {designer:03x})"
 
     def enable_and_reset(self):
         self.serial_wire_instrument.set_enabled(True)
@@ -628,6 +652,7 @@ class Flasher:
     def flash(self):
         assert (self.rpc.firmware.heap.address & 0x7) == 0
         assert (self.rpc.firmware.heap.size & 0x7) == 0
+        assert (len(self.rpc.firmware.data) & 0x7) == 0
         heap = self.rpc.firmware.heap.address
         max_count = self.rpc.firmware.heap.size
         address = self.firmware.address
@@ -732,15 +757,16 @@ class KL0(SOC):
     dp_select_apsel_ahb = 0
     dp_select_apsel_mdm = 1
 
-    mdm_ap_status = 0x01000000
-    mdm_ap_control = 0x01000004
-    mdm_ap_idr = 0x010000fc
+    mdm_ap_status = 0x00
+    mdm_ap_control = 0x04
+    mdm_ap_idr = 0xfc
 
     mdm_ap_control_flash_mass_erase = 0x00000001
+    mdm_ap_control_debug_request = 0x00000004
     mdm_ap_control_system_reset = 0x00000008
 
-    ap_idr_ahb = 0x84770001
-    ap_idr_mdm = 0x001c0200
+    ap_idr_ahb = 0x04770031
+    ap_idr_mdm = 0x001c0020
 
     class SIM:
 
@@ -823,6 +849,8 @@ class KL0(SOC):
         self.select_mdm()
         self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, KL0.mdm_ap_control_flash_mass_erase)
         retry(lambda: self.read_erase_all_status() == 0, 1.0, "KL0 mdm ap erase all timeout")
+        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, KL0.mdm_ap_control_debug_request)
+        self.serial_wire_instrument.select_and_write_access_port(KL0.mdm_ap_control, 0)
 
     def initialize_ahb(self):
         self.select_ahb()
@@ -1527,18 +1555,6 @@ class ProgramScript(FixtureScript):
         self.name = name
         self.serial_wire_instrument_number = serial_wire_instrument_number
         self.access_port_id = access_port_id
-
-    @staticmethod
-    def dpid_str(dpid):
-        revision = (dpid >> 28) & 0xf
-        partno = (dpid >> 20) & 0xff
-        res0 = (dpid >> 17) & 0x7
-        min = (dpid >> 16) & 0x1
-        version = (dpid >> 12) & 0xf
-        designer = (dpid >> 1) & 0x7ff
-        ra0 = (dpid >> 0) & 0x1
-        return f"dpid: 0x{dpid:08x}" +\
-               f"(revision {revision}, partno {partno}, min {min}, version {version}, designer {designer:03x})"
 
     def setup(self):
         super().setup()
