@@ -72,13 +72,13 @@ uint32_t fd_flasher_write(uint32_t address, uint8_t *data, uint32_t size) {
         FTFA->FCCOB1 = (write_address >> 16) & 0xff;
         FTFA->FCCOB2 = (write_address >> 8) & 0xff;
         FTFA->FCCOB3 = write_address & 0xff;
-        FTFA->FCCOB4 = (*write_data++ >> 24) & 0xff;
-        FTFA->FCCOB5 = (*write_data++ >> 16) & 0xff;
-        FTFA->FCCOB6 = (*write_data++ >> 8) & 0xff;
-        FTFA->FCCOB7 = *write_data++ & 0xff;
+        FTFA->FCCOB7 = *write_data++;
+        FTFA->FCCOB6 = *write_data++;
+        FTFA->FCCOB5 = *write_data++;
+        FTFA->FCCOB4 = *write_data++;
         FTFA->FSTAT |= FTFA_FSTAT_CCIF_MASK;
 
-        write_address++;
+        write_address += 4;
         erase_size -= 4;
     }
 
