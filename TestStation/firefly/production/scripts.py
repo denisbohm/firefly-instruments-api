@@ -831,6 +831,7 @@ class KL0(SOC):
         self.fgpioa = KL0.FGPIO(0xF8000000)
         self.fgpiob = KL0.FGPIO(0xF8000040)
         self.fgpio = [self.fgpioa, self.fgpiob]
+        self.pddr = 0
 
     def select_ahb(self):
         self.serial_wire_instrument.set_access_port_id(KL0.dp_select_apsel_ahb)
@@ -878,7 +879,7 @@ class KL0(SOC):
 
         # enable port a and b
         scgc5 = self.serial_wire_instrument.read_memory_uint32(self.sim.r_SCGC5)
-        scgc5 |= 0x60
+        scgc5 |= 0x600
         self.serial_wire_instrument.write_memory_uint32(self.sim.r_SCGC5, scgc5)
 
     def start_counter(self):
@@ -901,12 +902,21 @@ class KL0(SOC):
         cnt = self.serial_wire_instrument.read_memory_uint32(tpm.r_CNT)
         return cnt
 
-    def append_configure_io_transactions(self, transactions, io, output=False, connected=True):
+    def append_configure_io_transactions(self, transactions, io, output=False, connected=True, pullup=False):
+        self.append_set_output_transactions(transactions, io, output)
+
+        fgpio = self.fgpio[io.port]
+        if output:
+            self.pddr = self.pddr | (1 << io.pin)
+        else:
+            self.pddr = self.pddr & ~(1 << io.pin)
+        transactions.append(SerialWireDebugTransfer.write_memory(fgpio.r_pddr, self.pddr))
+
         port = self.port[io.port]
         pcr = 0x00000100 if connected else 0x00000000
+        if pullup:
+            pcr |= 0b11
         transactions.append(SerialWireDebugTransfer.write_memory(port.r_pcr[io.pin], pcr))
-
-        self.append_set_output_transactions(transactions, io, output)
 
     def append_configure_default_transactions(self, transactions, io):
         self.append_configure_io_transactions(transactions, io, connected=False)
@@ -1417,20 +1427,26 @@ class SPI:
     def configure_dq_as_single(self):
         self.soc.configure_output(self.d0, True)
         self.soc.configure_input(self.d1)
-        self.soc.configure_output(self.d2, True)
-        self.soc.configure_output(self.d3, True)
+        if self.d2 is not None:
+            self.soc.configure_output(self.d2, True)
+        if self.d3 is not None:
+            self.soc.configure_output(self.d3, True)
 
     def configure_dq_as_quad_input(self):
         self.soc.configure_input(self.d0)
         self.soc.configure_input(self.d1)
-        self.soc.configure_input(self.d2)
-        self.soc.configure_input(self.d3)
+        if self.d2 is not None:
+            self.soc.configure_input(self.d2)
+        if self.d3 is not None:
+            self.soc.configure_input(self.d3)
 
     def configure_dq_as_quad_output(self):
         self.soc.configure_output(self.d0, True)
         self.soc.configure_output(self.d1, True)
-        self.soc.configure_output(self.d2, True)
-        self.soc.configure_output(self.d3, True)
+        if self.d2 is not None:
+            self.soc.configure_output(self.d2, True)
+        if self.d3 is not None:
+            self.soc.configure_output(self.d3, True)
 
     def set_chip_select(self, value):
         self.soc.set_output(self.csn, value)
@@ -1478,10 +1494,12 @@ class SPI:
         transactions = []
         self.soc.append_configure_output_transactions(transactions, self.d0, True)
         self.soc.append_configure_input_transactions(transactions, self.d1)
-        self.soc.append_configure_output_transactions(transactions, self.d2, True)
-        self.soc.append_configure_output_transactions(transactions, self.d3, True)
+        if self.d2 is not None:
+            self.soc.append_configure_output_transactions(transactions, self.d2, True)
+        if self.d3 is not None:
+            self.soc.append_configure_output_transactions(transactions, self.d3, True)
         self.soc.append_set_output_transactions(transactions, self.csn, False)
-        count = max(len(tx), rxn)
+        count = max(len(tx), skip + rxn)
         gets = []
         for i in range(count):
             tx_byte = tx[i] if i < len(tx) else 0xff
