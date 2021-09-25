@@ -1414,7 +1414,7 @@ class I2CM:
 
 class SPI:
 
-    def __init__(self, soc, csn, c, d0, d1, d2=None, d3=None):
+    def __init__(self, soc, csn, c, d0, d1=None, d2=None, d3=None):
         super().__init__()
         self.soc = soc
         self.csn = csn
@@ -1426,7 +1426,8 @@ class SPI:
 
     def configure_dq_as_single(self):
         self.soc.configure_output(self.d0, True)
-        self.soc.configure_input(self.d1)
+        if self.d1 is not None:
+            self.soc.configure_input(self.d1)
         if self.d2 is not None:
             self.soc.configure_output(self.d2, True)
         if self.d3 is not None:
@@ -1435,18 +1436,14 @@ class SPI:
     def configure_dq_as_quad_input(self):
         self.soc.configure_input(self.d0)
         self.soc.configure_input(self.d1)
-        if self.d2 is not None:
-            self.soc.configure_input(self.d2)
-        if self.d3 is not None:
-            self.soc.configure_input(self.d3)
+        self.soc.configure_input(self.d2)
+        self.soc.configure_input(self.d3)
 
     def configure_dq_as_quad_output(self):
         self.soc.configure_output(self.d0, True)
         self.soc.configure_output(self.d1, True)
-        if self.d2 is not None:
-            self.soc.configure_output(self.d2, True)
-        if self.d3 is not None:
-            self.soc.configure_output(self.d3, True)
+        self.soc.configure_output(self.d2, True)
+        self.soc.configure_output(self.d3, True)
 
     def set_chip_select(self, value):
         self.soc.set_output(self.csn, value)
@@ -1493,7 +1490,8 @@ class SPI:
 
         transactions = []
         self.soc.append_configure_output_transactions(transactions, self.d0, True)
-        self.soc.append_configure_input_transactions(transactions, self.d1)
+        if self.d1 is not None:
+            self.soc.append_configure_input_transactions(transactions, self.d1)
         if self.d2 is not None:
             self.soc.append_configure_output_transactions(transactions, self.d2, True)
         if self.d3 is not None:
@@ -1507,10 +1505,14 @@ class SPI:
                 self.soc.append_set_output_transactions(transactions, self.d0, (tx_byte & 0x80) != 0)
                 tx_byte <<= 1
                 self.soc.append_set_output_transactions(transactions, self.c, True)
-                gets.append(self.soc.append_get_input_transactions(transactions, self.d1))
+                if self.d1 is not None:
+                    gets.append(self.soc.append_get_input_transactions(transactions, self.d1))
                 self.soc.append_set_output_transactions(transactions, self.c, False)
         self.soc.append_set_output_transactions(transactions, self.csn, True)
         self.soc.serial_wire_instrument.transfer(transactions)
+
+        if self.d1 is None:
+            return None
 
         rx = []
         for i in range(count):

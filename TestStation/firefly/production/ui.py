@@ -71,6 +71,7 @@ class TestStation:
 
     def add_log(self):
         self.logText = scrolledtext.ScrolledText(state='disabled', wrap='none')
+        self.logText.bind("<1>", lambda event: self.logText.focus_set())
         self.logText['state'] = 'disabled'
         self.logText.tag_configure('information')
         self.logText.tag_configure('pass', background='green')
