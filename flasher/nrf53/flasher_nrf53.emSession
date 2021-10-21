@@ -12,11 +12,8 @@
  <Memory4/>
  <Project>
   <ProjectSessionItem path="flasher_nrf53"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app_test"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app_test;Device Files"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app_test;Script Files"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app_test;Source Files"/>
-  <ProjectSessionItem path="flasher_nrf53;nrf53_app_test;System Files"/>
+  <ProjectSessionItem path="flasher_nrf53;nrf53_app"/>
+  <ProjectSessionItem path="flasher_nrf53;nrf53_app;Source Files"/>
  </Project>
  <Register1/>
  <Register2/>
@@ -40,6 +37,8 @@
  <Watch4>
   <Watches active="0" update="Never"/>
  </Watch4>
- <Files/>
- <ARMCrossStudioWindow activeProject="nrf53_app_test" fileDialogDefaultFilter="*.*" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="/Users/denis/sandbox/denisbohm/firefly-instruments-api/flasher/nrf53" debugSearchPath="" autoConnectCapabilities="3199"/>
+ <Files>
+  <SessionOpenFile windowGroup="DockEditLeft" x="39" y="72" useTextEdit="1" openedFrom="" useBinaryEdit="0" left="0" path="src/fd_flasher_nrf53.c" selected="1" top="42" codecName="Default"/>
+ </Files>
+ <ARMCrossStudioWindow activeProject="nrf53_app" fileDialogDefaultFilter="*.*" autoConnectTarget="J-Link" buildConfiguration="Debug" sessionSettings="" debugSearchFileMap="" fileDialogInitialDirectory="/Users/denis/sandbox/denisbohm/firefly-instruments-api/flasher/nrf53" debugSearchPath="" autoConnectCapabilities="3199"/>
 </session>

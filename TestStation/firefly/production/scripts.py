@@ -686,6 +686,7 @@ class Flasher:
             self.transfer_to_ram(heap, offset, count)
             self.write(subaddress, heap, count)
 
+            """
             subdata = self.firmware.data[offset:offset + count]
             verify = self.rpc.serial_wire_instrument.read_memory(subaddress, len(subdata))
             if verify != subdata:
@@ -696,6 +697,7 @@ class Flasher:
                     if vi != di:
                         mismatches += 1
                 raise IOError("firmware verification failed")
+            """
 
             subaddress += count
 
