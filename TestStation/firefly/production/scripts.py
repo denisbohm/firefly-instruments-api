@@ -9,6 +9,7 @@ from .instruments import SerialWireDebugTransfer
 from .instruments import StorageInstrument
 from elftools.elf.elffile import ELFFile
 from elftools.elf.constants import SH_FLAGS
+from intelhex import IntelHex
 
 
 class Fixture:
@@ -175,8 +176,26 @@ class Firmware:
         self.heap = None
         self.stack = None
         self.functions = None
-        self.load_elf_from_resource(name)
+        if name.endswith(".elf"):
+            self.load_elf_from_resource(name)
+        else:
+            self.load_hex_from_resource(name)
         self.pad(pad)
+
+    def load_hex(self, path):
+        intel_hex = IntelHex(path)
+        segments = intel_hex.segments()
+        address = segments[0][0]
+        address_end = segments[-1][1]
+        size = address_end - address
+        data = intel_hex.tobinarray(start=address, size=size)
+        self.address = address
+        self.data = list(data)
+
+    def load_hex_from_resource(self, name):
+        bundle = Bundle.get_default_bundle()
+        path = bundle.path_for_resource(name)
+        self.load_hex(path)
 
     def load_symbols(self, elf):
         self.functions = {}
@@ -596,7 +615,7 @@ class Flasher:
             self.transfer_to_ram = self.transfer_to_ram_via_swd
 
     def setup_firmware(self):
-        self.firmware = Firmware(f"firmware/{self.name}.elf")
+        self.firmware = Firmware(f"firmware/{self.name}")
         if self.storage_instrument is None:
             return
 
@@ -666,6 +685,18 @@ class Flasher:
                 break
             self.transfer_to_ram(heap, offset, count)
             self.write(subaddress, heap, count)
+
+            subdata = self.firmware.data[offset:offset + count]
+            verify = self.rpc.serial_wire_instrument.read_memory(subaddress, len(subdata))
+            if verify != subdata:
+                mismatches = 0
+                for i in range(len(subdata)):
+                    vi = verify[i]
+                    di = subdata[i]
+                    if vi != di:
+                        mismatches += 1
+                raise IOError("firmware verification failed")
+
             subaddress += count
 
     def verify(self):
