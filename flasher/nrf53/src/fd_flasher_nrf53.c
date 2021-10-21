@@ -65,11 +65,12 @@ uint32_t fd_flasher_write(uint32_t address, uint8_t *data, uint32_t size) {
     NRF_NVMC->CONFIG = 1; // WEN
     uint32_t *write_address = (uint32_t *)address;
     uint32_t *write_data = (uint32_t *)data;
-    uint32_t erase_size = size;
-    while (erase_size-- != 0) {
+    uint32_t write_size = size;
+    while (write_size != 0) {
         while (!NRF_NVMC->READY) {
         }
         *write_address++ = *write_data++;
+        write_size -= sizeof(uint32_t);
     }
     NRF_NVMC->CONFIG = 0;
 
