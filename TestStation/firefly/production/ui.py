@@ -51,7 +51,8 @@ class Runner(threading.Thread):
                 detail += f"\n at {frame.name} in {os.path.basename(frame.filename)} line {frame.lineno}: {frame.line}"
             self.presenter.log(detail, "fail")
         try:
-            self.fixture.manager.reset_instruments()
+            if self.script.resetInstruments:
+                self.fixture.manager.reset_instruments()
         except:
             pass
         self.presenter.completed()

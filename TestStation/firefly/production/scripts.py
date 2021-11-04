@@ -111,6 +111,7 @@ class Script:
     def __init__(self, presenter):
         self.presenter = presenter
         self.status = Script.status_pass
+        self.resetInstruments = True
 
     def setup(self):
         pass
