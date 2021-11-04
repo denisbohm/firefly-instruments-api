@@ -998,6 +998,9 @@ class InstrumentManager:
         assert type == return_type
         return return_content
 
+    def reset_instruments(self):
+        return self.write(self.identifier, InstrumentManager.apiTypeResetInstruments)
+
     def echo(self, data):
         return self.call(self.identifier, InstrumentManager.apiTypeEcho, data)
 

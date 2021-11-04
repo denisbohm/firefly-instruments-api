@@ -1,6 +1,6 @@
 import tkinter as tk
 import tkinter.scrolledtext as scrolledtext
-from tkmacosx import Button
+from tkinter import Button
 import threading
 import ctypes
 import os
@@ -50,6 +50,10 @@ class Runner(threading.Thread):
             for frame in traceback.extract_tb(exception_traceback):
                 detail += f"\n at {frame.name} in {os.path.basename(frame.filename)} line {frame.lineno}: {frame.line}"
             self.presenter.log(detail, "fail")
+        try:
+            self.fixture.manager.reset_instruments()
+        except:
+            pass
         self.presenter.completed()
 
 
@@ -79,8 +83,8 @@ class TestStation:
         self.log("Ready...")
 
     def add_buttons(self):
-        self.startButton = Button(text='Start', command=self.start_button_command, borderless=True)
-        self.cancelButton = Button(text='Cancel', command=self.cancel_button_command, borderless=True)
+        self.startButton = Button(text='Start', command=self.start_button_command)
+        self.cancelButton = Button(text='Cancel', command=self.cancel_button_command)
         self.cancelButton['state'] = 'disabled'
 
     def layout(self):
