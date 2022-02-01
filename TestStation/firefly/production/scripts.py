@@ -598,53 +598,65 @@ class SerialWireDebugRemoteProcedureCall:
 
 class Flasher:
 
-    def __init__(self, presenter, serial_wire_instrument, mcu, name, storage_instrument=None, filename=None):
+    class Install:
+
+        def __init__(self, name, filename=None):
+            self.name = name
+            if filename is None:
+                self.filename = firmware
+            else:
+                self.filename = filename
+            self.firmware = None
+            self.file_address = None
+
+    def __init__(self, presenter, serial_wire_instrument, mcu, installs, storage_instrument=None):
         self.presenter = presenter
         self.serial_wire_instrument = serial_wire_instrument
         self.mcu = mcu
-        self.name = name
+        if isinstance(installs, str):
+            self.installs = [Flasher.Install(installs, installs)]
+        else:
+            self.installs = installs
         self.storage_instrument = storage_instrument
-        self.filename = filename
 
         self.rpc = None
-        self.firmware = None
-        self.file_address = None
 
         if self.storage_instrument is not None:
             self.transfer_to_ram = self.transfer_to_ram_via_storage
         else:
             self.transfer_to_ram = self.transfer_to_ram_via_swd
 
-    def setup_firmware(self):
-        self.firmware = Firmware(f"firmware/{self.name}")
-        if self.storage_instrument is None:
-            return
-
-        storage_instrument = self.storage_instrument
-        for info in storage_instrument.file_list():
-            if info.name == self.filename:
-                address = storage_instrument.file_address(self.filename)
-                storage_hash = bytes(storage_instrument.hash(address, info.size))
-                firmware_hash = hashlib.sha1(bytes(self.firmware.data)).digest()
-                if storage_hash == firmware_hash:
-                    self.file_address = address
-                    return
-                else:
-                    break
-
-        storage_instrument.file_open(self.filename, StorageInstrument.FA_CREATE_ALWAYS)
-        storage_instrument.file_expand(self.filename, len(self.firmware.data))
-        self.file_address = storage_instrument.file_address(self.filename)
-        storage_instrument.file_write(self.filename, 0, self.firmware.data)
-
     def setup_rpc(self):
         flasher_firmware = Firmware(f"flasher/{self.mcu}.elf")
         self.rpc = SerialWireDebugRemoteProcedureCall(self.serial_wire_instrument, flasher_firmware)
         self.rpc.setup()
 
+    def setup_firmware(self, install):
+        install.firmware = Firmware(f"firmware/{install.name}")
+        if self.storage_instrument is None:
+            return
+
+        storage_instrument = self.storage_instrument
+        for info in storage_instrument.file_list():
+            if info.name == install.filename:
+                address = storage_instrument.file_address(install.filename)
+                storage_hash = bytes(storage_instrument.hash(address, info.size))
+                firmware_hash = hashlib.sha1(bytes(install.firmware.data)).digest()
+                if storage_hash == firmware_hash:
+                    install.file_address = address
+                    return
+                else:
+                    break
+
+        storage_instrument.file_open(install.filename, StorageInstrument.FA_CREATE_ALWAYS)
+        storage_instrument.file_expand(install.filename, len(install.firmware.data))
+        install.file_address = storage_instrument.file_address(install.filename)
+        storage_instrument.file_write(install.filename, 0, install.firmware.data)
+
     def setup(self):
         self.setup_rpc()
-        self.setup_firmware()
+        for install in self.installs:
+            self.setup_firmware(install)
 
     def erase_all(self):
         result = self.rpc.run('fd_flasher_erase_all')
@@ -661,34 +673,34 @@ class Flasher:
         if result != 0:
             raise IOError(f"flasher write(0x{address:08x}), 0x{data:08x}, 0x{size:08x}) failed ({result})")
 
-    def transfer_to_ram_via_storage(self, address, offset, count):
+    def transfer_to_ram_via_storage(self, install, address, offset, count):
         storage_identifier = self.storage_instrument.identifier
-        storage_address = self.file_address + offset
+        storage_address = install.file_address + offset
         self.rpc.serial_wire_instrument.write_from_storage(address, count, storage_identifier, storage_address)
 
-    def transfer_to_ram_via_swd(self, address, offset, count):
-        subdata = self.firmware.data[offset:offset + count]
+    def transfer_to_ram_via_swd(self, install, address, offset, count):
+        subdata = install.firmware.data[offset:offset + count]
         self.rpc.serial_wire_instrument.write_memory(address, subdata)
 
-    def flash(self):
+    def flash(self, install):
         assert (self.rpc.firmware.heap.address & 0x7) == 0
         assert (self.rpc.firmware.heap.size & 0x7) == 0
         assert (len(self.rpc.firmware.data) & 0x7) == 0
         heap = self.rpc.firmware.heap.address
         max_count = self.rpc.firmware.heap.size
-        address = self.firmware.address
-        data = self.firmware.data
+        address = install.firmware.address
+        data = install.firmware.data
         subaddress = address
         while True:
             offset = subaddress - address
             count = min(len(data) - offset, max_count)
             if count == 0:
                 break
-            self.transfer_to_ram(heap, offset, count)
+            self.transfer_to_ram(install, heap, offset, count)
             self.write(subaddress, heap, count)
 
             """
-            subdata = self.firmware.data[offset:offset + count]
+            subdata = install.firmware.data[offset:offset + count]
             verify = self.rpc.serial_wire_instrument.read_memory(subaddress, len(subdata))
             if verify != subdata:
                 mismatches = 0
@@ -702,31 +714,33 @@ class Flasher:
 
             subaddress += count
 
-    def verify(self):
-        address = self.firmware.address
-        count = len(self.firmware.data)
+    def verify(self, install):
+        address = install.firmware.address
+        count = len(install.firmware.data)
         use_storage = True
         if use_storage and (self.storage_instrument is not None):
             code = self.rpc.serial_wire_instrument.compare_to_storage(
-                address, count, self.storage_instrument.identifier, self.file_address
+                address, count, self.storage_instrument.identifier, install.file_address
             )
             if code != 0:
                 raise IOError("firmware verification failed")
         else:
             data = self.rpc.serial_wire_instrument.read_memory(address, count)
-            if data != self.firmware.data:
+            if data != install.firmware.data:
                 mismatches = 0
                 for i in range(count):
                     vi = data[i]
-                    di = self.firmware.data[i]
+                    di = install.firmware.data[i]
                     if vi != di:
                         mismatches += 1
                 raise IOError("firmware verification failed")
 
     def program(self):
         self.setup()
-        self.flash()
-        self.verify()
+        for install in self.installs:
+            self.flash(install)
+        for install in self.installs:
+            self.verify(install)
 
 
 class SOC:
@@ -1023,8 +1037,12 @@ class NRF53(SOC):
 
     class FICR:
 
+        INFO_VARIANT_QKAA = 0x514B4141
+        INFO_VARIANT_CLAA = 0x434C4141
+
         def __init__(self):
             base = 0x00FF0000
+            self.r_info_variant = base + 0x210
             self.r_xosc32mtrim = base + 0xC20
 
     class UICR:
@@ -1196,6 +1214,10 @@ class NRF53(SOC):
         clock_s = self.application.clock_s
         events_hfclkstarted = self.serial_wire_instrument.read_memory_uint32(clock_s.r_events_hfclkstarted)
         return events_hfclkstarted
+
+    def get_info_variant(self):
+        ficr = self.application.ficr
+        return self.serial_wire_instrument.read_memory_uint32(ficr.r_info_variant)
 
     def start_hfclk(self, capacitance=9.5):
         ficr = self.application.ficr
